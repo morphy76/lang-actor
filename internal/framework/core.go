@@ -34,8 +34,9 @@ const (
 // Actor is part of the actor model framework underlying lang-actor.
 //
 // Type Parameters:
+//   - M: The type of the message.
 //   - T: The type of the actor state.
-type Actor[T any] interface {
+type Actor[M any, T any] interface {
 	// Actor URI
 	Address() url.URL
 	// Start the actor
@@ -47,7 +48,7 @@ type Actor[T any] interface {
 	// State of the actor
 	State() T
 	// Deliver a message to the actor
-	Deliver(msg Message) error
+	Deliver(msg Message[M]) error
 	// String representation of the actor
 	String() string
 }
@@ -62,11 +63,16 @@ type Payload[T any] interface {
 }
 
 // Message is the interface for messages sent to actors.
-type Message interface {
+//
+// Type Parameters:
+//   - T: The type of the message.
+type Message[T any] interface {
 	// Sender returns the URL of the sender.
 	Sender() url.URL
 	// Mutation returns true if the message is an actor mutation.
 	Mutation() bool
+	// ToImplementation returns the exact type of the struct implementing this interface.
+	ToImplementation() T
 }
 
 // ProcessingFn defines a generic function type for processing messages within an actor system.
@@ -80,4 +86,4 @@ type Message interface {
 // Returns:
 //   - Payload[T]: The updated state of the actor after processing the message.
 //   - error: An error if the processing fails, otherwise nil.
-type ProcessingFn[T any] func(msg Message, currentState Payload[T]) (Payload[T], error)
+type ProcessingFn[M any, T any] func(msg Message[M], currentState Payload[T]) (Payload[T], error)

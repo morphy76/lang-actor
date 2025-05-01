@@ -6,31 +6,31 @@ import (
 	"sync"
 )
 
-var staticActorAssertion Actor[any] = (*actor[any])(nil)
+var staticActorAssertion Actor[any, any] = (*actor[any, any])(nil)
 
-type actor[T any] struct {
+type actor[M any, T any] struct {
 	lock *sync.Mutex
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
 	status  ActorStatus
-	mailbox chan Message
+	mailbox chan Message[M]
 	address url.URL
 
 	state        Payload[T]
-	processingFn ProcessingFn[T]
+	processingFn ProcessingFn[M, T]
 
 	stopCompleted chan bool
 }
 
 // Address returns the actor's address.
-func (a actor[T]) Address() url.URL {
+func (a actor[M, T]) Address() url.URL {
 	return a.address
 }
 
 // Start starts the actor.
-func (a *actor[T]) Start() error {
+func (a *actor[M, T]) Start() error {
 
 	if a.status == ActorStatusRunning ||
 		a.status == ActorStatusStarting {
@@ -44,12 +44,12 @@ func (a *actor[T]) Start() error {
 	return ErrorActorNotIdle
 }
 
-func (a *actor[T]) warmup() error {
+func (a *actor[M, T]) warmup() error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	a.status = ActorStatusStarting
-	a.mailbox = make(chan Message, 100)
+	a.mailbox = make(chan Message[M], 100)
 	useCtx, useCancelFn := context.WithCancel(context.Background())
 	a.ctx = useCtx
 	a.ctxCancel = useCancelFn
@@ -61,7 +61,7 @@ func (a *actor[T]) warmup() error {
 }
 
 // Stop stops the actor.
-func (a *actor[T]) Stop() (chan bool, error) {
+func (a *actor[M, T]) Stop() (chan bool, error) {
 
 	if a.status == ActorStatusRunning {
 		return a.teardown()
@@ -70,7 +70,7 @@ func (a *actor[T]) Stop() (chan bool, error) {
 	return nil, ErrorActorNotRunning
 }
 
-func (a *actor[T]) teardown() (chan bool, error) {
+func (a *actor[M, T]) teardown() (chan bool, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -85,7 +85,7 @@ func (a *actor[T]) teardown() (chan bool, error) {
 }
 
 // Deliver delivers a message to the actor.
-func (a *actor[T]) Deliver(msg Message) error {
+func (a *actor[M, T]) Deliver(msg Message[M]) error {
 	if a.status != ActorStatusRunning {
 		return ErrorActorNotRunning
 	}
@@ -93,7 +93,7 @@ func (a *actor[T]) Deliver(msg Message) error {
 	return nil
 }
 
-func (a *actor[T]) consume() {
+func (a *actor[M, T]) consume() {
 	for {
 		select {
 		case msg := <-a.mailbox:
@@ -127,28 +127,28 @@ func (a *actor[T]) consume() {
 	}
 }
 
-func (a *actor[T]) swapState(newState Payload[T]) {
+func (a *actor[M, T]) swapState(newState Payload[T]) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	a.state = newState
 }
 
-func (a actor[T]) handleFailure(err error) {
+func (a actor[M, T]) handleFailure(err error) {
 	// TODO: Handle failure
 }
 
 // Status returns the actor's status.
-func (a actor[T]) Status() ActorStatus {
+func (a actor[M, T]) Status() ActorStatus {
 	return a.status
 }
 
 // State returns the actor's state.
-func (a actor[T]) State() T {
+func (a actor[M, T]) State() T {
 	return a.state.ToImplementation()
 }
 
 // String returns the string representation of the actor's address.
-func (a actor[T]) String() string {
+func (a actor[M, T]) String() string {
 	return a.address.String()
 }
 
@@ -164,11 +164,11 @@ func (a actor[T]) String() string {
 // Returns:
 //   - (Actor): The created Actor instance.
 //   - (error): An error if the actor could not be created.
-func NewActor[T any](
+func NewActor[M any, T any](
 	address url.URL,
-	processingFn ProcessingFn[T],
+	processingFn ProcessingFn[M, T],
 	initialState Payload[T],
-) (Actor[T], error) {
+) (Actor[M, T], error) {
 	// TODO, future schema support:
 	// - actor+http:// to dispatch messages over HTTP
 	// - actor+https:// to dispatch messages over HTTPS
@@ -188,7 +188,7 @@ func NewActor[T any](
 		}
 	}
 
-	return &actor[T]{
+	return &actor[M, T]{
 		lock: &sync.Mutex{},
 
 		status:  ActorStatusIdle,

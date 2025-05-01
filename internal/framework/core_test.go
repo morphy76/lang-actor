@@ -23,7 +23,7 @@ func TestNewActor(t *testing.T) {
 	t.Log("NewActor test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn framework.ProcessingFn[noState] = func(msg framework.Message, currentState framework.Payload[noState]) (framework.Payload[noState], error) {
+	var nullProcessingFn framework.ProcessingFn[string, noState] = func(msg framework.Message[string], currentState framework.Payload[noState]) (framework.Payload[noState], error) {
 		return &noState{}, nil
 	}
 
@@ -53,7 +53,7 @@ func TestActorLifecycle(t *testing.T) {
 	t.Log("Actor lifecycle test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn framework.ProcessingFn[noState] = func(msg framework.Message, currentState framework.Payload[noState]) (framework.Payload[noState], error) {
+	var nullProcessingFn framework.ProcessingFn[string, noState] = func(msg framework.Message[string], currentState framework.Payload[noState]) (framework.Payload[noState], error) {
 		return &noState{}, nil
 	}
 
@@ -121,7 +121,7 @@ func TestActorLifecycle(t *testing.T) {
 	})
 }
 
-var staticMockMessageAssertion framework.Message = (*mockMessage)(nil)
+var staticMockMessageAssertion framework.Message[mockMessage] = (*mockMessage)(nil)
 
 type mockMessage struct {
 	sender   url.URL
@@ -134,6 +134,10 @@ func (m mockMessage) Sender() url.URL {
 
 func (m mockMessage) Mutation() bool {
 	return m.mutation
+}
+
+func (m mockMessage) ToImplementation() mockMessage {
+	return m
 }
 
 var staticMockActorStateAssertion framework.Payload[mockActorState] = (*mockActorState)(nil)
@@ -159,7 +163,7 @@ func TestActorMessageDelivery(t *testing.T) {
 
 		var messageProcessed *bool = new(bool)
 		*messageProcessed = false
-		var spyFn framework.ProcessingFn[noState] = func(msg framework.Message, currentState framework.Payload[noState]) (framework.Payload[noState], error) {
+		var spyFn framework.ProcessingFn[mockMessage, noState] = func(msg framework.Message[mockMessage], currentState framework.Payload[noState]) (framework.Payload[noState], error) {
 			*messageProcessed = true
 			return noState{}, nil
 		}
@@ -186,7 +190,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		t.Log("Should return an error when delivering a message to an actor that is not running")
 
 		var messageProcessed bool
-		var spyFn framework.ProcessingFn[noState] = func(msg framework.Message, currentState framework.Payload[noState]) (framework.Payload[noState], error) {
+		var spyFn framework.ProcessingFn[mockMessage, noState] = func(msg framework.Message[mockMessage], currentState framework.Payload[noState]) (framework.Payload[noState], error) {
 			messageProcessed = true
 			return noState{}, nil
 		}
@@ -207,7 +211,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		t.Log("Should update the actor's state when a mutation message is delivered")
 
 		var initialState = mockActorState{processed: false}
-		var spyFn framework.ProcessingFn[mockActorState] = func(msg framework.Message, currentState framework.Payload[mockActorState]) (framework.Payload[mockActorState], error) {
+		var spyFn framework.ProcessingFn[mockMessage, mockActorState] = func(msg framework.Message[mockMessage], currentState framework.Payload[mockActorState]) (framework.Payload[mockActorState], error) {
 			return mockActorState{processed: true}, nil
 		}
 
