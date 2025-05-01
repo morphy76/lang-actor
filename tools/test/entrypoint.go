@@ -42,7 +42,7 @@ func (m chatMessage) ToImplementation() chatMessage {
 func main() {
 
 	var echoFn framework.ProcessingFn[chatMessage, actorStatus] = func(msg framework.Message[chatMessage], currentState framework.Payload[actorStatus]) (framework.Payload[actorStatus], error) {
-		fmt.Printf("Echo: %s\n", msg.ToImplementation().Message)
+		fmt.Printf("Echo [%s] after [%d] messages\n", msg.ToImplementation().Message, currentState.ToImplementation().processedMessages)
 		return actorStatus{processedMessages: currentState.ToImplementation().processedMessages + 1}, nil
 	}
 
