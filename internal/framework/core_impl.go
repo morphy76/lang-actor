@@ -8,31 +8,33 @@ import (
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
-var staticActorAssertion f.Actor[any, any] = (*actor[any, any])(nil)
+var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
+var staticReceiverAssertion f.Transport = (*actor[any])(nil)
 
-type actor[M any, T any] struct {
-	lock *sync.Mutex
+type actor[T any] struct {
+	parentCtx context.Context
+	lock      *sync.Mutex
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
 	status  f.ActorStatus
-	mailbox chan f.Message[M]
+	mailbox chan f.Message
 	address url.URL
 
-	state        f.Payload[T]
-	processingFn f.ProcessingFn[M, T]
+	state        f.ActorState[T]
+	processingFn f.ProcessingFn[T]
 
 	stopCompleted chan bool
 }
 
 // Address returns the actor's address.
-func (a actor[M, T]) Address() url.URL {
+func (a actor[T]) Address() url.URL {
 	return a.address
 }
 
 // Start starts the actor.
-func (a *actor[M, T]) Start() error {
+func (a *actor[T]) Start() error {
 
 	if a.status == f.ActorStatusRunning ||
 		a.status == f.ActorStatusStarting {
@@ -47,7 +49,7 @@ func (a *actor[M, T]) Start() error {
 }
 
 // Stop stops the actor.
-func (a *actor[M, T]) Stop() (chan bool, error) {
+func (a *actor[T]) Stop() (chan bool, error) {
 
 	if a.status == f.ActorStatusRunning {
 		return a.teardown()
@@ -57,7 +59,7 @@ func (a *actor[M, T]) Stop() (chan bool, error) {
 }
 
 // Deliver delivers a message to the actor.
-func (a *actor[M, T]) Deliver(msg f.Message[M]) error {
+func (a *actor[T]) Deliver(msg f.Message) error {
 	if a.status != f.ActorStatusRunning {
 		return f.ErrorActorNotRunning
 	}
@@ -66,21 +68,28 @@ func (a *actor[M, T]) Deliver(msg f.Message[M]) error {
 }
 
 // State returns the actor's state.
-func (a actor[M, T]) State() T {
+func (a actor[T]) State() T {
 	return a.state.Cast()
 }
 
 // Status returns the actor's status.
-func (a actor[M, T]) Status() f.ActorStatus {
+func (a actor[T]) Status() f.ActorStatus {
 	return a.status
 }
 
-func (a *actor[M, T]) warmup() error {
+// SendFn returns a function to send messages to other actors.
+func (a actor[T]) Send(msg f.Message, destination url.URL) error {
+	// TODO a better implementation to send messages to other actors
+	catalog := a.parentCtx.Value(f.ActorCatalogContextKey).(map[url.URL]f.Transport)
+	return catalog[destination].Deliver(msg)
+}
+
+func (a *actor[T]) warmup() error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	a.status = f.ActorStatusStarting
-	a.mailbox = make(chan f.Message[M], 100)
+	a.mailbox = make(chan f.Message, 100)
 	useCtx, useCancelFn := context.WithCancel(context.Background())
 	a.ctx = useCtx
 	a.ctxCancel = useCancelFn
@@ -91,7 +100,7 @@ func (a *actor[M, T]) warmup() error {
 	return nil
 }
 
-func (a *actor[M, T]) teardown() (chan bool, error) {
+func (a *actor[T]) teardown() (chan bool, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
@@ -105,11 +114,11 @@ func (a *actor[M, T]) teardown() (chan bool, error) {
 	return a.stopCompleted, nil
 }
 
-func (a *actor[M, T]) consume() {
+func (a *actor[T]) consume() {
 	for {
 		select {
 		case msg := <-a.mailbox:
-			newState, err := a.processingFn(msg, a.state)
+			newState, err := a.processingFn(msg, a.state, a.Send, a.address)
 			if err != nil {
 				a.handleFailure(err)
 			}
@@ -121,7 +130,7 @@ func (a *actor[M, T]) consume() {
 			for {
 				select {
 				case msg := <-a.mailbox:
-					newState, err := a.processingFn(msg, a.state)
+					newState, err := a.processingFn(msg, a.state, a.Send, a.address)
 					if err != nil {
 						a.handleFailure(err)
 					}
@@ -139,22 +148,23 @@ func (a *actor[M, T]) consume() {
 	}
 }
 
-func (a *actor[M, T]) swapState(newState f.Payload[T]) {
+func (a *actor[T]) swapState(newState f.ActorState[T]) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	a.state = newState
 }
 
-func (a actor[M, T]) handleFailure(err error) {
+func (a actor[T]) handleFailure(err error) {
 	// TODO: Handle failure
 }
 
 // NewActor creates a new actor with the given address.
-func NewActor[M any, T any](
+func NewActor[T any](
+	parentCtx context.Context,
 	address url.URL,
-	processingFn f.ProcessingFn[M, T],
-	initialState f.Payload[T],
-) (f.Actor[M, T], error) {
+	processingFn f.ProcessingFn[T],
+	initialState f.ActorState[T],
+) (f.Actor[T], error) {
 	// TODO, future schema support:
 	// - actor+http:// to dispatch messages over HTTP
 	// - actor+https:// to dispatch messages over HTTPS
@@ -166,8 +176,9 @@ func NewActor[M any, T any](
 		return nil, f.ErrorInvalidActorAddress
 	}
 
-	return &actor[M, T]{
-		lock: &sync.Mutex{},
+	return &actor[T]{
+		parentCtx: parentCtx,
+		lock:      &sync.Mutex{},
 
 		status:  f.ActorStatusIdle,
 		address: address,

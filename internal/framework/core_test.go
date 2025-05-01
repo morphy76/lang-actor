@@ -1,6 +1,7 @@
 package framework_test
 
 import (
+	"context"
 	"net/url"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 
 const actorURI = "actor://example"
 
-var staticNoStateAssertion f.Payload[noState] = (*noState)(nil)
+var staticNoStateAssertion f.ActorState[noState] = (*noState)(nil)
 
 type noState struct {
 }
@@ -24,17 +25,19 @@ func TestNewActor(t *testing.T) {
 	t.Log("NewActor test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[string, noState] = func(msg f.Message[string], currentState f.Payload[noState]) (f.Payload[noState], error) {
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
 		return &noState{}, nil
 	}
 
 	t.Run("Valid schema", func(t *testing.T) {
 		t.Log("Should create an actor with a valid schema")
 
+		ctx := context.Background()
+
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 		assert.Equal(t, actor.Address().Scheme, address.Scheme)
 	})
@@ -42,10 +45,12 @@ func TestNewActor(t *testing.T) {
 	t.Run("Invalid schema", func(t *testing.T) {
 		t.Log("Should return an error for an unsupported schema")
 
+		ctx := context.Background()
+
 		address, err := url.Parse("http://example")
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, nullProcessingFn, initialState)
 		assert.Assert(t, actor == nil)
 		assert.ErrorContains(t, err, "invalid actor address")
 	})
@@ -54,17 +59,19 @@ func TestActorLifecycle(t *testing.T) {
 	t.Log("Actor lifecycle test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[string, noState] = func(msg f.Message[string], currentState f.Payload[noState]) (f.Payload[noState], error) {
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
 		return &noState{}, nil
 	}
 
 	t.Run("Start actor successfully", func(t *testing.T) {
 		t.Log("Should start the actor successfully when idle")
 
+		ctx := context.Background()
+
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		err = actor.Start()
@@ -75,10 +82,12 @@ func TestActorLifecycle(t *testing.T) {
 	t.Run("Start actor when already running", func(t *testing.T) {
 		t.Log("Should return an error when starting an already running actor")
 
+		ctx := context.Background()
+
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		err = actor.Start()
@@ -91,10 +100,12 @@ func TestActorLifecycle(t *testing.T) {
 	t.Run("Stop actor successfully", func(t *testing.T) {
 		t.Log("Should stop the actor successfully when running")
 
+		ctx := context.Background()
+
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		err = actor.Start()
@@ -111,10 +122,12 @@ func TestActorLifecycle(t *testing.T) {
 	t.Run("Stop actor when not running", func(t *testing.T) {
 		t.Log("Should return an error when stopping an actor that is not running")
 
+		ctx := context.Background()
+
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		_, err = actor.Stop()
@@ -122,7 +135,7 @@ func TestActorLifecycle(t *testing.T) {
 	})
 }
 
-var staticMockMessageAssertion f.Message[mockMessage] = (*mockMessage)(nil)
+var staticMockMessageAssertion f.Message = (*mockMessage)(nil)
 
 type mockMessage struct {
 	sender   url.URL
@@ -141,7 +154,7 @@ func (m mockMessage) Cast() mockMessage {
 	return m
 }
 
-var staticMockActorStateAssertion f.Payload[mockActorState] = (*mockActorState)(nil)
+var staticMockActorStateAssertion f.ActorState[mockActorState] = (*mockActorState)(nil)
 
 type mockActorState struct {
 	processed bool
@@ -159,17 +172,19 @@ func TestActorMessageDelivery(t *testing.T) {
 	t.Run("Deliver message successfully", func(t *testing.T) {
 		t.Log("Should deliver a message to the actor and invoke the processing function")
 
+		ctx := context.Background()
+
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
 		var messageProcessed *bool = new(bool)
 		*messageProcessed = false
-		var spyFn f.ProcessingFn[mockMessage, noState] = func(msg f.Message[mockMessage], currentState f.Payload[noState]) (f.Payload[noState], error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
 			*messageProcessed = true
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, spyFn, noState{})
+		actor, err := framework.NewActor(ctx, *address, spyFn, noState{})
 		assert.NilError(t, err)
 
 		err = actor.Start()
@@ -190,8 +205,10 @@ func TestActorMessageDelivery(t *testing.T) {
 	t.Run("Deliver message when actor is not running", func(t *testing.T) {
 		t.Log("Should return an error when delivering a message to an actor that is not running")
 
+		ctx := context.Background()
+
 		var messageProcessed bool
-		var spyFn f.ProcessingFn[mockMessage, noState] = func(msg f.Message[mockMessage], currentState f.Payload[noState]) (f.Payload[noState], error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
 			messageProcessed = true
 			return noState{}, nil
 		}
@@ -199,7 +216,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, spyFn, noState{})
+		actor, err := framework.NewActor(ctx, *address, spyFn, noState{})
 		assert.NilError(t, err)
 
 		message := &mockMessage{sender: *address, mutation: false}
@@ -211,15 +228,17 @@ func TestActorMessageDelivery(t *testing.T) {
 	t.Run("Update actor state on mutation message", func(t *testing.T) {
 		t.Log("Should update the actor's state when a mutation message is delivered")
 
+		ctx := context.Background()
+
 		var initialState = mockActorState{processed: false}
-		var spyFn f.ProcessingFn[mockMessage, mockActorState] = func(msg f.Message[mockMessage], currentState f.Payload[mockActorState]) (f.Payload[mockActorState], error) {
+		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, currentState f.ActorState[mockActorState], sendFn f.SendFn, me url.URL) (f.ActorState[mockActorState], error) {
 			return mockActorState{processed: true}, nil
 		}
 
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, spyFn, initialState)
+		actor, err := framework.NewActor(ctx, *address, spyFn, initialState)
 		assert.NilError(t, err)
 
 		err = actor.Start()

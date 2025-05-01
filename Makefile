@@ -9,4 +9,7 @@ test:
 	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -v '/tools')
 
 run-echo-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/entrypoint.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/echo/run.go
+
+run-pingpong-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/pingpong/run.go
