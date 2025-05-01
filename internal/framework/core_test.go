@@ -25,7 +25,7 @@ func TestNewActor(t *testing.T) {
 	t.Log("NewActor test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
 		return &noState{}, nil
 	}
 
@@ -59,7 +59,7 @@ func TestActorLifecycle(t *testing.T) {
 	t.Log("Actor lifecycle test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
 		return &noState{}, nil
 	}
 
@@ -179,7 +179,7 @@ func TestActorMessageDelivery(t *testing.T) {
 
 		var messageProcessed *bool = new(bool)
 		*messageProcessed = false
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
 			*messageProcessed = true
 			return noState{}, nil
 		}
@@ -208,7 +208,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		ctx := context.Background()
 
 		var messageProcessed bool
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, currentState f.ActorState[noState], sendFn f.SendFn, me url.URL) (f.ActorState[noState], error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
 			messageProcessed = true
 			return noState{}, nil
 		}
@@ -231,7 +231,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		ctx := context.Background()
 
 		var initialState = mockActorState{processed: false}
-		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, currentState f.ActorState[mockActorState], sendFn f.SendFn, me url.URL) (f.ActorState[mockActorState], error) {
+		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.ActorView[mockActorState]) (f.ActorState[mockActorState], error) {
 			return mockActorState{processed: true}, nil
 		}
 

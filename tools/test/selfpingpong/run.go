@@ -43,33 +43,31 @@ func (m chatMessage) Cast() chatMessage {
 
 var pingPongFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
-	currentState framework.ActorState[actorState],
-	sendFn framework.SendFn,
-	me url.URL,
+	actor framework.ActorView[actorState],
 ) (framework.ActorState[actorState], error) {
 	var useMsg chatMessage = msg.(chatMessage)
 
 	fmt.Println("-----------------------------------")
-	fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", me.Host, msg.Sender().Host)
+	fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", actor.Address().Host, msg.Sender().Host)
 
-	if useMsg.stopAfter < int(currentState.Cast().processedMessages) {
-		fmt.Println("Current state:", currentState.Cast().processedMessages)
+	if useMsg.stopAfter < int(actor.State().Cast().processedMessages) {
+		fmt.Println("Current state:", actor.State().Cast().processedMessages)
 		fmt.Println("Stopping after:", useMsg.stopAfter)
 		fmt.Println("Cancelling the actor")
 		useMsg.cancelFn()
 		fmt.Println("====================================")
-		return currentState, nil
+		return actor.State(), nil
 	}
 
 	content := chatMessage{
-		sender:    me,
+		sender:    actor.Address(),
 		stopAfter: useMsg.stopAfter,
 		cancelFn:  useMsg.cancelFn,
 	}
 	fmt.Println("Sending message to:", msg.Sender().Host)
-	sendFn(content, msg.Sender())
+	actor.Send(content, msg.Sender())
 	fmt.Println("-----------------------------------")
-	return actorState{processedMessages: currentState.Cast().processedMessages + 1}, nil
+	return actorState{processedMessages: actor.State().Cast().processedMessages + 1}, nil
 }
 
 func main() {

@@ -118,7 +118,7 @@ func (a *actor[T]) consume() {
 	for {
 		select {
 		case msg := <-a.mailbox:
-			newState, err := a.processingFn(msg, a.state, a.Send, a.address)
+			newState, err := a.processingFn(msg, a)
 			if err != nil {
 				a.handleFailure(err)
 			}
@@ -130,7 +130,7 @@ func (a *actor[T]) consume() {
 			for {
 				select {
 				case msg := <-a.mailbox:
-					newState, err := a.processingFn(msg, a.state, a.Send, a.address)
+					newState, err := a.processingFn(msg, a)
 					if err != nil {
 						a.handleFailure(err)
 					}

@@ -54,18 +54,25 @@ type Transport interface {
 // Actor is part of the actor model framework underlying lang-actor.
 //
 // Type Parameters:
-//   - M: The type of the message.
 //   - T: The type of the actor state.
 type Actor[T any] interface {
-	Transport
-	// Actor URI
-	Address() url.URL
+	ActorView[T]
 	// Start the actor
 	Start() error
 	// Stop the actor
 	Stop() (chan bool, error)
 	// Status of the actor
 	Status() ActorStatus
+}
+
+// ActorView is the interface for the actor view.
+//
+// Type Parameters:
+//   - T: The type of the actor state.
+type ActorView[T any] interface {
+	Transport
+	// Actor URI
+	Address() url.URL
 	// State of the actor
 	State() T
 }
@@ -103,18 +110,14 @@ type Message interface {
 //
 // Parameters:
 //   - msg: The message of type T to be processed.
-//   - currentState: The current state of the actor of type T.
-//   - sendFn: A function to send messages to other actors.
-//   - me: The URL of the actor itself.
+//   - actor: The actor view of type T that is processing the message.
 //
 // Returns:
 //   - Payload[T]: The updated state of the actor after processing the message.
 //   - error: An error if the processing fails, otherwise nil.
 type ProcessingFn[T any] func(
 	msg Message,
-	currentState ActorState[T],
-	sendFn SendFn,
-	me url.URL,
+	actor ActorView[T],
 ) (ActorState[T], error)
 
 // SendFn defines a function type for sending messages to actors.

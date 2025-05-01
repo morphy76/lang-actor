@@ -43,13 +43,11 @@ func (m chatMessage) Cast() chatMessage {
 
 var echoFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
-	currentState framework.ActorState[actorState],
-	sendFn framework.SendFn,
-	me url.URL,
+	actor framework.ActorView[actorState],
 ) (framework.ActorState[actorState], error) {
 	var useMsg chatMessage = msg.(chatMessage)
-	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg.Message, currentState.Cast().processedMessages)
-	return actorState{processedMessages: currentState.Cast().processedMessages + 1}, nil
+	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg.Message, actor.State().Cast().processedMessages)
+	return actorState{processedMessages: actor.State().Cast().processedMessages + 1}, nil
 }
 
 func main() {
