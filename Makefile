@@ -13,3 +13,6 @@ run-echo-case:
 
 run-pingpong-case:
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/pingpong/run.go
+
+run-selfpingpong-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/selfpingpong/run.go
