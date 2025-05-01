@@ -47,7 +47,7 @@ func TestNewActor(t *testing.T) {
 
 		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.Assert(t, actor == nil)
-		assert.ErrorContains(t, err, "unsupported schema")
+		assert.ErrorContains(t, err, "invalid actor address")
 	})
 }
 func TestActorLifecycle(t *testing.T) {

@@ -5,6 +5,8 @@ import (
 	"net/url"
 )
 
+var ErrorInvalidActorAddress = errors.New("invalid actor address")
+
 // ErrorActorNotStarted is returned when an actor is not started.
 var ErrorActorNotStarted = errors.New("actor not started")
 

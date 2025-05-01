@@ -163,15 +163,7 @@ func NewActor[M any, T any](
 	// - actor+udp:// to dispatch messages over UDP
 	// Validate the schema
 	if address.Scheme != "actor" {
-		return nil, &url.Error{
-			Op:  "parse",
-			URL: address.String(),
-			Err: &url.Error{
-				Op:  "unsupported schema",
-				URL: address.String(),
-				Err: nil,
-			},
-		}
+		return nil, f.ErrorInvalidActorAddress
 	}
 
 	return &actor[M, T]{
