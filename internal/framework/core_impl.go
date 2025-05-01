@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	f "github.com/morphy76/lang-actor/pkg/framework"
+	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
@@ -78,10 +79,8 @@ func (a actor[T]) Status() f.ActorStatus {
 }
 
 // SendFn returns a function to send messages to other actors.
-func (a actor[T]) Send(msg f.Message, destination url.URL) error {
-	// TODO a better implementation to send messages to other actors
-	catalog := a.parentCtx.Value(f.ActorCatalogContextKey).(map[url.URL]f.Transport)
-	return catalog[destination].Deliver(msg)
+func (a actor[T]) Send(msg f.Message, transport f.Transport) error {
+	return transport.Deliver(msg)
 }
 
 func (a *actor[T]) warmup() error {
@@ -98,6 +97,10 @@ func (a *actor[T]) warmup() error {
 	a.status = f.ActorStatusRunning
 
 	return nil
+}
+
+func (a *actor[T]) TransportByAddress(address url.URL) (f.Transport, error) {
+	return a.parentCtx.Value(r.ActorCatalogContextKey).(r.Catalog).Lookup(address)
 }
 
 func (a *actor[T]) teardown() (chan bool, error) {

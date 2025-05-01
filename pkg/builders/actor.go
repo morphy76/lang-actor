@@ -2,11 +2,11 @@ package builders
 
 import (
 	"context"
-	"errors"
 	"net/url"
 
 	i "github.com/morphy76/lang-actor/internal/framework"
 	f "github.com/morphy76/lang-actor/pkg/framework"
+	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
 // NewActor creates a new actor with the given address.
@@ -35,14 +35,16 @@ func NewActor[T any](
 	if err != nil {
 		return nil, err
 	}
-	// TODO a better model for the catalog
-	actorCatalog, found := parentCtx.Value(f.ActorCatalogContextKey).(map[url.URL]f.Transport)
+
+	actorCatalog, found := parentCtx.Value(r.ActorCatalogContextKey).(r.Catalog)
 	if !found {
 		return nil, f.ErrActorCatalogNotFound
 	}
-	if _, found := actorCatalog[address]; found {
-		return nil, errors.New("actor already exists")
+
+	err = actorCatalog.Register(rv)
+	if err != nil {
+		return nil, err
 	}
-	actorCatalog[address] = rv.(f.Transport)
+
 	return rv, nil
 }

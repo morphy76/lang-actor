@@ -10,6 +10,7 @@ import (
 
 	"github.com/morphy76/lang-actor/pkg/builders"
 	"github.com/morphy76/lang-actor/pkg/framework"
+	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticActorStatusAssertion framework.ActorState[actorState] = (*actorState)(nil)
@@ -52,14 +53,10 @@ var echoFn framework.ProcessingFn[actorState] = func(
 
 func main() {
 
-	actorCatalog := make(map[url.URL]framework.Transport)
-	defer func() {
-		for k := range actorCatalog {
-			delete(actorCatalog, k)
-		}
-	}()
+	actorCatalog := builders.NewActorCatalog()
+	defer actorCatalog.TearDown()
 
-	ctx := context.WithValue(context.Background(), framework.ActorCatalogContextKey, actorCatalog)
+	ctx := context.WithValue(context.Background(), routing.ActorCatalogContextKey, actorCatalog)
 
 	echoURL, _ := url.Parse("actor://echo")
 	echoActor, err := builders.NewActor(ctx, *echoURL, echoFn, actorState{})

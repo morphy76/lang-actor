@@ -37,20 +37,6 @@ const (
 	ActorStatusStopping
 )
 
-// ActorCatalogContextKeyType is the type of the context key for the actor catalog.
-type ActorCatalogContextKeyType string
-
-// ActorCatalogContextKey is the context key for the actor catalog.
-var ActorCatalogContextKey ActorCatalogContextKeyType = "actors"
-
-// Transport is the interface for the transport layer of the actor model.
-type Transport interface {
-	// Deliver a message to the actor
-	Deliver(msg Message) error
-	// Send is a function to send messages to other actors.
-	Send(msg Message, destination url.URL) error
-}
-
 // Actor is part of the actor model framework underlying lang-actor.
 //
 // Type Parameters:
@@ -71,10 +57,25 @@ type Actor[T any] interface {
 //   - T: The type of the actor state.
 type ActorView[T any] interface {
 	Transport
-	// Actor URI
-	Address() url.URL
 	// State of the actor
 	State() T
+	// Send a message to another actor
+	TransportByAddress(address url.URL) (Transport, error)
+}
+
+// Transport is the interface for the transport layer of the actor model.
+type Transport interface {
+	Addressable
+	// Deliver a message to the actor
+	Deliver(msg Message) error
+	// Send is a function to send messages to other actors.
+	Send(msg Message, transport Transport) error
+}
+
+// Addressable is the interface for addressable entities.
+type Addressable interface {
+	// Actor URI
+	Address() url.URL
 }
 
 // ActorState represents the state of an actor.
@@ -110,14 +111,14 @@ type Message interface {
 //
 // Parameters:
 //   - msg: The message of type T to be processed.
-//   - actor: The actor view of type T that is processing the message.
+//   - self: The actor view of type T that is processing the message.
 //
 // Returns:
 //   - Payload[T]: The updated state of the actor after processing the message.
 //   - error: An error if the processing fails, otherwise nil.
 type ProcessingFn[T any] func(
 	msg Message,
-	actor ActorView[T],
+	self ActorView[T],
 ) (ActorState[T], error)
 
 // SendFn defines a function type for sending messages to actors.

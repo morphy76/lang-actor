@@ -9,6 +9,7 @@ import (
 
 	"github.com/morphy76/lang-actor/pkg/builders"
 	"github.com/morphy76/lang-actor/pkg/framework"
+	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticActorStatusAssertion framework.ActorState[actorState] = (*actorState)(nil)
@@ -43,43 +44,42 @@ func (m chatMessage) Cast() chatMessage {
 
 var pingPongFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
-	actor framework.ActorView[actorState],
+	self framework.ActorView[actorState],
 ) (framework.ActorState[actorState], error) {
 	var useMsg chatMessage = msg.(chatMessage)
 
 	fmt.Println("-----------------------------------")
-	fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", actor.Address().Host, msg.Sender().Host)
+	fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", self.Address().Host, msg.Sender().Host)
 
-	if useMsg.stopAfter < int(actor.State().Cast().processedMessages) {
-		fmt.Println("Current state:", actor.State().Cast().processedMessages)
+	if useMsg.stopAfter < int(self.State().Cast().processedMessages) {
+		fmt.Println("Current state:", self.State().Cast().processedMessages)
 		fmt.Println("Stopping after:", useMsg.stopAfter)
 		fmt.Println("Cancelling the actor")
 		useMsg.cancelFn()
 		fmt.Println("====================================")
-		return actor.State(), nil
+		return self.State(), nil
 	}
 
 	content := chatMessage{
-		sender:    actor.Address(),
+		sender:    self.Address(),
 		stopAfter: useMsg.stopAfter,
 		cancelFn:  useMsg.cancelFn,
 	}
 	fmt.Println("Sending message to:", msg.Sender().Host)
-	actor.Send(content, msg.Sender())
+
+	transport, _ := self.TransportByAddress(msg.Sender())
+
+	self.Send(content, transport)
 	fmt.Println("-----------------------------------")
-	return actorState{processedMessages: actor.State().Cast().processedMessages + 1}, nil
+	return actorState{processedMessages: self.State().Cast().processedMessages + 1}, nil
 }
 
 func main() {
 
-	actorCatalog := make(map[url.URL]framework.Transport)
-	defer func() {
-		for k := range actorCatalog {
-			delete(actorCatalog, k)
-		}
-	}()
+	actorCatalog := builders.NewActorCatalog()
+	defer actorCatalog.TearDown()
 
-	ctx, cancelFn := context.WithCancel(context.WithValue(context.Background(), framework.ActorCatalogContextKey, actorCatalog))
+	ctx, cancelFn := context.WithCancel(context.WithValue(context.Background(), routing.ActorCatalogContextKey, actorCatalog))
 
 	pingURL, _ := url.Parse("actor://ping")
 	pingActor, err := builders.NewActor(ctx, *pingURL, pingPongFn, actorState{})

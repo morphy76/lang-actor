@@ -1,9 +1,9 @@
 # Design principles of the actor model
 
-## Baseline
+## Actors
 
 - [x] Each node has an unique URI;
-- [x] Node URIs can support multiple schemas, local to stay within the proces or remote, supporting different protocols, e.g. HTTP, TCP, etc;
+- [] Node URIs can support multiple schemas, 'actor' to stay within the proces or remote, supporting different protocols, e.g. HTTP, TCP, etc;
 - [X] Each node has a mailbox;
 - [X] Each node can emit messages;
 - [X] Each node can send a message to itself;
@@ -16,11 +16,3 @@
 - [X] Each node has a lifecycle: starting, running, stopping, idle;
 - [X] Each node can be started, stopped, restarted;
 - [] Improve the Message model.
-
-## Routing
-
-- [] Create a catalog model for node routing.
-
-## Graph
-
-- [] Create a graph model for node routes.
