@@ -7,7 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/morphy76/lang-actor/internal/framework"
+	"github.com/morphy76/lang-actor/pkg/builders"
+	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
 var staticActorStatusAssertion framework.Payload[actorStatus] = (*actorStatus)(nil)
@@ -16,7 +17,7 @@ type actorStatus struct {
 	processedMessages uint64
 }
 
-func (c actorStatus) ToImplementation() actorStatus {
+func (c actorStatus) Cast() actorStatus {
 	return c
 }
 
@@ -35,19 +36,19 @@ func (m chatMessage) Mutation() bool {
 	return true
 }
 
-func (m chatMessage) ToImplementation() chatMessage {
+func (m chatMessage) Cast() chatMessage {
 	return m
+}
+
+var echoFn framework.ProcessingFn[chatMessage, actorStatus] = func(msg framework.Message[chatMessage], currentState framework.Payload[actorStatus]) (framework.Payload[actorStatus], error) {
+	fmt.Printf("Echo [%s] after [%d] messages\n", msg.Cast().Message, currentState.Cast().processedMessages)
+	return actorStatus{processedMessages: currentState.Cast().processedMessages + 1}, nil
 }
 
 func main() {
 
-	var echoFn framework.ProcessingFn[chatMessage, actorStatus] = func(msg framework.Message[chatMessage], currentState framework.Payload[actorStatus]) (framework.Payload[actorStatus], error) {
-		fmt.Printf("Echo [%s] after [%d] messages\n", msg.ToImplementation().Message, currentState.ToImplementation().processedMessages)
-		return actorStatus{processedMessages: currentState.ToImplementation().processedMessages + 1}, nil
-	}
-
 	echoURL, _ := url.Parse("actor://echo")
-	echoActor, _ := framework.NewActor(*echoURL, echoFn, actorStatus{})
+	echoActor, _ := builders.NewActor(*echoURL, echoFn, actorStatus{})
 	echoActor.Start()
 	defer func() {
 		done, _ := echoActor.Stop()

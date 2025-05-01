@@ -49,8 +49,6 @@ type Actor[M any, T any] interface {
 	State() T
 	// Deliver a message to the actor
 	Deliver(msg Message[M]) error
-	// String representation of the actor
-	String() string
 }
 
 // Payload represents the state of an actor.
@@ -58,8 +56,8 @@ type Actor[M any, T any] interface {
 // Type Parameters:
 //   - T: The type of the actor state.
 type Payload[T any] interface {
-	// ToImplementation returns the exact type of the struct implementing this interface.
-	ToImplementation() T
+	// Cast returns the exact type of the struct implementing this interface.
+	Cast() T
 }
 
 // Message is the interface for messages sent to actors.
@@ -72,12 +70,16 @@ type Message[T any] interface {
 	// Mutation returns true if the message is an actor mutation.
 	Mutation() bool
 	// ToImplementation returns the exact type of the struct implementing this interface.
-	ToImplementation() T
+	Cast() T
 }
 
 // ProcessingFn defines a generic function type for processing messages within an actor system.
 // It takes a message of type T and the current actor state of type S, and returns the updated
 // state of type S along with an error, if any.
+//
+// Type Parameters:
+//   - M: The type of the message.
+//   - T: The type of the actor state.
 //
 // Parameters:
 //   - msg: The message of type T to be processed.
