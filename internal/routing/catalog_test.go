@@ -45,10 +45,6 @@ func (m *mockActor) Send(msg f.Message, transport f.Transport) error {
 	return nil
 }
 
-func (m *mockActor) TransportByAddress(address url.URL) (f.Transport, error) {
-	return nil, nil
-}
-
 const actorURI = "actor://example"
 
 func TestAddressBookRegister(t *testing.T) {

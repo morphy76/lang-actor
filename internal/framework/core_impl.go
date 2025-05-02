@@ -9,6 +9,7 @@ import (
 )
 
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
+var staticActorViewAssertion f.ActorView[any] = (*actorView[any])(nil)
 var staticReceiverAssertion f.Transport = (*actor[any])(nil)
 
 type actor[T any] struct {
@@ -21,7 +22,7 @@ type actor[T any] struct {
 	mailbox chan f.Message
 	address url.URL
 
-	state        f.ActorState[T]
+	state        T
 	processingFn f.ProcessingFn[T]
 
 	stopCompleted chan bool
@@ -68,7 +69,7 @@ func (a *actor[T]) Deliver(msg f.Message) error {
 
 // State returns the actor's state.
 func (a actor[T]) State() T {
-	return a.state.Cast()
+	return a.state
 }
 
 // Status returns the actor's status.
@@ -145,7 +146,7 @@ func (a *actor[T]) consume() {
 	}
 }
 
-func (a *actor[T]) swapState(newState f.ActorState[T]) {
+func (a *actor[T]) swapState(newState T) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	a.state = newState
@@ -155,11 +156,35 @@ func (a actor[T]) handleFailure(err error) {
 	// TODO: Handle failure
 }
 
+type actorView[T any] struct {
+	actor f.Actor[T]
+}
+
+// Addess returns the actor's address.
+func (a *actorView[T]) Address() url.URL {
+	return a.actor.Address()
+}
+
+// State returns the actor's state.
+func (a actorView[T]) State() T {
+	return a.actor.State()
+}
+
+// Send sends a message to the actor.
+func (a *actorView[T]) Send(msg f.Message, transport f.Transport) error {
+	return a.actor.Send(msg, transport)
+}
+
+// Deliver delivers a message to the actor.
+func (a *actorView[T]) Deliver(msg f.Message) error {
+	return a.actor.Deliver(msg)
+}
+
 // NewActor creates a new actor with the given address.
 func NewActor[T any](
 	address url.URL,
 	processingFn f.ProcessingFn[T],
-	initialState f.ActorState[T],
+	initialState T,
 ) (f.Actor[T], error) {
 	// TODO, future schema support:
 	// - actor+http:// to dispatch messages over HTTP

@@ -11,21 +11,15 @@ import (
 
 const actorURI = "actor://example"
 
-var staticNoStateAssertion f.ActorState[noState] = (*noState)(nil)
-
 type noState struct {
-}
-
-func (n noState) Cast() noState {
-	return n
 }
 
 func TestNewActor(t *testing.T) {
 	t.Log("NewActor test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
-		return &noState{}, nil
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
+		return noState{}, nil
 	}
 
 	t.Run("Valid schema", func(t *testing.T) {
@@ -54,8 +48,8 @@ func TestActorLifecycle(t *testing.T) {
 	t.Log("Actor lifecycle test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
-		return &noState{}, nil
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
+		return noState{}, nil
 	}
 
 	t.Run("Start actor successfully", func(t *testing.T) {
@@ -137,18 +131,8 @@ func (m mockMessage) Mutation() bool {
 	return m.mutation
 }
 
-func (m mockMessage) Cast() mockMessage {
-	return m
-}
-
-var staticMockActorStateAssertion f.ActorState[mockActorState] = (*mockActorState)(nil)
-
 type mockActorState struct {
 	processed bool
-}
-
-func (m mockActorState) Cast() mockActorState {
-	return m
 }
 
 func TestActorMessageDelivery(t *testing.T) {
@@ -164,7 +148,7 @@ func TestActorMessageDelivery(t *testing.T) {
 
 		var messageProcessed *bool = new(bool)
 		*messageProcessed = false
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
 			*messageProcessed = true
 			return noState{}, nil
 		}
@@ -191,7 +175,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		t.Log("Should return an error when delivering a message to an actor that is not running")
 
 		var messageProcessed bool
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (f.ActorState[noState], error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
 			messageProcessed = true
 			return noState{}, nil
 		}
@@ -212,7 +196,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		t.Log("Should update the actor's state when a mutation message is delivered")
 
 		var initialState = mockActorState{processed: false}
-		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.ActorView[mockActorState]) (f.ActorState[mockActorState], error) {
+		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.ActorView[mockActorState]) (mockActorState, error) {
 			return mockActorState{processed: true}, nil
 		}
 

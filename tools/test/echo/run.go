@@ -11,14 +11,8 @@ import (
 	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
-var staticActorStatusAssertion framework.ActorState[actorState] = (*actorState)(nil)
-
 type actorState struct {
 	processedMessages uint64
-}
-
-func (c actorState) Cast() actorState {
-	return c
 }
 
 var staticChatMessageAssertion framework.Message = (*chatMessage)(nil)
@@ -36,17 +30,13 @@ func (m chatMessage) Mutation() bool {
 	return true
 }
 
-func (m chatMessage) Cast() chatMessage {
-	return m
-}
-
 var echoFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
 	actor framework.ActorView[actorState],
-) (framework.ActorState[actorState], error) {
+) (actorState, error) {
 	var useMsg chatMessage = msg.(chatMessage)
-	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg.Message, actor.State().Cast().processedMessages)
-	return actorState{processedMessages: actor.State().Cast().processedMessages + 1}, nil
+	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg.Message, actor.State().processedMessages)
+	return actorState{processedMessages: actor.State().processedMessages + 1}, nil
 }
 
 func main() {

@@ -11,14 +11,8 @@ import (
 	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
-var staticActorStatusAssertion framework.ActorState[actorState] = (*actorState)(nil)
-
 type actorState struct {
 	processedMessages uint64
-}
-
-func (c actorState) Cast() actorState {
-	return c
 }
 
 var staticChatMessageAssertion framework.Message = (*chatMessage)(nil)
@@ -37,21 +31,17 @@ func (m chatMessage) Mutation() bool {
 	return true
 }
 
-func (m chatMessage) Cast() chatMessage {
-	return m
-}
-
 var pingPongFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
 	self framework.ActorView[actorState],
-) (framework.ActorState[actorState], error) {
+) (actorState, error) {
 	var useMsg chatMessage = msg.(chatMessage)
 
 	fmt.Println("-----------------------------------")
 	fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", self.Address().Host, msg.Sender().Host)
 
-	if useMsg.stopAfter < int(self.State().Cast().processedMessages) {
-		fmt.Println("Current state:", self.State().Cast().processedMessages)
+	if useMsg.stopAfter < int(self.State().processedMessages) {
+		fmt.Println("Current state:", self.State().processedMessages)
 		fmt.Println("Stopping after:", useMsg.stopAfter)
 		fmt.Println("Cancelling the actor")
 		useMsg.cancelFn()
@@ -68,7 +58,7 @@ var pingPongFn framework.ProcessingFn[actorState] = func(
 
 	self.Send(content, self)
 	fmt.Println("-----------------------------------")
-	return actorState{processedMessages: self.State().Cast().processedMessages + 1}, nil
+	return actorState{processedMessages: self.State().processedMessages + 1}, nil
 }
 
 func main() {

@@ -17,7 +17,7 @@ import (
 // Parameters:
 //   - address (url.URL): The URL address that specifies the actor's location and protocol.
 //   - processingFn (ProcessingFn): The function to process messages sent to the actor.
-//   - initialState (ActorState): The initial state of the actor.
+//   - initialState (T): The initial state of the actor.
 //
 // Returns:
 //   - (Actor): The created Actor instance.
@@ -25,7 +25,7 @@ import (
 func NewActor[T any](
 	address url.URL,
 	processingFn f.ProcessingFn[T],
-	initialState f.ActorState[T],
+	initialState T,
 ) (f.Actor[T], error) {
 	return i.NewActor(address, processingFn, initialState)
 }
