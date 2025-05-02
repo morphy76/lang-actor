@@ -10,7 +10,7 @@ import (
 
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
 var staticActorViewAssertion f.ActorView[any] = (*actorView[any])(nil)
-var staticReceiverAssertion f.Transport = (*actor[any])(nil)
+var staticReceiverAssertion f.Addressable = (*actor[any])(nil)
 
 type actor[T any] struct {
 	lock *sync.Mutex
@@ -18,9 +18,11 @@ type actor[T any] struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	status  f.ActorStatus
-	mailbox chan f.Message
-	address url.URL
+	status   f.ActorStatus
+	mailbox  chan f.Message
+	address  url.URL
+	parent   f.ActorRef
+	children map[url.URL]f.ActorRef
 
 	state        T
 	processingFn f.ProcessingFn[T]
@@ -50,6 +52,9 @@ func (a *actor[T]) Start() error {
 
 // Stop stops the actor.
 func (a *actor[T]) Stop() (chan bool, error) {
+	for childURL := range a.children {
+		a.Crop(childURL)
+	}
 
 	if a.status == f.ActorStatusRunning {
 		return a.teardown()
@@ -72,14 +77,80 @@ func (a actor[T]) State() T {
 	return a.state
 }
 
-// Status returns the actor's status.
+// Status returns, by value, the actor's status.
 func (a actor[T]) Status() f.ActorStatus {
 	return a.status
 }
 
-// SendFn returns a function to send messages to other actors.
-func (a actor[T]) Send(msg f.Message, transport f.Transport) error {
-	return transport.Deliver(msg)
+// Send sends a message to the actor.
+func (a actor[T]) Send(msg f.Message, addressable f.Addressable) error {
+	return addressable.Deliver(msg)
+}
+
+// Append appends a child actor to the actor.
+func (a *actor[T]) Append(child f.ActorRef) error {
+	if err := a.verifyChildURL(child.Address()); err != nil {
+		return err
+	}
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	if _, ok := a.children[child.Address()]; ok {
+		return f.ErrorInvalidChildURL
+	}
+	a.children[child.Address()] = child
+
+	return child.Start()
+}
+
+// Crop removes a child actor from the actor.
+func (a *actor[T]) Crop(url url.URL) error {
+	if err := a.verifyChildURL(url); err != nil {
+		return err
+	}
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	if child, ok := a.children[url]; !ok {
+		return f.ErrorInvalidChildURL
+	} else {
+		go child.(f.Controllable).Stop()
+	}
+	delete(a.children, url)
+	return nil
+}
+
+// GetParent returns the parent actor of the current actor.
+func (a *actor[T]) GetParent() (f.ActorRef, bool) {
+	if a.parent == nil {
+		return nil, false
+	}
+	return a.parent, true
+}
+
+func (a *actor[T]) verifyChildURL(url url.URL) error {
+	if url.Scheme != a.address.Scheme || url.Host != a.address.Host {
+		return f.ErrorInvalidChildURL
+	}
+
+	parentPath := a.address.Path
+	childPath := url.Path
+
+	if len(childPath) <= len(parentPath) || childPath[:len(parentPath)] != parentPath {
+		return f.ErrorInvalidChildURL
+	}
+
+	remainingPath := childPath[len(parentPath):]
+	if len(remainingPath) == 0 || remainingPath[0] != '/' {
+		return f.ErrorInvalidChildURL
+	}
+
+	remainingPath = remainingPath[1:]
+	if len(remainingPath) == 0 || remainingPath[0] == '/' || len(remainingPath) != len(url.Path[len(parentPath)+1:]) {
+		return f.ErrorInvalidChildURL
+	}
+
+	return nil
 }
 
 func (a *actor[T]) warmup() error {
@@ -88,6 +159,7 @@ func (a *actor[T]) warmup() error {
 
 	a.status = f.ActorStatusStarting
 	a.mailbox = make(chan f.Message, 100)
+	a.children = make(map[url.URL]f.ActorRef)
 	useCtx, useCancelFn := context.WithCancel(context.Background())
 	a.ctx = useCtx
 	a.ctxCancel = useCancelFn
@@ -171,13 +243,18 @@ func (a actorView[T]) State() T {
 }
 
 // Send sends a message to the actor.
-func (a *actorView[T]) Send(msg f.Message, transport f.Transport) error {
-	return a.actor.Send(msg, transport)
+func (a *actorView[T]) Send(msg f.Message, addressable f.Addressable) error {
+	return a.actor.Send(msg, addressable)
 }
 
 // Deliver delivers a message to the actor.
 func (a *actorView[T]) Deliver(msg f.Message) error {
 	return a.actor.Deliver(msg)
+}
+
+// GetParent returns the parent actor of the current actor.
+func (a *actorView[T]) GetParent() (f.ActorRef, bool) {
+	return a.actor.GetParent()
 }
 
 // NewActor creates a new actor with the given address.
@@ -206,4 +283,23 @@ func NewActor[T any](
 		state:        initialState,
 		processingFn: processingFn,
 	}, nil
+}
+
+// NewActorWithParent creates a new actor with the given address and parent actor.
+func NewActorWithParent[T any](
+	address url.URL,
+	processingFn f.ProcessingFn[T],
+	initialState T,
+	parent f.ActorRef,
+) (f.Actor[T], error) {
+	actor, err := NewActor(address, processingFn, initialState)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := parent.Append(actor); err != nil {
+		return nil, err
+	}
+
+	return actor, nil
 }

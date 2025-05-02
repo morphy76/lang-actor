@@ -15,11 +15,11 @@ var staticAddressBookAssertion r.AddressBook = (*addressBook)(nil)
 type addressBook struct {
 	lock *sync.Mutex
 
-	actors map[url.URL]f.Transport
+	actors map[url.URL]f.Addressable
 }
 
 // Register registers an actor in the addressBook.
-func (c *addressBook) Register(actor f.Transport) error {
+func (c *addressBook) Register(actor f.Addressable) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -33,14 +33,14 @@ func (c *addressBook) Register(actor f.Transport) error {
 }
 
 // Lookup looks up an actor in the addressBook by its address.
-func (c *addressBook) Lookup(address url.URL) (f.Transport, error) {
+func (c *addressBook) Lookup(address url.URL) (f.Addressable, error) {
 
 	rv, found := c.actors[address]
 	if !found {
 		return nil, errors.Join(r.ErrorActorNotFound, fmt.Errorf("actor [%s] not found for scheme [%s]", address.Host, address.Scheme))
 	}
 
-	return rv.(f.Transport), nil
+	return rv.(f.Addressable), nil
 }
 
 // TearDown tears down the addressBook and releases any resources.
@@ -58,6 +58,6 @@ func NewAddressBook() r.AddressBook {
 	return &addressBook{
 		lock: &sync.Mutex{},
 
-		actors: make(map[url.URL]f.Transport),
+		actors: make(map[url.URL]f.Addressable),
 	}
 }

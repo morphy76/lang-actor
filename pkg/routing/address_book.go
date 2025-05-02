@@ -22,7 +22,7 @@ type AddressBook interface {
 	//
 	// Returns:
 	//   - error: An error if the registration fails.
-	Register(actor framework.Transport) error
+	Register(actor framework.Addressable) error
 	// Lookup looks up an actor in the catalog by its address.
 	//
 	// Parameters:
@@ -31,7 +31,7 @@ type AddressBook interface {
 	// Returns:
 	//   - actor: The actor if found, nil otherwise.
 	//   - error: An error if the lookup fails.
-	Lookup(address url.URL) (framework.Transport, error)
+	Lookup(address url.URL) (framework.Addressable, error)
 	// Teardown tears down the catalog and releases any resources.
 	TearDown()
 }

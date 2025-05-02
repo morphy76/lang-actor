@@ -20,6 +20,9 @@ var ErrorActorNotIdle = errors.New("actor not idle")
 // ErrorActorNotRunning is returned when an actor is not running.
 var ErrorActorNotRunning = errors.New("actor not running")
 
+// ErrorInvalidChildURL is returned when a child URL is invalid.
+var ErrorInvalidChildURL = errors.New("invalid child URL")
+
 // ActorStatus represents the status of an actor.
 type ActorStatus int8
 
@@ -34,14 +37,14 @@ const (
 	ActorStatusStopping
 )
 
-// Transport is the interface for the transport layer of the actor model.
-type Transport interface {
+// Addressable is the interface for the transport layer of the actor model.
+type Addressable interface {
 	// Actor URI
 	Address() url.URL
 	// Deliver a message to the actor
 	Deliver(msg Message) error
 	// Send is a function to send messages to other actors.
-	Send(msg Message, transport Transport) error
+	Send(msg Message, addressable Addressable) error
 }
 
 // Controllable is the interface for controllable actors.
@@ -56,10 +59,30 @@ type Controllable interface {
 
 // Controller is the interface for the controller of the actor model.
 type Controller interface {
-	// Spawn a new child actor, TODO processingFn and initial state
-	Spawn() (url.URL, error)
+	// Append a child actor
+	Append(child ActorRef) error
 	// Crop a child actor
 	Crop(url.URL) error
+}
+
+// Relationable is the interface for the relationable actors.
+type Relationable interface {
+	// GetParent returns the parent actor of the current actor.
+	GetParent() (ActorRef, bool)
+}
+
+// ActorRef is the interface for the actor reference.
+type ActorRef interface {
+	Controllable
+	Controller
+	Addressable
+	Relationable
+}
+
+// Carrier is the interface for the carrier of the actor model.
+type Carrier[T any] interface {
+	// State of the actor
+	State() T
 }
 
 // Actor is part of the actor model framework underlying lang-actor.
@@ -67,11 +90,8 @@ type Controller interface {
 // Type Parameters:
 //   - T: The type of the actor state.
 type Actor[T any] interface {
-	Controllable
-	// Controller
-	Transport
-	// State of the actor
-	State() T
+	ActorRef
+	Carrier[T]
 }
 
 // ActorView is the interface for the actor view.
@@ -79,9 +99,9 @@ type Actor[T any] interface {
 // Type Parameters:
 //   - T: The type of the actor state.
 type ActorView[T any] interface {
-	Transport
-	// State of the actor
-	State() T
+	Addressable
+	Relationable
+	Carrier[T]
 }
 
 // Message is the interface for messages sent to actors.

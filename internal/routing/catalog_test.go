@@ -41,8 +41,20 @@ func (m *mockActor) State() any {
 	return nil
 }
 
-func (m *mockActor) Send(msg f.Message, transport f.Transport) error {
+func (m *mockActor) Send(msg f.Message, actor f.Addressable) error {
 	return nil
+}
+
+func (m *mockActor) Append(child f.ActorRef) error {
+	return nil
+}
+
+func (m *mockActor) Crop(address url.URL) error {
+	return nil
+}
+
+func (m *mockActor) GetParent() (f.ActorRef, bool) {
+	return nil, false
 }
 
 const actorURI = "actor://example"

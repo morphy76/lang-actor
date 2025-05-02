@@ -16,3 +16,6 @@ run-pingpong-case:
 
 run-selfpingpong-case:
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/selfpingpong/run.go
+
+run-sort-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/sort/run.go
