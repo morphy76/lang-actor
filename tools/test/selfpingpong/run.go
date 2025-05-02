@@ -9,7 +9,6 @@ import (
 
 	"github.com/morphy76/lang-actor/pkg/builders"
 	"github.com/morphy76/lang-actor/pkg/framework"
-	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticActorStatusAssertion framework.ActorState[actorState] = (*actorState)(nil)
@@ -67,22 +66,17 @@ var pingPongFn framework.ProcessingFn[actorState] = func(
 	}
 	fmt.Println("Sending message to:", msg.Sender().Host)
 
-	transport, _ := self.TransportByAddress(msg.Sender())
-
-	self.Send(content, transport)
+	self.Send(content, self)
 	fmt.Println("-----------------------------------")
 	return actorState{processedMessages: self.State().Cast().processedMessages + 1}, nil
 }
 
 func main() {
 
-	actorCatalog := builders.NewActorCatalog()
-	defer actorCatalog.TearDown()
-
-	ctx, cancelFn := context.WithCancel(context.WithValue(context.Background(), routing.ActorCatalogContextKey, actorCatalog))
+	ctx, cancelFn := context.WithCancel(context.Background())
 
 	pingURL, _ := url.Parse("actor://ping")
-	pingActor, err := builders.NewActor(ctx, *pingURL, pingPongFn, actorState{})
+	pingActor, err := builders.NewActor(*pingURL, pingPongFn, actorState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return

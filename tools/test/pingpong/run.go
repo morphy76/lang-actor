@@ -42,47 +42,51 @@ func (m chatMessage) Cast() chatMessage {
 	return m
 }
 
-var pingPongFn framework.ProcessingFn[actorState] = func(
-	msg framework.Message,
-	self framework.ActorView[actorState],
-) (framework.ActorState[actorState], error) {
-	var useMsg chatMessage = msg.(chatMessage)
+func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actorState] {
+	return func(
+		msg framework.Message,
+		self framework.ActorView[actorState],
+	) (framework.ActorState[actorState], error) {
+		var useMsg chatMessage = msg.(chatMessage)
 
-	fmt.Println("-----------------------------------")
-	fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", self.Address().Host, msg.Sender().Host)
+		fmt.Println("-----------------------------------")
+		fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", self.Address().Host, msg.Sender().Host)
 
-	if useMsg.stopAfter < int(self.State().Cast().processedMessages) {
-		fmt.Println("Current state:", self.State().Cast().processedMessages)
-		fmt.Println("Stopping after:", useMsg.stopAfter)
-		fmt.Println("Cancelling the actor")
-		useMsg.cancelFn()
-		fmt.Println("====================================")
-		return self.State(), nil
+		if useMsg.stopAfter < int(self.State().Cast().processedMessages) {
+			fmt.Println("Current state:", self.State().Cast().processedMessages)
+			fmt.Println("Stopping after:", useMsg.stopAfter)
+			fmt.Println("Cancelling the actor")
+			useMsg.cancelFn()
+			fmt.Println("====================================")
+			return self.State(), nil
+		}
+
+		content := chatMessage{
+			sender:    self.Address(),
+			stopAfter: useMsg.stopAfter,
+			cancelFn:  useMsg.cancelFn,
+		}
+		fmt.Println("Sending message to:", msg.Sender().Host)
+
+		transport, _ := addressBook.Lookup(msg.Sender())
+
+		self.Send(content, transport)
+		fmt.Println("-----------------------------------")
+		return actorState{processedMessages: self.State().Cast().processedMessages + 1}, nil
 	}
-
-	content := chatMessage{
-		sender:    self.Address(),
-		stopAfter: useMsg.stopAfter,
-		cancelFn:  useMsg.cancelFn,
-	}
-	fmt.Println("Sending message to:", msg.Sender().Host)
-
-	transport, _ := self.TransportByAddress(msg.Sender())
-
-	self.Send(content, transport)
-	fmt.Println("-----------------------------------")
-	return actorState{processedMessages: self.State().Cast().processedMessages + 1}, nil
 }
 
 func main() {
 
-	actorCatalog := builders.NewActorCatalog()
-	defer actorCatalog.TearDown()
+	addressBook := builders.NewAddressBook()
+	defer addressBook.TearDown()
 
-	ctx, cancelFn := context.WithCancel(context.WithValue(context.Background(), routing.ActorCatalogContextKey, actorCatalog))
+	pingPongFn := getPingPongFn(addressBook)
+
+	ctx, cancelFn := context.WithCancel(context.Background())
 
 	pingURL, _ := url.Parse("actor://ping")
-	pingActor, err := builders.NewActor(ctx, *pingURL, pingPongFn, actorState{})
+	pingActor, err := builders.NewActor(*pingURL, pingPongFn, actorState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return
@@ -95,11 +99,14 @@ func main() {
 	}()
 
 	pongURL, _ := url.Parse("actor://pong")
-	pongActor, err := builders.NewActor(ctx, *pongURL, pingPongFn, actorState{})
+	pongActor, err := builders.NewActor(*pongURL, pingPongFn, actorState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return
 	}
+
+	addressBook.Register(pingActor)
+	addressBook.Register(pongActor)
 
 	pongActor.Start()
 	defer func() {

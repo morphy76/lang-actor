@@ -10,16 +10,16 @@ import (
 	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
-var staticCatalogAssertion r.Catalog = (*catalog)(nil)
+var staticAddressBookAssertion r.AddressBook = (*addressBook)(nil)
 
-type catalog struct {
+type addressBook struct {
 	lock *sync.Mutex
 
 	actors map[url.URL]f.Transport
 }
 
-// Register registers an actor in the catalog.
-func (c *catalog) Register(actor f.Transport) error {
+// Register registers an actor in the addressBook.
+func (c *addressBook) Register(actor f.Transport) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -32,8 +32,8 @@ func (c *catalog) Register(actor f.Transport) error {
 	return nil
 }
 
-// Lookup looks up an actor in the catalog by its address.
-func (c *catalog) Lookup(address url.URL) (f.Transport, error) {
+// Lookup looks up an actor in the addressBook by its address.
+func (c *addressBook) Lookup(address url.URL) (f.Transport, error) {
 
 	rv, found := c.actors[address]
 	if !found {
@@ -43,8 +43,8 @@ func (c *catalog) Lookup(address url.URL) (f.Transport, error) {
 	return rv.(f.Transport), nil
 }
 
-// TearDown tears down the catalog and releases any resources.
-func (c *catalog) TearDown() {
+// TearDown tears down the addressBook and releases any resources.
+func (c *addressBook) TearDown() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -53,9 +53,9 @@ func (c *catalog) TearDown() {
 	}
 }
 
-// NewCatalog creates a new catalog instance.
-func NewCatalog() r.Catalog {
-	return &catalog{
+// NewAddressBook creates a new addressBook instance.
+func NewAddressBook() r.AddressBook {
+	return &addressBook{
 		lock: &sync.Mutex{},
 
 		actors: make(map[url.URL]f.Transport),

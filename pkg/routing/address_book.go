@@ -13,14 +13,8 @@ var ErrorActorAlreadyRegistered = errors.New("actor already registered")
 // ErrorActorNotFound is returned when an actor is not found in the catalog.
 var ErrorActorNotFound = errors.New("actor not found")
 
-// ActorCatalogContextKeyType is the type of the context key for the actor catalog.
-type ActorCatalogContextKeyType string
-
-// ActorCatalogContextKey is the context key for the actor catalog.
-var ActorCatalogContextKey ActorCatalogContextKeyType = "actors"
-
-// Catalog is an interface that defines the methods for a catalog.
-type Catalog interface {
+// AddressBook is an interface that defines the methods for a catalog.
+type AddressBook interface {
 	// Register registers an actor in the catalog.
 	//
 	// Parameters:

@@ -6,15 +6,13 @@ import (
 	"sync"
 
 	f "github.com/morphy76/lang-actor/pkg/framework"
-	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
 var staticReceiverAssertion f.Transport = (*actor[any])(nil)
 
 type actor[T any] struct {
-	parentCtx context.Context
-	lock      *sync.Mutex
+	lock *sync.Mutex
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
@@ -99,10 +97,6 @@ func (a *actor[T]) warmup() error {
 	return nil
 }
 
-func (a *actor[T]) TransportByAddress(address url.URL) (f.Transport, error) {
-	return a.parentCtx.Value(r.ActorCatalogContextKey).(r.Catalog).Lookup(address)
-}
-
 func (a *actor[T]) teardown() (chan bool, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -163,7 +157,6 @@ func (a actor[T]) handleFailure(err error) {
 
 // NewActor creates a new actor with the given address.
 func NewActor[T any](
-	parentCtx context.Context,
 	address url.URL,
 	processingFn f.ProcessingFn[T],
 	initialState f.ActorState[T],
@@ -180,8 +173,7 @@ func NewActor[T any](
 	}
 
 	return &actor[T]{
-		parentCtx: parentCtx,
-		lock:      &sync.Mutex{},
+		lock: &sync.Mutex{},
 
 		status:  f.ActorStatusIdle,
 		address: address,

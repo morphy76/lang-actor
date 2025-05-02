@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/morphy76/lang-actor/pkg/builders"
 	"github.com/morphy76/lang-actor/pkg/framework"
-	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticActorStatusAssertion framework.ActorState[actorState] = (*actorState)(nil)
@@ -53,13 +51,8 @@ var echoFn framework.ProcessingFn[actorState] = func(
 
 func main() {
 
-	actorCatalog := builders.NewActorCatalog()
-	defer actorCatalog.TearDown()
-
-	ctx := context.WithValue(context.Background(), routing.ActorCatalogContextKey, actorCatalog)
-
 	echoURL, _ := url.Parse("actor://echo")
-	echoActor, err := builders.NewActor(ctx, *echoURL, echoFn, actorState{})
+	echoActor, err := builders.NewActor(*echoURL, echoFn, actorState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return

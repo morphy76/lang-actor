@@ -5,9 +5,6 @@ import (
 	"net/url"
 )
 
-// ErrActorCatalogNotFound is returned when the actor catalog is not found.
-var ErrActorCatalogNotFound = errors.New("actor catalog not found")
-
 // ErrorInvalidActorAddress is returned when an actor address is invalid.
 var ErrorInvalidActorAddress = errors.New("invalid actor address")
 
@@ -59,8 +56,6 @@ type ActorView[T any] interface {
 	Transport
 	// State of the actor
 	State() T
-	// Send a message to another actor
-	TransportByAddress(address url.URL) (Transport, error)
 }
 
 // Transport is the interface for the transport layer of the actor model.
