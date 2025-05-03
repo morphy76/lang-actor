@@ -14,6 +14,7 @@
 - [X] Messages can be just unicast;
 - [X] Each node can be a sender or receiver;
 - [X] Each node has a lifecycle: running, idle;
-- [] Each node can be started, stopped, restarted;
+- [] Each node can be restarted;
+- [] Handling failures and policies retry, backoff, drop and restart the node...
 - [] Improve the Message model;
 - [] Logging.

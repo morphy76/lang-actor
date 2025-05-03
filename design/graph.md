@@ -1,4 +1,4 @@
-# Design principles of the actor model
+# Design principles of the graph model
 
 ## Graph
 
@@ -65,3 +65,9 @@
 5. **Composition Patterns**:
    - Subgraphs: Encapsulate complex logic as reusable components
    - Graph templates: Define reusable workflow patterns
+
+## Disclaimer
+
+This document has been generated with Full Vibes (Github Copilot using Claude 3.7 Sonnet).
+
+Prompt... _I do not remember the prompt 😊._

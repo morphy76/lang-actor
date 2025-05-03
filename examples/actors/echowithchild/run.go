@@ -79,17 +79,16 @@ var mainActorFn framework.ProcessingFn[mainActorState] = func(
 		if err != nil {
 			return actor.State(), fmt.Errorf("error sending message to child: %w", err)
 		}
-
+		return actor.State(), nil
 	case messageTypeReply:
 		// Display the prepared echo message received from child
 		fmt.Printf("Echo: [%s] (processed %d messages)\n",
 			useMsg.decorated,
 			actor.State().processedMessages,
 		)
+		return mainActorState{processedMessages: actor.State().processedMessages + 1}, nil
 	}
-
-	// Update state with incremented message count
-	return mainActorState{processedMessages: actor.State().processedMessages + 1}, nil
+	return actor.State(), nil
 }
 
 // Child actor processing function
