@@ -2,7 +2,7 @@ GO := go
 
 GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
-GCFLAGS := -gcflags="-m -l"
+GCFLAGS := #-gcflags="-m -l"
 TESTFLAGS := -v
 
 test:
@@ -19,3 +19,11 @@ run-selfpingpong-case:
 
 run-sort-case:
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/sort/run.go
+
+run-calculator-case:
+	@echo "With Full Vibes (Github Copilot using Claude 3.7 Sonnet)"
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/calculator/run.go
+
+run-echowithchild-case:
+	@echo "With Full Vibes (Github Copilot using Claude 3.7 Sonnet)"
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/echowithchild/run.go
