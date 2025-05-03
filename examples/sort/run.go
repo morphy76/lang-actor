@@ -179,7 +179,6 @@ func main() {
 		return
 	}
 
-	sorterActor.Start()
 	defer func() {
 		done, _ := sorterActor.Stop()
 		<-done

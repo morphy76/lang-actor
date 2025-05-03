@@ -48,7 +48,6 @@ func main() {
 		return
 	}
 
-	echoActor.Start()
 	defer func() {
 		done, _ := echoActor.Stop()
 		<-done

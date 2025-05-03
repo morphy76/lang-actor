@@ -61,25 +61,7 @@ func TestActorLifecycle(t *testing.T) {
 		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
-		err = actor.Start()
-		assert.NilError(t, err)
 		assert.Equal(t, actor.Status(), f.ActorStatusRunning)
-	})
-
-	t.Run("Start actor when already running", func(t *testing.T) {
-		t.Log("Should return an error when starting an already running actor")
-
-		address, err := url.Parse(actorURI)
-		assert.NilError(t, err)
-
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
-		assert.NilError(t, err)
-
-		err = actor.Start()
-		assert.NilError(t, err)
-
-		err = actor.Start()
-		assert.ErrorContains(t, err, "actor already started")
 	})
 
 	t.Run("Stop actor successfully", func(t *testing.T) {
@@ -91,28 +73,12 @@ func TestActorLifecycle(t *testing.T) {
 		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
-		err = actor.Start()
-		assert.NilError(t, err)
-
 		stopCompleted, err := actor.Stop()
 		assert.NilError(t, err)
 
 		<-stopCompleted
 
 		assert.Equal(t, actor.Status(), f.ActorStatusIdle)
-	})
-
-	t.Run("Stop actor when not running", func(t *testing.T) {
-		t.Log("Should return an error when stopping an actor that is not running")
-
-		address, err := url.Parse(actorURI)
-		assert.NilError(t, err)
-
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
-		assert.NilError(t, err)
-
-		_, err = actor.Stop()
-		assert.ErrorContains(t, err, "actor not running")
 	})
 }
 
@@ -156,9 +122,6 @@ func TestActorMessageDelivery(t *testing.T) {
 		actor, err := framework.NewActor(*address, spyFn, noState{})
 		assert.NilError(t, err)
 
-		err = actor.Start()
-		assert.NilError(t, err)
-
 		message := &mockMessage{sender: *address, mutation: false}
 		err = actor.Deliver(message)
 		assert.NilError(t, err)
@@ -169,27 +132,6 @@ func TestActorMessageDelivery(t *testing.T) {
 		<-stopCompleted
 
 		assert.Assert(t, *messageProcessed)
-	})
-
-	t.Run("Deliver message when actor is not running", func(t *testing.T) {
-		t.Log("Should return an error when delivering a message to an actor that is not running")
-
-		var messageProcessed bool
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.Actor[noState]) (noState, error) {
-			messageProcessed = true
-			return noState{}, nil
-		}
-
-		address, err := url.Parse(actorURI)
-		assert.NilError(t, err)
-
-		actor, err := framework.NewActor(*address, spyFn, noState{})
-		assert.NilError(t, err)
-
-		message := &mockMessage{sender: *address, mutation: false}
-		err = actor.Deliver(message)
-		assert.ErrorContains(t, err, "actor not running")
-		assert.Assert(t, !messageProcessed)
 	})
 
 	t.Run("Update actor state on mutation message", func(t *testing.T) {
@@ -204,9 +146,6 @@ func TestActorMessageDelivery(t *testing.T) {
 		assert.NilError(t, err)
 
 		actor, err := framework.NewActor(*address, spyFn, initialState)
-		assert.NilError(t, err)
-
-		err = actor.Start()
 		assert.NilError(t, err)
 
 		message := &mockMessage{sender: *address, mutation: true}

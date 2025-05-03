@@ -19,10 +19,6 @@ func (m *mockActor) Address() url.URL {
 	return m.address
 }
 
-func (m *mockActor) Start() error {
-	return nil
-}
-
 func (m *mockActor) Stop() (chan bool, error) {
 	ch := make(chan bool)
 	close(ch)
@@ -49,8 +45,8 @@ func (m *mockActor) Append(child f.ActorRef) error {
 	return nil
 }
 
-func (m *mockActor) Crop(address url.URL) error {
-	return nil
+func (m *mockActor) Crop(address url.URL) (f.ActorRef, error) {
+	return nil, nil
 }
 
 func (m *mockActor) GetParent() (f.ActorRef, bool) {

@@ -16,39 +16,25 @@ var staticReceiverAssertion f.Addressable = (*actor[any])(nil)
 type actor[T any] struct {
 	lock *sync.Mutex
 
+	status        f.ActorStatus
+	stopCompleted chan bool
+
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	status   f.ActorStatus
-	mailbox  chan f.Message
-	address  url.URL
+	address      url.URL
+	mailbox      chan f.Message
+	processingFn f.ProcessingFn[T]
+
 	parent   f.ActorRef
 	children map[url.URL]f.ActorRef
 
-	state        T
-	processingFn f.ProcessingFn[T]
-
-	stopCompleted chan bool
+	state T
 }
 
 // Address returns the actor's address.
 func (a actor[T]) Address() url.URL {
 	return a.address
-}
-
-// Start starts the actor.
-func (a *actor[T]) Start() error {
-
-	if a.status == f.ActorStatusRunning ||
-		a.status == f.ActorStatusStarting {
-		return f.ErrorActorAlreadyStarted
-	}
-
-	if a.status == f.ActorStatusIdle {
-		return a.warmup()
-	}
-
-	return f.ErrorActorNotIdle
 }
 
 // Stop stops the actor.
@@ -99,26 +85,25 @@ func (a *actor[T]) Append(child f.ActorRef) error {
 	if _, ok := a.children[child.Address()]; ok {
 		return f.ErrorInvalidChildURL
 	}
+
 	a.children[child.Address()] = child
 
-	return child.Start()
+	return nil
 }
 
 // Crop removes a child actor from the actor.
-func (a *actor[T]) Crop(url url.URL) error {
-	if err := a.verifyChildURL(url); err != nil {
-		return err
-	}
+func (a *actor[T]) Crop(url url.URL) (f.ActorRef, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if child, ok := a.children[url]; !ok {
-		return f.ErrorInvalidChildURL
+		return nil, f.ErrorInvalidChildURL
 	} else {
-		go child.(f.Controllable).Stop()
+		stopCompleted, _ := child.Stop()
+		<-stopCompleted
+		delete(a.children, url)
+		return child, nil
 	}
-	delete(a.children, url)
-	return nil
 }
 
 // GetParent returns the parent actor of the current actor.
@@ -154,34 +139,11 @@ func (a *actor[T]) verifyChildURL(url url.URL) error {
 	return nil
 }
 
-func (a *actor[T]) warmup() error {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
-	a.status = f.ActorStatusStarting
-	a.mailbox = make(chan f.Message, 100)
-	a.children = make(map[url.URL]f.ActorRef)
-	useCtx, useCancelFn := context.WithCancel(context.Background())
-	a.ctx = useCtx
-	a.ctxCancel = useCancelFn
-	go a.consume()
-
-	a.status = f.ActorStatusRunning
-
-	return nil
-}
-
 func (a *actor[T]) teardown() (chan bool, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	a.status = f.ActorStatusStopping
-	if a.ctxCancel != nil {
-		a.ctxCancel()
-	}
-
-	a.stopCompleted = make(chan bool)
-	a.status = f.ActorStatusIdle
+	a.ctxCancel()
 
 	return a.stopCompleted, nil
 }
@@ -248,15 +210,28 @@ func NewActor[T any](
 		return nil, f.ErrorInvalidActorAddress
 	}
 
-	return &actor[T]{
+	useCtx, useCancelFn := context.WithCancel(context.Background())
+
+	rv := &actor[T]{
 		lock: &sync.Mutex{},
 
-		status:  f.ActorStatusIdle,
-		address: address,
+		status:        f.ActorStatusRunning,
+		stopCompleted: make(chan bool),
 
-		state:        initialState,
+		ctx:       useCtx,
+		ctxCancel: useCancelFn,
+
+		address:      address,
+		mailbox:      make(chan f.Message, 100),
 		processingFn: processingFn,
-	}, nil
+
+		children: make(map[url.URL]f.ActorRef),
+
+		state: initialState,
+	}
+	go rv.consume()
+
+	return rv, nil
 }
 
 // NewActorWithParent creates a new actor with the given address and parent actor.
@@ -273,21 +248,32 @@ func NewActorWithParent[T any](
 	if err != nil {
 		return nil, err
 	}
-	actor := &actor[T]{
+
+	useCtx, useCancelFn := context.WithCancel(context.Background())
+
+	rv := &actor[T]{
 		lock: &sync.Mutex{},
 
-		status:  f.ActorStatusIdle,
-		address: *address,
+		status:        f.ActorStatusRunning,
+		stopCompleted: make(chan bool),
 
-		state:        initialState,
+		ctx:       useCtx,
+		ctxCancel: useCancelFn,
+
+		address:      *address,
+		mailbox:      make(chan f.Message, 100),
 		processingFn: processingFn,
 
-		parent: parent,
-	}
+		parent:   parent,
+		children: make(map[url.URL]f.ActorRef),
 
-	if err := parent.Append(actor); err != nil {
+		state: initialState,
+	}
+	go rv.consume()
+
+	if err := parent.Append(rv); err != nil {
 		return nil, err
 	}
 
-	return actor, nil
+	return rv, nil
 }

@@ -9,13 +9,13 @@ test:
 	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -v '/tools')
 
 run-echo-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/echo/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/echo/run.go
 
 run-pingpong-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/pingpong/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/pingpong/run.go
 
 run-selfpingpong-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/selfpingpong/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/selfpingpong/run.go
 
 run-sort-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./tools/test/sort/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/sort/run.go

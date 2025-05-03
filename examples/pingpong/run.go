@@ -82,7 +82,6 @@ func main() {
 		return
 	}
 
-	pingActor.Start()
 	defer func() {
 		done, _ := pingActor.Stop()
 		<-done
@@ -98,7 +97,6 @@ func main() {
 	addressBook.Register(pingActor)
 	addressBook.Register(pongActor)
 
-	pongActor.Start()
 	defer func() {
 		done, _ := pongActor.Stop()
 		<-done

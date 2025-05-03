@@ -72,7 +72,6 @@ func main() {
 		return
 	}
 
-	pingActor.Start()
 	defer func() {
 		done, _ := pingActor.Stop()
 		<-done

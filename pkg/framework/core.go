@@ -8,15 +8,6 @@ import (
 // ErrorInvalidActorAddress is returned when an actor address is invalid.
 var ErrorInvalidActorAddress = errors.New("invalid actor address")
 
-// ErrorActorNotStarted is returned when an actor is not started.
-var ErrorActorNotStarted = errors.New("actor not started")
-
-// ErrorActorAlreadyStarted is returned when an actor is already started.
-var ErrorActorAlreadyStarted = errors.New("actor already started")
-
-// ErrorActorNotIdle is returned when an actor is not idle.
-var ErrorActorNotIdle = errors.New("actor not idle")
-
 // ErrorActorNotRunning is returned when an actor is not running.
 var ErrorActorNotRunning = errors.New("actor not running")
 
@@ -29,12 +20,8 @@ type ActorStatus int8
 const (
 	// ActorStatusIdle indicates that the actor is idle.
 	ActorStatusIdle ActorStatus = iota
-	// ActorStatusStarting indicates that the actor is starting.
-	ActorStatusStarting
 	// ActorStatusRunning indicates that the actor is running.
 	ActorStatusRunning
-	// ActorStatusStopping indicates that the actor is stopping.
-	ActorStatusStopping
 )
 
 // Addressable is the interface for the routing layer of the actor model.
@@ -49,8 +36,6 @@ type Addressable interface {
 
 // Controllable is the interface for controllable actors.
 type Controllable interface {
-	// Start the actor
-	Start() error
 	// Stop the actor
 	Stop() (chan bool, error)
 	// Status of the actor
@@ -62,7 +47,7 @@ type Controller interface {
 	// Append a child actor
 	Append(child ActorRef) error
 	// Crop a child actor
-	Crop(url.URL) error
+	Crop(url.URL) (ActorRef, error)
 }
 
 // Relationable is the interface for the relationable actors.
