@@ -14,6 +14,11 @@ import (
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
 var staticReceiverAssertion f.Addressable = (*actor[any])(nil)
 
+var DefaultMailboxConfig = f.MailboxConfig{
+	Capacity: 100,
+	Policy:   f.BackpressurePolicyBlock,
+}
+
 type actor[T any] struct {
 	lock *sync.Mutex
 
@@ -23,9 +28,10 @@ type actor[T any] struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	address      url.URL
-	mailbox      chan f.Message
-	processingFn f.ProcessingFn[T]
+	address       url.URL
+	mailbox       chan f.Message
+	mailboxConfig f.MailboxConfig
+	processingFn  f.ProcessingFn[T]
 
 	parent   f.ActorRef
 	children map[url.URL]f.ActorRef
@@ -56,7 +62,43 @@ func (a *actor[T]) Deliver(msg f.Message) error {
 	if a.status != f.ActorStatusRunning {
 		return fmt.Errorf("failed to deliver message: %w", f.ErrorActorNotRunning)
 	}
-	a.mailbox <- msg
+
+	switch a.mailboxConfig.Policy {
+	case f.BackpressurePolicyBlock:
+		a.mailbox <- msg
+	case f.BackpressurePolicyFail:
+		select {
+		case a.mailbox <- msg:
+		default:
+			return fmt.Errorf("mailbox full: message rejected")
+		}
+	case f.BackpressurePolicyDropNewest:
+		select {
+		case a.mailbox <- msg:
+		default:
+			// Mailbox is full, silently drop the message
+			// This is intentional as per the policy
+		}
+	case f.BackpressurePolicyDropOldest:
+		if len(a.mailbox) == cap(a.mailbox) && cap(a.mailbox) > 0 {
+			select {
+			case <-a.mailbox:
+			default:
+			}
+		}
+		select {
+		case a.mailbox <- msg:
+		default:
+			return fmt.Errorf("failed to deliver message: mailbox state changed unexpectedly")
+		}
+
+	case f.BackpressurePolicyUnbounded:
+		a.mailbox <- msg
+
+	default:
+		a.mailbox <- msg
+	}
+
 	return nil
 }
 
@@ -206,6 +248,7 @@ func NewActor[T any](
 	address url.URL,
 	processingFn f.ProcessingFn[T],
 	initialState T,
+	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
 	// TODO, future schema support:
 	// - actor+http:// to dispatch messages over HTTP
@@ -220,6 +263,24 @@ func NewActor[T any](
 
 	useCtx, useCancelFn := context.WithCancel(context.Background())
 
+	config := DefaultMailboxConfig
+	if len(mailboxConfig) > 0 {
+		config = mailboxConfig[0]
+	}
+
+	var mailbox chan f.Message
+	switch config.Policy {
+	case f.BackpressurePolicyUnbounded:
+		// In Go, we can't truly have an unbounded channel, but we can make it very large
+		mailbox = make(chan f.Message, 1000000)
+	default:
+		capacity := config.Capacity
+		if capacity <= 0 {
+			capacity = DefaultMailboxConfig.Capacity
+		}
+		mailbox = make(chan f.Message, capacity)
+	}
+
 	rv := &actor[T]{
 		lock: &sync.Mutex{},
 
@@ -229,9 +290,10 @@ func NewActor[T any](
 		ctx:       useCtx,
 		ctxCancel: useCancelFn,
 
-		address:      address,
-		mailbox:      make(chan f.Message, 100),
-		processingFn: processingFn,
+		address:       address,
+		mailbox:       mailbox,
+		mailboxConfig: config,
+		processingFn:  processingFn,
 
 		children: make(map[url.URL]f.ActorRef),
 
@@ -247,6 +309,7 @@ func NewActorWithParent[T any](
 	processingFn f.ProcessingFn[T],
 	initialState T,
 	parent f.ActorRef,
+	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
 	address, err := url.Parse(fmt.Sprintf(
 		"actor://%s%s",
@@ -259,6 +322,24 @@ func NewActorWithParent[T any](
 
 	useCtx, useCancelFn := context.WithCancel(context.Background())
 
+	config := DefaultMailboxConfig
+	if len(mailboxConfig) > 0 {
+		config = mailboxConfig[0]
+	}
+
+	var mailbox chan f.Message
+	switch config.Policy {
+	case f.BackpressurePolicyUnbounded:
+		// In Go, we can't truly have an unbounded channel, but we can make it very large
+		mailbox = make(chan f.Message, 1000000)
+	default:
+		capacity := config.Capacity
+		if capacity <= 0 {
+			capacity = DefaultMailboxConfig.Capacity
+		}
+		mailbox = make(chan f.Message, capacity)
+	}
+
 	rv := &actor[T]{
 		lock: &sync.Mutex{},
 
@@ -268,9 +349,10 @@ func NewActorWithParent[T any](
 		ctx:       useCtx,
 		ctxCancel: useCancelFn,
 
-		address:      *address,
-		mailbox:      make(chan f.Message, 100),
-		processingFn: processingFn,
+		address:       *address,
+		mailbox:       mailbox,
+		mailboxConfig: config,
+		processingFn:  processingFn,
 
 		parent:   parent,
 		children: make(map[url.URL]f.ActorRef),

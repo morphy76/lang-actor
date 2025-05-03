@@ -24,6 +24,36 @@ const (
 	ActorStatusRunning
 )
 
+// BackpressurePolicy defines how an actor's mailbox handles pressure when reaching capacity
+type BackpressurePolicy int
+
+const (
+	// BackpressurePolicyBlock causes message sends to wait when the mailbox is full
+	BackpressurePolicyBlock BackpressurePolicy = iota
+
+	// BackpressurePolicyFail causes message sends to fail immediately when the mailbox is full
+	BackpressurePolicyFail
+
+	// BackpressurePolicyUnbounded means the mailbox has no capacity limit
+	BackpressurePolicyUnbounded
+
+	// BackpressurePolicyDropNewest rejects new messages when the mailbox is full
+	BackpressurePolicyDropNewest
+
+	// BackpressurePolicyDropOldest discards oldest messages to make room for new ones
+	BackpressurePolicyDropOldest
+)
+
+// MailboxConfig defines configuration options for an actor's mailbox
+type MailboxConfig struct {
+	// Capacity defines the maximum number of messages the mailbox can hold
+	// Ignored when using BackpressurePolicyUnbounded
+	Capacity int
+
+	// Policy defines how the mailbox handles pressure when reaching capacity
+	Policy BackpressurePolicy
+}
+
 // Addressable is the interface for the routing layer of the actor model.
 type Addressable interface {
 	// Actor URI

@@ -10,7 +10,7 @@
 - [X] Each node can receive messages;
 - [X] Each message has the sender and receiver address;
 - [X] Each node consumes messages from its mailbox;
-- [] Each node can be configure for backpressure policies;
+- [X] Each node can be configure for backpressure policies;
 - [X] Messages can be just unicast;
 - [X] Each node can be a sender or receiver;
 - [X] Each node has a lifecycle: starting, running, stopping, idle;

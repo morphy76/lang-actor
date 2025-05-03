@@ -18,6 +18,7 @@ import (
 //   - address (url.URL): The URL address that specifies the actor's location and protocol.
 //   - processingFn (ProcessingFn): The function to process messages sent to the actor.
 //   - initialState (T): The initial state of the actor.
+//   - mailboxConfig (MailboxConfig): Optional configuration for the actor's mailbox.
 //
 // Returns:
 //   - (Actor): The created Actor instance.
@@ -26,8 +27,9 @@ func NewActor[T any](
 	address url.URL,
 	processingFn f.ProcessingFn[T],
 	initialState T,
+	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
-	return i.NewActor(address, processingFn, initialState)
+	return i.NewActor(address, processingFn, initialState, mailboxConfig...)
 }
 
 // SpawnChild creates a new child actor with the given processing function and initial state.
@@ -39,6 +41,7 @@ func NewActor[T any](
 //   - parent (Actor): The parent actor that will spawn the child actor.
 //   - processingFn (ProcessingFn): The function to process messages sent to the child actor.
 //   - initialState (T): The initial state of the child actor.
+//   - mailboxConfig (MailboxConfig): Optional configuration for the child actor's mailbox.
 //
 // Returns:
 //   - (Actor): The created child Actor instance.
@@ -47,8 +50,9 @@ func SpawnChild[T any](
 	parent f.ActorRef,
 	processingFn f.ProcessingFn[T],
 	initialState T,
+	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
-	child, err := i.NewActorWithParent(processingFn, initialState, parent)
+	child, err := i.NewActorWithParent(processingFn, initialState, parent, mailboxConfig...)
 	if err != nil {
 		return nil, err
 	}
