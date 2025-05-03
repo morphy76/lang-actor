@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	f "github.com/morphy76/lang-actor/pkg/framework"
@@ -47,13 +48,13 @@ func (a *actor[T]) Stop() (chan bool, error) {
 		return a.teardown()
 	}
 
-	return nil, f.ErrorActorNotRunning
+	return nil, fmt.Errorf("cannot stop actor: %w", f.ErrorActorNotRunning)
 }
 
 // Deliver delivers a message to the actor.
 func (a *actor[T]) Deliver(msg f.Message) error {
 	if a.status != f.ActorStatusRunning {
-		return f.ErrorActorNotRunning
+		return fmt.Errorf("failed to deliver message: %w", f.ErrorActorNotRunning)
 	}
 	a.mailbox <- msg
 	return nil
@@ -77,13 +78,13 @@ func (a actor[T]) Send(msg f.Message, addressable f.Addressable) error {
 // Append appends a child actor to the actor.
 func (a *actor[T]) Append(child f.ActorRef) error {
 	if err := a.verifyChildURL(child.Address()); err != nil {
-		return err
+		return fmt.Errorf("invalid child URL: %w", err)
 	}
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if _, ok := a.children[child.Address()]; ok {
-		return f.ErrorInvalidChildURL
+		return fmt.Errorf("child already exists: %w", f.ErrorInvalidChildURL)
 	}
 
 	a.children[child.Address()] = child
@@ -161,6 +162,8 @@ func (a *actor[T]) consume() {
 				a.swapState(newState)
 			}
 		case <-a.ctx.Done():
+			cleanupTimeout := time.After(5 * time.Second)
+		drainLoop:
 			for {
 				select {
 				case msg := <-a.mailbox:
@@ -172,12 +175,17 @@ func (a *actor[T]) consume() {
 					if msg.Mutation() {
 						a.swapState(newState)
 					}
-				default:
+				case <-cleanupTimeout:
 					a.status = f.ActorStatusIdle
 					a.stopCompleted <- true
 					return
+				default:
+					a.status = f.ActorStatusIdle
+					a.stopCompleted <- true
+					break drainLoop
 				}
 			}
+			return
 		}
 	}
 }
@@ -216,7 +224,7 @@ func NewActor[T any](
 		lock: &sync.Mutex{},
 
 		status:        f.ActorStatusRunning,
-		stopCompleted: make(chan bool),
+		stopCompleted: make(chan bool, 1),
 
 		ctx:       useCtx,
 		ctxCancel: useCancelFn,
@@ -246,7 +254,7 @@ func NewActorWithParent[T any](
 		parent.Address().Path+"/"+uuid.NewString(),
 	))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse actor address: %w", err)
 	}
 
 	useCtx, useCancelFn := context.WithCancel(context.Background())
@@ -255,7 +263,7 @@ func NewActorWithParent[T any](
 		lock: &sync.Mutex{},
 
 		status:        f.ActorStatusRunning,
-		stopCompleted: make(chan bool),
+		stopCompleted: make(chan bool, 1),
 
 		ctx:       useCtx,
 		ctxCancel: useCancelFn,
@@ -272,7 +280,7 @@ func NewActorWithParent[T any](
 	go rv.consume()
 
 	if err := parent.Append(rv); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to append child to parent: %w", err)
 	}
 
 	return rv, nil
