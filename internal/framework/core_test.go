@@ -218,7 +218,7 @@ func TestBackpressurePolicies(t *testing.T) {
 		// Second message should be rejected since mailbox is full and we're using fail policy
 		message2 := &mockMessage{sender: *address, mutation: false}
 		err = actor.Deliver(message2)
-		assert.ErrorContains(t, err, "mailbox fullAAAA")
+		assert.ErrorContains(t, err, "mailbox full")
 
 		// Release the processing function
 		close(blockCh)
