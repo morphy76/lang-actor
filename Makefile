@@ -9,21 +9,21 @@ test:
 	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -v '/tools')
 
 run-echo-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/echo/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echo/run.go
 
 run-pingpong-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/pingpong/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/pingpong/run.go
 
 run-selfpingpong-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/selfpingpong/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/selfpingpong/run.go
 
 run-sort-case:
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/sort/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/sort/run.go
 
 run-calculator-case:
 	@echo "With Full Vibes (Github Copilot using Claude 3.7 Sonnet)"
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/calculator/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/calculator/run.go
 
 run-echowithchild-case:
 	@echo "With Full Vibes (Github Copilot using Claude 3.7 Sonnet)"
-	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/echowithchild/run.go
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echowithchild/run.go

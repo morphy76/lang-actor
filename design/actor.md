@@ -13,7 +13,7 @@
 - [X] Each node can be configure for backpressure policies;
 - [X] Messages can be just unicast;
 - [X] Each node can be a sender or receiver;
-- [X] Each node has a lifecycle: starting, running, stopping, idle;
-- [X] Each node can be started, stopped, restarted;
+- [X] Each node has a lifecycle: running, idle;
+- [] Each node can be started, stopped, restarted;
 - [] Improve the Message model;
 - [] Logging.
