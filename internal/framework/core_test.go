@@ -405,7 +405,7 @@ func TestBackpressurePolicies(t *testing.T) {
 		// Sixth message should fail
 		message := &mockMessage{sender: *address, mutation: false}
 		err = actor.Deliver(message)
-		assert.ErrorContains(t, err, "mailbox full")
+		assert.ErrorContains(t, err, "mailbox full AAA")
 
 		// Release processing
 		close(blockCh)
