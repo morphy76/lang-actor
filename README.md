@@ -150,9 +150,18 @@ This document has been generated with Full Vibes (Github Copilot using Claude 3.
 
 Prompt:
 
-```shell
+```text
 Document the actor model framework with:
 - description
 - main capabilities
 - simple usage example
 - reference to the examples for more complex cases
+```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on how to contribute to this project.
