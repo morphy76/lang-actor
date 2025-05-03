@@ -15,4 +15,5 @@
 - [X] Each node can be a sender or receiver;
 - [X] Each node has a lifecycle: starting, running, stopping, idle;
 - [X] Each node can be started, stopped, restarted;
-- [] Improve the Message model.
+- [] Improve the Message model;
+- [] Logging.

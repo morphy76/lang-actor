@@ -33,7 +33,7 @@ func (m chatMessage) Mutation() bool {
 
 var pingPongFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
-	self framework.ActorView[actorState],
+	self framework.Actor[actorState],
 ) (actorState, error) {
 	var useMsg chatMessage = msg.(chatMessage)
 

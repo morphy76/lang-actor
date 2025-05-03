@@ -1,10 +1,7 @@
 package builders
 
 import (
-	"fmt"
 	"net/url"
-
-	"github.com/google/uuid"
 
 	i "github.com/morphy76/lang-actor/internal/framework"
 	f "github.com/morphy76/lang-actor/pkg/framework"
@@ -51,16 +48,7 @@ func SpawnChild[T any](
 	processingFn f.ProcessingFn[T],
 	initialState T,
 ) (f.Actor[T], error) {
-	address, err := url.Parse(fmt.Sprintf(
-		"actor://%s/%s",
-		parent.Address().Host,
-		parent.Address().Path+"/"+uuid.NewString(),
-	))
-	if err != nil {
-		return nil, err
-	}
-
-	child, err := i.NewActorWithParent(*address, processingFn, initialState, parent)
+	child, err := i.NewActorWithParent(processingFn, initialState, parent)
 	if err != nil {
 		return nil, err
 	}

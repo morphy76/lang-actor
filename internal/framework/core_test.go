@@ -18,7 +18,7 @@ func TestNewActor(t *testing.T) {
 	t.Log("NewActor test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.Actor[noState]) (noState, error) {
 		return noState{}, nil
 	}
 
@@ -48,7 +48,7 @@ func TestActorLifecycle(t *testing.T) {
 	t.Log("Actor lifecycle test suite")
 
 	var initialState = noState{}
-	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
+	var nullProcessingFn f.ProcessingFn[noState] = func(msg f.Message, actor f.Actor[noState]) (noState, error) {
 		return noState{}, nil
 	}
 
@@ -148,7 +148,7 @@ func TestActorMessageDelivery(t *testing.T) {
 
 		var messageProcessed *bool = new(bool)
 		*messageProcessed = false
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.Actor[noState]) (noState, error) {
 			*messageProcessed = true
 			return noState{}, nil
 		}
@@ -175,7 +175,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		t.Log("Should return an error when delivering a message to an actor that is not running")
 
 		var messageProcessed bool
-		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.ActorView[noState]) (noState, error) {
+		var spyFn f.ProcessingFn[noState] = func(msg f.Message, actor f.Actor[noState]) (noState, error) {
 			messageProcessed = true
 			return noState{}, nil
 		}
@@ -196,7 +196,7 @@ func TestActorMessageDelivery(t *testing.T) {
 		t.Log("Should update the actor's state when a mutation message is delivered")
 
 		var initialState = mockActorState{processed: false}
-		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.ActorView[mockActorState]) (mockActorState, error) {
+		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.Actor[mockActorState]) (mockActorState, error) {
 			return mockActorState{processed: true}, nil
 		}
 

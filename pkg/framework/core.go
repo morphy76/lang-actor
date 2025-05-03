@@ -37,7 +37,7 @@ const (
 	ActorStatusStopping
 )
 
-// Addressable is the interface for the transport layer of the actor model.
+// Addressable is the interface for the routing layer of the actor model.
 type Addressable interface {
 	// Actor URI
 	Address() url.URL
@@ -79,29 +79,14 @@ type ActorRef interface {
 	Relationable
 }
 
-// Carrier is the interface for the carrier of the actor model.
-type Carrier[T any] interface {
-	// State of the actor
-	State() T
-}
-
 // Actor is part of the actor model framework underlying lang-actor.
 //
 // Type Parameters:
 //   - T: The type of the actor state.
 type Actor[T any] interface {
 	ActorRef
-	Carrier[T]
-}
-
-// ActorView is the interface for the actor view.
-//
-// Type Parameters:
-//   - T: The type of the actor state.
-type ActorView[T any] interface {
-	Addressable
-	Relationable
-	Carrier[T]
+	// State of the actor
+	State() T
 }
 
 // Message is the interface for messages sent to actors.
@@ -135,7 +120,7 @@ type Message interface {
 //   - error: An error if the processing fails, otherwise nil.
 type ProcessingFn[T any] func(
 	msg Message,
-	self ActorView[T],
+	self Actor[T],
 ) (T, error)
 
 // SendFn defines a function type for sending messages to actors.

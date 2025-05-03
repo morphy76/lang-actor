@@ -35,7 +35,7 @@ func (m chatMessage) Mutation() bool {
 func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actorState] {
 	return func(
 		msg framework.Message,
-		self framework.ActorView[actorState],
+		self framework.Actor[actorState],
 	) (actorState, error) {
 		var useMsg chatMessage = msg.(chatMessage)
 
@@ -58,9 +58,9 @@ func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actor
 		}
 		fmt.Println("Sending message to:", msg.Sender().Host)
 
-		transport, _ := addressBook.Lookup(msg.Sender())
+		addressable, _ := addressBook.Lookup(msg.Sender())
 
-		self.Send(content, transport)
+		self.Send(content, addressable)
 		fmt.Println("-----------------------------------")
 		return actorState{processedMessages: self.State().processedMessages + 1}, nil
 	}

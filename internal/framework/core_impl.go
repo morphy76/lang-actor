@@ -2,14 +2,15 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"sync"
 
+	"github.com/google/uuid"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
-var staticActorViewAssertion f.ActorView[any] = (*actorView[any])(nil)
 var staticReceiverAssertion f.Addressable = (*actor[any])(nil)
 
 type actor[T any] struct {
@@ -180,6 +181,7 @@ func (a *actor[T]) teardown() (chan bool, error) {
 	}
 
 	a.stopCompleted = make(chan bool)
+	a.status = f.ActorStatusIdle
 
 	return a.stopCompleted, nil
 }
@@ -226,35 +228,7 @@ func (a *actor[T]) swapState(newState T) {
 
 func (a actor[T]) handleFailure(err error) {
 	// TODO: Handle failure
-}
-
-type actorView[T any] struct {
-	actor f.Actor[T]
-}
-
-// Addess returns the actor's address.
-func (a *actorView[T]) Address() url.URL {
-	return a.actor.Address()
-}
-
-// State returns the actor's state.
-func (a actorView[T]) State() T {
-	return a.actor.State()
-}
-
-// Send sends a message to the actor.
-func (a *actorView[T]) Send(msg f.Message, addressable f.Addressable) error {
-	return a.actor.Send(msg, addressable)
-}
-
-// Deliver delivers a message to the actor.
-func (a *actorView[T]) Deliver(msg f.Message) error {
-	return a.actor.Deliver(msg)
-}
-
-// GetParent returns the parent actor of the current actor.
-func (a *actorView[T]) GetParent() (f.ActorRef, bool) {
-	return a.actor.GetParent()
+	fmt.Println("handleFailure", err)
 }
 
 // NewActor creates a new actor with the given address.
@@ -287,14 +261,28 @@ func NewActor[T any](
 
 // NewActorWithParent creates a new actor with the given address and parent actor.
 func NewActorWithParent[T any](
-	address url.URL,
 	processingFn f.ProcessingFn[T],
 	initialState T,
 	parent f.ActorRef,
 ) (f.Actor[T], error) {
-	actor, err := NewActor(address, processingFn, initialState)
+	address, err := url.Parse(fmt.Sprintf(
+		"actor://%s%s",
+		parent.Address().Host,
+		parent.Address().Path+"/"+uuid.NewString(),
+	))
 	if err != nil {
 		return nil, err
+	}
+	actor := &actor[T]{
+		lock: &sync.Mutex{},
+
+		status:  f.ActorStatusIdle,
+		address: *address,
+
+		state:        initialState,
+		processingFn: processingFn,
+
+		parent: parent,
 	}
 
 	if err := parent.Append(actor); err != nil {

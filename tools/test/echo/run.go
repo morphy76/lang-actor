@@ -32,7 +32,7 @@ func (m chatMessage) Mutation() bool {
 
 var echoFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
-	actor framework.ActorView[actorState],
+	actor framework.Actor[actorState],
 ) (actorState, error) {
 	var useMsg chatMessage = msg.(chatMessage)
 	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg.Message, actor.State().processedMessages)
