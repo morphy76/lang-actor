@@ -9,7 +9,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-var staticMockActorAssertion f.Actor[any] = (*mockActor)(nil)
+var staticMockActorAssertion f.Addressable = (*mockActor)(nil)
 
 type mockActor struct {
 	address url.URL
@@ -19,38 +19,12 @@ func (m *mockActor) Address() url.URL {
 	return m.address
 }
 
-func (m *mockActor) Stop() (chan bool, error) {
-	ch := make(chan bool)
-	close(ch)
-	return ch, nil
-}
-
 func (m *mockActor) Deliver(msg f.Message) error {
-	return nil
-}
-
-func (m *mockActor) Status() f.ActorStatus {
-	return f.ActorStatusIdle
-}
-
-func (m *mockActor) State() any {
 	return nil
 }
 
 func (m *mockActor) Send(msg f.Message, actor f.Addressable) error {
 	return nil
-}
-
-func (m *mockActor) Append(child f.ActorRef) error {
-	return nil
-}
-
-func (m *mockActor) Crop(address url.URL) (f.ActorRef, error) {
-	return nil, nil
-}
-
-func (m *mockActor) GetParent() (f.ActorRef, bool) {
-	return nil, false
 }
 
 const actorURI = "actor://example"
