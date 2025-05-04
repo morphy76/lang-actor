@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
@@ -48,4 +49,9 @@ func (r *endNode) OneWayRoute(name string, destination g.Node) error {
 // TwoWayRoute adds a new possible outgoing route from the node
 func (r *endNode) TwoWayRoute(name string, destination g.Node) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from the end [%s]", name, r.Name()))
+}
+
+// ProceedOnFirstRoute proceeds with the first route available
+func (r *endNode) ProceedOnFirstRoute(mex f.Message) error {
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the end [%s]", r.Name()))
 }

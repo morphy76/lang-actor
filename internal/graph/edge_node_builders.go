@@ -26,31 +26,33 @@ func NewRootNode() (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode := newNode(rootTask)
+	baseNode := newNode(rootTask, *address)
 	return &rootNode{
 		node: *baseNode,
 	}, nil
 }
 
 // NewEndNode creates a new instance of the end node in the actor graph.
-func NewEndNode() (g.Node, error) {
+func NewEndNode() (g.Node, chan bool, error) {
 	address, err := url.Parse("actor://edge/end/" + uuid.NewString())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	endCh := make(chan bool)
 	endTask, err := framework.NewActor(
 		*address,
 		func(msg f.Message, self f.Actor[string]) (string, error) {
+			endCh <- true
 			return "", nil
 		},
 		"",
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	baseNode := newNode(endTask)
+	baseNode := newNode(endTask, *address)
 	return &endNode{
 		node: *baseNode,
-	}, nil
+	}, endCh, nil
 }

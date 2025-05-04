@@ -1,6 +1,10 @@
 package graph
 
-import "errors"
+import (
+	"errors"
+
+	f "github.com/morphy76/lang-actor/pkg/framework"
+)
 
 // ErrorInvalidRouting is returned when a routing is invalid.
 var ErrorInvalidRouting = errors.New("invalid routing")
@@ -18,9 +22,11 @@ type Routable interface {
 // Node represents a node in the actor graph.
 type Node interface {
 	Routable
+	f.Addressable
 	// Name returns the name of the node.
 	Name() string
-	// OneWayRoute add a new possible outgoin
+	// ProceedOnFirstRoute proceeds with the first route available.
+	ProceedOnFirstRoute(msg f.Message) error
 }
 
 // RootNode represents the root node of the actor graph.
