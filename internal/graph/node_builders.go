@@ -30,7 +30,7 @@ func NewDebugNode() (g.Node, error) {
 	baseNode := newNode[string](nil, *address)
 	taskFn := func(msg f.Message, self f.Actor[string]) (string, error) {
 		fmt.Printf("Debug node received message: %+v\n", msg)
-		baseNode.ProceedOnFirstRoute(msg)
+		baseNode.ProceedOnAnyRoute(msg)
 
 		return self.State(), nil
 	}

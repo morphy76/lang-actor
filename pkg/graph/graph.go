@@ -25,8 +25,8 @@ type Node interface {
 	f.Addressable
 	// Name returns the name of the node.
 	Name() string
-	// ProceedOnFirstRoute proceeds with the first route available.
-	ProceedOnFirstRoute(msg f.Message) error
+	// ProceedOnAnyRoute proceeds the message on any route.
+	ProceedOnAnyRoute(msg f.Message) error
 }
 
 // RootNode represents the root node of the actor graph.
