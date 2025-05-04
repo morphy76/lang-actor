@@ -51,7 +51,7 @@ func TestSimpleGraph(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.ProceedOnFirstRoute(&mockMessage{
+		err = rootNode.ProceedOnAnyRoute(&mockMessage{
 			sender: rootNode.Address(),
 		})
 		if err != nil {

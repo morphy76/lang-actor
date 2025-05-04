@@ -89,6 +89,9 @@ func (r *node) Deliver(mex f.Message) error {
 }
 
 func (r *node) Send(mex f.Message, addressable f.Addressable) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	for _, route := range r.routes {
 		if route.Destination.Address() == addressable.Address() {
 			return route.Destination.Deliver(mex)
@@ -98,8 +101,20 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", destinationAddress, r.Name()))
 }
 
-// ProceedOnFirstRoute proceeds with the first route available
-func (r *node) ProceedOnFirstRoute(mex f.Message) error {
+func (r *node) SendByName(mex f.Message, name string) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	route, ok := r.routes[name]
+	if !ok {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", name, r.Name()))
+	}
+
+	return route.Destination.Deliver(mex)
+}
+
+// ProceedOnAnyRoute proceeds with the first route available
+func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
