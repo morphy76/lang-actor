@@ -27,3 +27,6 @@ run-calculator-case:
 run-echowithchild-case:
 	@echo "With Full Vibes (Github Copilot using Claude 3.7 Sonnet)"
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echowithchild/run.go
+
+run-simplegraph-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/simple/run.go
