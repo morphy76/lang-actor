@@ -3,6 +3,7 @@ package graph
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"sync"
 
 	f "github.com/morphy76/lang-actor/pkg/framework"
@@ -17,12 +18,13 @@ type node struct {
 
 	routes map[string]route
 
+	name  string
 	actor f.ActorRef
 }
 
 // Name returns the name of the node
 func (r *node) Name() string {
-	return fmt.Sprintf("%s%s", r.actor.Address().Host, r.actor.Address().Path)
+	return r.name
 }
 
 // RouteNames returns the names of all possible routes from the node
@@ -77,6 +79,58 @@ func (r *node) TwoWayRoute(name string, destination g.Node) error {
 	return destination.OneWayRoute("inverse-"+name, meAsNode)
 }
 
+// DestinationAddress returns the address of the destination node
+func (r *node) Address() url.URL {
+	return r.actor.Address()
+}
+
+func (r *node) Deliver(mex f.Message) error {
+	return r.actor.Deliver(mex)
+}
+
+func (r *node) Send(mex f.Message, addressable f.Addressable) error {
+	for _, route := range r.routes {
+		if route.Destination.Address() == addressable.Address() {
+			return route.Destination.Deliver(mex)
+		}
+	}
+	destinationAddress := fmt.Sprintf("%s%s", addressable.Address().Host, addressable.Address().Path)
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", destinationAddress, r.Name()))
+}
+
+// ProceedOnFirstRoute proceeds with the first route available
+func (r *node) ProceedOnFirstRoute(mex f.Message) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	if len(r.routes) == 0 {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%s] has no routes", r.Name()))
+	}
+
+	for _, route := range r.routes {
+		return route.Destination.Deliver(mex)
+	}
+
+	return nil
+}
+
 type debugNode struct {
 	node
+}
+
+// OneWayRoute adds a new possible outgoing route from the node
+func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	if len(r.routes) > 0 {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("debugNode node [%s] already has a route", r.Name()))
+	}
+
+	r.routes[name] = route{
+		Name:        name,
+		Destination: destination,
+	}
+
+	return nil
 }

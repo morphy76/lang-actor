@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"net/url"
 	"sync"
 
@@ -10,11 +11,12 @@ import (
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
-func newNode[T any](task f.Actor[T]) *node {
+func newNode[T any](task f.Actor[T], address url.URL) *node {
 	return &node{
 		lock:   &sync.Mutex{},
 		routes: make(map[string]route, 0),
 		actor:  task,
+		name:   fmt.Sprintf("/%s%s", address.Host, address.Path),
 	}
 }
 
@@ -24,19 +26,28 @@ func NewDebugNode() (g.Node, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	baseNode := newNode[string](nil, *address)
+	taskFn := func(msg f.Message, self f.Actor[string]) (string, error) {
+		fmt.Printf("Debug node received message: %+v\n", msg)
+		baseNode.ProceedOnFirstRoute(msg)
+
+		return self.State(), nil
+	}
+
 	debugTask, err := framework.NewActor(
 		*address,
-		func(msg f.Message, self f.Actor[string]) (string, error) {
-			return "", nil
-		},
+		taskFn,
 		"",
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	baseNode := newNode(debugTask)
-	return &debugNode{
+	rv := &debugNode{
 		node: *baseNode,
-	}, nil
+	}
+	rv.actor = debugTask
+
+	return rv, nil
 }

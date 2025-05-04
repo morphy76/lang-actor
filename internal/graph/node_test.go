@@ -38,7 +38,7 @@ func TestNodeRelationships(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		endNode, err := graph.NewEndNode()
+		endNode, _, err := graph.NewEndNode()
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

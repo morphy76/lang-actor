@@ -27,7 +27,7 @@ func TestNewEdgeNode(t *testing.T) {
 
 	t.Run("NewEndNode", func(t *testing.T) {
 		t.Log("NewEndNode test case")
-		node, err := graph.NewEndNode()
+		node, _, err := graph.NewEndNode()
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -77,7 +77,7 @@ func TestEndNodeRelationships(t *testing.T) {
 
 	t.Run("EndNode cannot have routes", func(t *testing.T) {
 		t.Log("EndNode route restriction test case")
-		endNode, err := graph.NewEndNode()
+		endNode, _, err := graph.NewEndNode()
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
