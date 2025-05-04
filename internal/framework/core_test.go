@@ -30,7 +30,7 @@ func TestNewActor(t *testing.T) {
 
 		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
-		assert.Equal(t, actor.Address().Scheme, "BBB")
+		assert.Equal(t, actor.Address().Scheme, address.Scheme)
 	})
 
 	t.Run("Invalid schema", func(t *testing.T) {
