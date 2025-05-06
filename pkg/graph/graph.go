@@ -17,6 +17,8 @@ type Routable interface {
 	TwoWayRoute(name string, destination Node) error
 	// RouteNames returns the names of the routes from this node
 	RouteNames() []string
+	// ProceedOnAnyRoute proceeds the message on any route.
+	ProceedOnAnyRoute(msg f.Message) error
 }
 
 // Node represents a node in the actor graph.
@@ -25,8 +27,6 @@ type Node interface {
 	f.Addressable
 	// Name returns the name of the node.
 	Name() string
-	// ProceedOnAnyRoute proceeds the message on any route.
-	ProceedOnAnyRoute(msg f.Message) error
 }
 
 // RootNode represents the root node of the actor graph.
@@ -42,4 +42,8 @@ type EndNode interface {
 // DebugNode represents a node used for debugging purposes.
 type DebugNode interface {
 	Node
+}
+
+// Graph represents the actor, runnable, graph.
+type Graph interface {
 }
