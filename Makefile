@@ -2,7 +2,7 @@ GO := go
 
 GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
-GCFLAGS := #-gcflags="-m -l"
+GCFLAGS := -gcflags="-m -l"
 TESTFLAGS := -v
 
 test:
