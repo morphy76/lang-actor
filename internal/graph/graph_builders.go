@@ -1,10 +1,8 @@
 package graph
 
 import (
-	"fmt"
 	"net/url"
 
-	"github.com/morphy76/lang-actor/internal/routing"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
@@ -25,14 +23,7 @@ func NewGraph(
 		return nil, err
 	}
 
-	addressBook := routing.NewAddressBook()
-	rootNode.Visit(func(node g.Node) {
-		addressBook.Register(node.ActorRef())
-		node.SetAddressBook(addressBook)
-	}, true)
-	fmt.Printf("TODO AAAAAAAAA BLOCKED!!! Address book: %v\n", addressBook)
-
-	configNode, err := newConfigNode(configs, *configURL, addressBook)
+	configNode, err := newConfigNode(configs, *configURL)
 	if err != nil {
 		return nil, err
 	}

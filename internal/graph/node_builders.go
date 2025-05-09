@@ -147,10 +147,9 @@ func newListEntriesResponse(sender url.URL, configuredEntries map[string]any) f.
 	}
 }
 
-func newConfigNode(config map[string]any, address url.URL, addressBook r.AddressBook) (g.Node, error) {
+func newConfigNode(config map[string]any, address url.URL) (g.Node, error) {
 
 	baseNode := newNode[map[string]any](nil, address)
-	baseAddressBook := addressBook
 	taskFn := func(msg f.Message, self f.Actor[map[string]any]) (map[string]any, error) {
 
 		if msg == nil {
@@ -169,49 +168,49 @@ func newConfigNode(config map[string]any, address url.URL, addressBook r.Address
 			for key := range useState {
 				keys = append(keys, key)
 			}
-			replyMsg := newListKeysResponse(self.Address(), keys)
-			addressable, err := baseAddressBook.Lookup(useMex.Sender())
-			if err != nil {
-				return nil, err
-			}
-			if err := addressable.Deliver(replyMsg); err != nil {
-				return nil, err
-			}
+			// replyMsg := newListKeysResponse(self.Address(), keys)
+			// addressable, err := baseAddressBook.Lookup(useMex.Sender())
+			// if err != nil {
+			// 	return nil, err
+			// }
+			// if err := addressable.Deliver(replyMsg); err != nil {
+			// 	return nil, err
+			// }
 		case entries:
 			entries := make(map[string]any, len(useState))
 			for key, value := range useState {
 				entries[key] = value
 			}
-			replyMsg := newListEntriesResponse(self.Address(), entries)
-			addressable, err := baseAddressBook.Lookup(useMex.Sender())
-			if err != nil {
-				return nil, err
-			}
-			if err := addressable.Deliver(replyMsg); err != nil {
-				return nil, err
-			}
+			// replyMsg := newListEntriesResponse(self.Address(), entries)
+			// addressable, err := baseAddressBook.Lookup(useMex.Sender())
+			// if err != nil {
+			// 	return nil, err
+			// }
+			// if err := addressable.Deliver(replyMsg); err != nil {
+			// 	return nil, err
+			// }
 		case request:
 			if len(useMex.requestedKeys) == 0 {
-				shouldReturn, result, err := sendEmptyResponse(self, baseAddressBook, useMex)
-				if shouldReturn {
-					return result, err
-				}
+				// shouldReturn, result, err := sendEmptyResponse(self, baseAddressBook, useMex)
+				// if shouldReturn {
+				// 	return result, err
+				// }
 			} else if len(useMex.requestedKeys) == 1 {
 				key := useMex.requestedKeys[0]
-				if value, ok := useState[key]; ok {
-					replyMsg := newSingleValueResponse(self.Address(), key, value)
-					addressable, err := baseAddressBook.Lookup(useMex.Sender())
-					if err != nil {
-						return nil, err
-					}
-					if err := addressable.Deliver(replyMsg); err != nil {
-						return nil, err
-					}
+				if _, ok := useState[key]; ok {
+					// replyMsg := newSingleValueResponse(self.Address(), key, value)
+					// addressable, err := baseAddressBook.Lookup(useMex.Sender())
+					// if err != nil {
+					// 	return nil, err
+					// }
+					// if err := addressable.Deliver(replyMsg); err != nil {
+					// 	return nil, err
+					// }
 				} else {
-					shouldReturn, result, err := sendEmptyResponse(self, baseAddressBook, useMex)
-					if shouldReturn {
-						return result, err
-					}
+					// shouldReturn, result, err := sendEmptyResponse(self, baseAddressBook, useMex)
+					// if shouldReturn {
+					// 	return result, err
+					// }
 				}
 			} else {
 				multiValueTmp := make(map[string]any, len(useMex.requestedKeys))
@@ -226,14 +225,14 @@ func newConfigNode(config map[string]any, address url.URL, addressBook r.Address
 				for key, val := range multiValueTmp {
 					multiValue[key] = val
 				}
-				replyMsg := newMultivalueResponse(self.Address(), multiValue)
-				addressable, err := baseAddressBook.Lookup(useMex.Sender())
-				if err != nil {
-					return nil, err
-				}
-				if err := addressable.Deliver(replyMsg); err != nil {
-					return nil, err
-				}
+				// replyMsg := newMultivalueResponse(self.Address(), multiValue)
+				// addressable, err := baseAddressBook.Lookup(useMex.Sender())
+				// if err != nil {
+				// 	return nil, err
+				// }
+				// if err := addressable.Deliver(replyMsg); err != nil {
+				// 	return nil, err
+				// }
 			}
 		}
 
