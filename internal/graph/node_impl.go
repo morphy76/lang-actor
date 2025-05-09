@@ -106,36 +106,6 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", destinationAddress, r.Name()))
 }
 
-// ActorRef returns the actor reference of the node
-func (r *node) ActorRef() f.ActorRef {
-	return r.actor
-}
-
-// SetAddressBook sets the address book for the node
-func (r *node) SetAddressBook(addressBook r.AddressBook) {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	r.addressBook = addressBook
-}
-
-// Visit visits the node and its children
-func (r *node) Visit(visitFn g.VisitFn, recursive bool) {
-	// TODO fix cyclic graphs
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	visitFn(r)
-
-	if recursive {
-		for _, route := range r.routes {
-			if route.Destination != nil {
-				route.Destination.Visit(visitFn, recursive)
-			}
-		}
-	}
-}
-
 // ProceedOnAnyRoute proceeds with the first route available
 func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 	r.lock.Lock()
