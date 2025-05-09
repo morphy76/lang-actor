@@ -8,18 +8,21 @@ import (
 
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
+	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticNodeAssertion g.Node = (*node)(nil)
 var staticDebugAssertion g.DebugNode = (*debugNode)(nil)
+var staticConfigAssertion g.Node = (*configNode)(nil)
 
 type node struct {
 	lock *sync.Mutex
 
 	routes map[string]route
 
-	name  string
-	actor f.ActorRef
+	name        string
+	actor       f.ActorRef
+	addressBook r.AddressBook
 }
 
 // Name returns the name of the node
@@ -84,10 +87,12 @@ func (r *node) Address() url.URL {
 	return r.actor.Address()
 }
 
+// Deliver delivers a message to the node
 func (r *node) Deliver(mex f.Message) error {
 	return r.actor.Deliver(mex)
 }
 
+// Send sends a message to the node
 func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
@@ -101,16 +106,34 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", destinationAddress, r.Name()))
 }
 
-func (r *node) SendByName(mex f.Message, name string) error {
+// ActorRef returns the actor reference of the node
+func (r *node) ActorRef() f.ActorRef {
+	return r.actor
+}
+
+// SetAddressBook sets the address book for the node
+func (r *node) SetAddressBook(addressBook r.AddressBook) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	route, ok := r.routes[name]
-	if !ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", name, r.Name()))
-	}
+	r.addressBook = addressBook
+}
 
-	return route.Destination.Deliver(mex)
+// Visit visits the node and its children
+func (r *node) Visit(visitFn g.VisitFn, recursive bool) {
+	// TODO fix cyclic graphs
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	visitFn(r)
+
+	if recursive {
+		for _, route := range r.routes {
+			if route.Destination != nil {
+				route.Destination.Visit(visitFn, recursive)
+			}
+		}
+	}
 }
 
 // ProceedOnAnyRoute proceeds with the first route available
@@ -148,4 +171,23 @@ func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
 	}
 
 	return nil
+}
+
+type configNode struct {
+	node
+}
+
+// OneWayRoute adds a new possible outgoing route from the node
+func (r *configNode) OneWayRoute(name string, destination g.Node) error {
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from the config node [%s]", name, r.Name()))
+}
+
+// TwoWayRoute adds a new possible outgoing route from the node
+func (r *configNode) TwoWayRoute(name string, destination g.Node) error {
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from the config node [%s]", name, r.Name()))
+}
+
+// ProceedOnFirstRoute proceeds with the first route available
+func (r *configNode) ProceedOnFirstRoute(mex f.Message) error {
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the config node [%s]", r.Name()))
 }

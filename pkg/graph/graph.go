@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	f "github.com/morphy76/lang-actor/pkg/framework"
+	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
 // ErrorInvalidRouting is returned when a routing is invalid.
@@ -27,6 +28,16 @@ type Node interface {
 	f.Addressable
 	// Name returns the name of the node.
 	Name() string
+	// ActorRef returns the actor reference of the actor.
+	ActorRef() f.ActorRef
+	// SetAddressBook sets the address book for the node.
+	SetAddressBook(addressBook r.AddressBook)
+	// Visit visits the node and its children.
+	//
+	// Parameters:
+	//   - visitFn: the function to call for each node
+	//   - recursive: whether to visit the node recursively
+	Visit(visitFn VisitFn, recursive bool)
 }
 
 // RootNode represents the root node of the actor graph.
@@ -46,4 +57,12 @@ type DebugNode interface {
 
 // Graph represents the actor, runnable, graph.
 type Graph interface {
+	// TODO Accept accepts a todo item.
+	Accept(todo any) error
 }
+
+// VisitFn is a function that visits a node in the graph.
+//
+// Parameters:
+//   - node: the node to visit
+type VisitFn func(node Node)

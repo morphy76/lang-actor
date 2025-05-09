@@ -49,7 +49,6 @@ type MailboxConfig struct {
 	// Capacity defines the maximum number of messages the mailbox can hold
 	// Ignored when using BackpressurePolicyUnbounded
 	Capacity int
-
 	// Policy defines how the mailbox handles pressure when reaching capacity
 	Policy BackpressurePolicy
 }
