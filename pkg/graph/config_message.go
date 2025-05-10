@@ -13,14 +13,14 @@ var staticConfigMessageAssertion f.Message = (*ConfigMessage)(nil)
 type ConfigMessageType int8
 
 const (
-	// Keys is the type of configuration message that requests the keys.
-	Keys ConfigMessageType = iota
-	// Entries is the type of configuration message that requests the entries.
-	Entries
-	// Request is the type of configuration message that requests a value.
-	Request
-	// Response is the type of configuration message that responds to a request.
-	Response
+	// ConfigKeys is the type of configuration message that requests the keys.
+	ConfigKeys ConfigMessageType = iota
+	// ConfigEntries is the type of configuration message that requests the entries.
+	ConfigEntries
+	// ConfigRequest is the type of configuration message that requests a value.
+	ConfigRequest
+	// ConfigResponse is the type of configuration message that responds to a request.
+	ConfigResponse
 )
 
 // ConfigMessage is a configuration message.
@@ -56,11 +56,12 @@ func (c *ConfigMessage) Mutation() bool {
 // Returns:
 // - A pointer to the created configuration message.
 // - An error if the message type is Response.
-func NewConfigMessage(sender url.URL,
+func NewConfigMessage(
+	sender url.URL,
 	ConfigMessageType ConfigMessageType,
 	requestedKey ...string,
 ) (*ConfigMessage, error) {
-	if ConfigMessageType == Response {
+	if ConfigMessageType == ConfigResponse {
 		return nil, fmt.Errorf("TODO: cannot create a config message with response type")
 	}
 

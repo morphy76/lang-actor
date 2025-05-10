@@ -8,6 +8,9 @@ import (
 
 // NewGraph creates a new instance of the actor graph.
 //
+// Type parameters:
+//   - T: The type of the root node.
+//
 // Parameters:
 //   - rootNode (graph.RootNode): The root node of the graph.
 //   - configs (map[string]any): Optional configurations for the graph.
@@ -15,8 +18,9 @@ import (
 // Returns:
 //   - (graph.Graph): The created actor graph.
 //   - (error): An error if the graph creation fails.
-func NewGraph(
+func NewGraph[T any](
 	rootNode graph.RootNode,
+	initialStatus T,
 	configs ...map[string]any,
 ) (graph.Graph, error) {
 	mergedConfigs := make(map[string]any)
@@ -25,7 +29,7 @@ func NewGraph(
 			mergedConfigs[key] = value
 		}
 	}
-	return g.NewGraph(uuid.NewString(), rootNode, mergedConfigs)
+	return g.NewGraph(uuid.NewString(), rootNode, initialStatus, mergedConfigs)
 }
 
 // NewRootNode creates a new instance of the root node.

@@ -51,7 +51,7 @@ func (r *endNode) TwoWayRoute(name string, destination g.Node) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%v] from the end [%v]", name, r.Address()))
 }
 
-// ProceedOnFirstRoute proceeds with the first route available
-func (r *endNode) ProceedOnFirstRoute(mex f.Message) error {
+// ProceedOnAnyRoute proceeds with the first route available
+func (r *endNode) ProceedOnAnyRoute(mex f.Message) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the end [%v]", r.Address()))
 }

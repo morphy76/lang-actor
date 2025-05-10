@@ -61,23 +61,19 @@ func NewDebugNode() (g.Node, error) {
 
 		// TODO timeout context between request (not a config message) and response (receiving a config message)
 
-		configResponse, ok := msg.(*g.ConfigMessage)
-		if ok {
+		statusResponse, okStatus := msg.(*g.StatusMessage[any])
+		configResponse, okConfig := msg.(*g.ConfigMessage)
+
+		if okStatus {
 			fmt.Println("==========================================")
-			fmt.Println("Debug node received message:")
-			jsonOriginalMessage, err := json.Marshal(self.State().originalMessage)
-			if err != nil {
-				fmt.Printf("%s\n", err)
-			} else {
-				fmt.Printf("%s\n", jsonOriginalMessage)
-			}
+			fmt.Printf("Debug node [%+v] received message:\n", useDebugNode.Address())
 			fmt.Println("---------------------------------")
-			fmt.Println("System config:")
-			jsonConfigResponse, err := json.Marshal(configResponse.Entries)
+			fmt.Println("Status response:")
+			jsonStatusResponse, err := json.Marshal(statusResponse)
 			if err != nil {
 				fmt.Printf("%s\n", err)
 			} else {
-				fmt.Printf("%s\n", jsonConfigResponse)
+				fmt.Printf("%s\n", jsonStatusResponse)
 			}
 			fmt.Println("==========================================")
 			err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
@@ -85,18 +81,53 @@ func NewDebugNode() (g.Node, error) {
 				return self.State(), err
 			}
 		} else {
-			requestCfg, err := g.NewConfigMessage(self.Address(), g.Entries)
-			if err != nil {
-				return self.State(), err
+			if okConfig {
+				fmt.Println("==========================================")
+				fmt.Printf("Debug node [%+v] received message:\n", useDebugNode.Address())
+				jsonOriginalMessage, err := json.Marshal(self.State().originalMessage)
+				if err != nil {
+					fmt.Printf("%s\n", err)
+				} else {
+					fmt.Printf("%s\n", jsonOriginalMessage)
+				}
+				fmt.Println("---------------------------------")
+				fmt.Println("System config:")
+				jsonConfigResponse, err := json.Marshal(configResponse.Entries)
+				if err != nil {
+					fmt.Printf("%s\n", err)
+				} else {
+					fmt.Printf("%s\n", jsonConfigResponse)
+				}
+				fmt.Println("==========================================")
+				err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
+				if err != nil {
+					return self.State(), err
+				}
+
+				requestStatus, err := g.NewStatusMessageRequest[any](self.Address())
+				if err != nil {
+					return self.State(), err
+				}
+				statusNodes := useDebugNode.GetResolver().Query("graph", "nodes", "status")
+				if len(statusNodes) == 0 {
+					return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no status node found"))
+				}
+				statusNodes[0].Deliver(requestStatus)
+				return self.State(), nil
+			} else {
+				requestCfg, err := g.NewConfigMessage(self.Address(), g.ConfigEntries)
+				if err != nil {
+					return self.State(), err
+				}
+				cfgNodes := useDebugNode.GetResolver().Query("graph", "nodes", "config")
+				if len(cfgNodes) == 0 {
+					return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no config node found"))
+				}
+				cfgNodes[0].Deliver(requestCfg)
+				return debugNodeState{
+					originalMessage: msg,
+				}, nil
 			}
-			cfgNodes := useDebugNode.GetResolver().Query("graph", "nodes", "config")
-			if len(cfgNodes) == 0 {
-				return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no config node found"))
-			}
-			cfgNodes[0].Deliver(requestCfg)
-			return debugNodeState{
-				originalMessage: msg,
-			}, nil
 		}
 
 		return self.State(), nil

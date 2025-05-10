@@ -16,6 +16,7 @@ type graph struct {
 	graphURL    url.URL
 	rootNode    g.RootNode
 	configNode  g.Node
+	statusNode  g.Node
 	addressBook r.AddressBook
 }
 

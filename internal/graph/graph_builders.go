@@ -11,9 +11,10 @@ import (
 )
 
 // NewGraph creates a new instance of the actor graph.
-func NewGraph(
+func NewGraph[T any](
 	graphName string,
 	rootNode g.RootNode,
+	initialStatus T,
 	configs map[string]any,
 ) (g.Graph, error) {
 
@@ -27,11 +28,17 @@ func NewGraph(
 		return nil, err
 	}
 
+	statusNode, err := NewStatusNode(initialStatus, graphName)
+	if err != nil {
+		return nil, err
+	}
+
 	graph := &graph{
 		resolvables: make(map[url.URL]*f.Addressable),
 		graphURL:    *graphURL,
 		rootNode:    rootNode,
 		configNode:  configNode,
+		statusNode:  statusNode,
 		addressBook: routing.NewAddressBook(),
 	}
 
@@ -51,6 +58,8 @@ func NewGraph(
 	rootNode.Visit(registerFn)
 	configNode.Visit(registerFn)
 	configNode.SetResolver(graph)
+	statusNode.Visit(registerFn)
+	statusNode.SetResolver(graph)
 
 	// TODO it should send an init message to the root node which propagates to all its edges recursively
 

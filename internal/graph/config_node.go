@@ -26,9 +26,6 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 	}
 
 	baseNode := newNode[map[string]any](nil, *address)
-	useDebugNode := &debugNode{
-		node: *baseNode,
-	}
 
 	taskFn := func(msg f.Message, self f.Actor[map[string]any]) (map[string]any, error) {
 
@@ -43,13 +40,13 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 		useState := self.State()
 
 		switch useMex.ConfigMessageType {
-		case g.Keys:
+		case g.ConfigKeys:
 			keys := make([]string, 0, len(useState))
 			for key := range useState {
 				keys = append(keys, key)
 			}
 			replyMsg := newListKeysResponse(self.Address(), keys)
-			addressable, found := useDebugNode.GetResolver().Resolve(useMex.Sender())
+			addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
 			if !found {
 				return nil, fmt.Errorf("addressable not found")
 			}
@@ -57,13 +54,13 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 			if err := addressable.Deliver(replyMsg); err != nil {
 				return nil, err
 			}
-		case g.Entries:
+		case g.ConfigEntries:
 			entries := make(map[string]any, len(useState))
 			for key, value := range useState {
 				entries[key] = value
 			}
 			replyMsg := newListEntriesResponse(self.Address(), entries)
-			addressable, found := useDebugNode.GetResolver().Resolve(useMex.Sender())
+			addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
 			if !found {
 				return nil, fmt.Errorf("addressable not found")
 			}
@@ -71,9 +68,9 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 			if err := addressable.Deliver(replyMsg); err != nil {
 				return nil, err
 			}
-		case g.Request:
+		case g.ConfigRequest:
 			if len(useMex.RequestedKeys) == 0 {
-				shouldReturn, result, err := sendEmptyResponse(self, useDebugNode.GetResolver(), useMex)
+				shouldReturn, result, err := sendEmptyResponse(self, baseNode.GetResolver(), useMex)
 				if shouldReturn {
 					return result, err
 				}
@@ -81,7 +78,7 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 				key := useMex.RequestedKeys[0]
 				if value, ok := useState[key]; ok {
 					replyMsg := newSingleValueResponse(self.Address(), key, value)
-					addressable, found := useDebugNode.GetResolver().Resolve(useMex.Sender())
+					addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
 					if !found {
 						return nil, fmt.Errorf("addressable not found")
 					}
@@ -90,7 +87,7 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 						return nil, err
 					}
 				} else {
-					shouldReturn, result, err := sendEmptyResponse(self, useDebugNode.GetResolver(), useMex)
+					shouldReturn, result, err := sendEmptyResponse(self, baseNode.GetResolver(), useMex)
 					if shouldReturn {
 						return result, err
 					}
@@ -109,7 +106,7 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 					multiValue[key] = val
 				}
 				replyMsg := newMultivalueResponse(self.Address(), multiValue)
-				addressable, found := useDebugNode.GetResolver().Resolve(useMex.Sender())
+				addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
 				if !found {
 					return nil, fmt.Errorf("addressable not found")
 				}
@@ -123,7 +120,7 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 		return self.State(), nil
 	}
 
-	debugTask, err := framework.NewActor(
+	cfgTask, err := framework.NewActor(
 		*actorAddress,
 		taskFn,
 		config,
@@ -133,16 +130,16 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 		return nil, err
 	}
 
-	useDebugNode.actor = debugTask
+	baseNode.actor = cfgTask
 
-	return useDebugNode, nil
+	return baseNode, nil
 }
 
 func newSingleValueResponse(sender url.URL, key string, value any) f.Message {
 	return &g.ConfigMessage{
 		From:              sender,
-		RequestType:       g.Request,
-		ConfigMessageType: g.Response,
+		RequestType:       g.ConfigRequest,
+		ConfigMessageType: g.ConfigResponse,
 		RequestedKeys:     []string{key},
 		Value:             value,
 	}
@@ -151,8 +148,8 @@ func newSingleValueResponse(sender url.URL, key string, value any) f.Message {
 func newListKeysResponse(sender url.URL, configuredKeys []string) f.Message {
 	return &g.ConfigMessage{
 		From:              sender,
-		ConfigMessageType: g.Response,
-		RequestType:       g.Keys,
+		ConfigMessageType: g.ConfigResponse,
+		RequestType:       g.ConfigKeys,
 		Keys:              configuredKeys,
 	}
 }
@@ -160,8 +157,8 @@ func newListKeysResponse(sender url.URL, configuredKeys []string) f.Message {
 func newMultivalueResponse(sender url.URL, entries map[string]any) f.Message {
 	return &g.ConfigMessage{
 		From:              sender,
-		ConfigMessageType: g.Response,
-		RequestType:       g.Request,
+		ConfigMessageType: g.ConfigResponse,
+		RequestType:       g.ConfigRequest,
 		Entries:           entries,
 	}
 }
@@ -169,8 +166,8 @@ func newMultivalueResponse(sender url.URL, entries map[string]any) f.Message {
 func newListEntriesResponse(sender url.URL, configuredEntries map[string]any) f.Message {
 	return &g.ConfigMessage{
 		From:              sender,
-		ConfigMessageType: g.Response,
-		RequestType:       g.Entries,
+		ConfigMessageType: g.ConfigResponse,
+		RequestType:       g.ConfigEntries,
 		Entries:           configuredEntries,
 	}
 }
@@ -205,7 +202,7 @@ func (r *configNode) TwoWayRoute(name string, destination g.Node) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from the config node [%v]", name, r.Address()))
 }
 
-// ProceedOnFirstRoute proceeds with the first route available
-func (r *configNode) ProceedOnFirstRoute(mex f.Message) error {
+// ProceedOnAnyRoute proceeds with the first route available
+func (r *configNode) ProceedOnAnyRoute(mex f.Message) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the config node [%v]", r.Address()))
 }

@@ -76,3 +76,7 @@ type EndNode interface {
 type DebugNode interface {
 	Node
 }
+
+type GraphStatus interface {
+	Node
+}

@@ -50,7 +50,7 @@ func main() {
 	whateverURL, _ := url.Parse("https://example.com:8080/ctx?id=1234")
 	config["test5"] = whateverURL
 
-	graph, err := builders.NewGraph(rootNode, config)
+	graph, err := builders.NewGraph(rootNode, "", config)
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
 		return

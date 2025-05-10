@@ -62,7 +62,7 @@ func TestConfigNode(t *testing.T) {
 		addressBook.Register(configNode)
 		configNode.SetResolver(addressBook)
 
-		request, err := g.NewConfigMessage(*clientURL, g.Keys)
+		request, err := g.NewConfigMessage(*clientURL, g.ConfigKeys)
 		configNode.Deliver(request)
 
 		cfgKeys := <-responseCh
@@ -104,7 +104,7 @@ func TestConfigNode(t *testing.T) {
 		addressBook.Register(configNode)
 		configNode.SetResolver(addressBook)
 
-		request, err := g.NewConfigMessage(*clientURL, g.Entries)
+		request, err := g.NewConfigMessage(*clientURL, g.ConfigEntries)
 		configNode.Deliver(request)
 
 		entries := <-responseCh
@@ -150,7 +150,7 @@ func TestConfigNode(t *testing.T) {
 		addressBook.Register(configNode)
 		configNode.SetResolver(addressBook)
 
-		request, err := g.NewConfigMessage(*clientURL, g.Request, randomKey1)
+		request, err := g.NewConfigMessage(*clientURL, g.ConfigRequest, randomKey1)
 		configNode.Deliver(request)
 
 		result := <-responseCh
@@ -186,7 +186,7 @@ func TestConfigNode(t *testing.T) {
 		addressBook.Register(configNode)
 		configNode.SetResolver(addressBook)
 
-		request, err := g.NewConfigMessage(*clientURL, g.Request, randomKey1, randomKey2)
+		request, err := g.NewConfigMessage(*clientURL, g.ConfigRequest, randomKey1, randomKey2)
 		configNode.Deliver(request)
 
 		result := <-responseCh
@@ -239,7 +239,7 @@ func TestConfigNode(t *testing.T) {
 		configNode.SetResolver(addressBook)
 
 		unknownKey := "unknown-key-" + uuid.NewString()
-		request, err := g.NewConfigMessage(*clientURL, g.Request, unknownKey)
+		request, err := g.NewConfigMessage(*clientURL, g.ConfigRequest, unknownKey)
 		configNode.Deliver(request)
 
 		result := <-responseCh
