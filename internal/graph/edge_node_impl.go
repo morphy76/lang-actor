@@ -20,11 +20,11 @@ func (r *rootNode) OneWayRoute(name string, destination g.Node) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	if len(r.routes) > 0 {
+	if len(r.edges) > 0 {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("root node [%s] already has a route", r.Name()))
 	}
 
-	r.routes[name] = route{
+	r.edges[name] = edge{
 		Name:        name,
 		Destination: destination,
 	}
