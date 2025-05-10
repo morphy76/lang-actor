@@ -70,7 +70,7 @@ func NewDebugNode() (g.Node, error) {
 			if len(cfgNodes) == 0 {
 				return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no config node found"))
 			}
-			(*cfgNodes[0]).Deliver(requestCfg)
+			cfgNodes[0].Deliver(requestCfg)
 			fmt.Printf("Debug node requesting config\n")
 		}
 

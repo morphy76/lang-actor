@@ -16,7 +16,7 @@ var staticAddressBookAssertion r.AddressBook = (*addressBook)(nil)
 type addressBook struct {
 	lock *sync.Mutex
 
-	addressables map[url.URL]*f.Addressable
+	addressables map[url.URL]f.Addressable
 }
 
 // Register registers an actor in the addressBook.
@@ -28,7 +28,7 @@ func (c *addressBook) Register(addressable framework.Addressable) error {
 		return errors.Join(r.ErrorActorAlreadyRegistered, fmt.Errorf("actor [%s] already registered for scheme [%s]", addressable.Address().Host, addressable.Address().Scheme))
 	}
 
-	c.addressables[addressable.Address()] = &addressable
+	c.addressables[addressable.Address()] = addressable
 
 	return nil
 }
@@ -36,21 +36,21 @@ func (c *addressBook) Register(addressable framework.Addressable) error {
 // Lookup looks up an actor in the addressBook by its address.
 func (c *addressBook) Resolve(address url.URL) (f.Addressable, bool) {
 	rv, found := c.addressables[address]
-	return *rv, found
+	return rv, found
 }
 
-func (c *addressBook) Query(schema string, pathParts ...string) []*f.Addressable {
+func (c *addressBook) Query(schema string, pathParts ...string) []f.Addressable {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	rv := make([]*f.Addressable, 0, len(c.addressables))
+	rv := make([]f.Addressable, 0, len(c.addressables))
 	for _, addressable := range c.addressables {
-		if (*addressable).Address().Scheme == schema {
+		if addressable.Address().Scheme == schema {
 			if len(pathParts) == 0 {
 				rv = append(rv, addressable)
 				continue
 			}
 
-			path := (*addressable).Address().Path
+			path := addressable.Address().Path
 			for _, part := range pathParts {
 				if path == part {
 					rv = append(rv, addressable)
@@ -77,6 +77,6 @@ func NewAddressBook() r.AddressBook {
 	return &addressBook{
 		lock: &sync.Mutex{},
 
-		addressables: make(map[url.URL]*f.Addressable),
+		addressables: make(map[url.URL]f.Addressable),
 	}
 }

@@ -59,6 +59,6 @@ func (g *graph) Resolve(address url.URL) (f.Addressable, bool) {
 }
 
 // Query queries the address book for the given schema and path parts.
-func (g *graph) Query(schema string, pathParts ...string) []*f.Addressable {
+func (g *graph) Query(schema string, pathParts ...string) []f.Addressable {
 	return g.addressBook.Query(schema, pathParts...)
 }

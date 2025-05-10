@@ -37,7 +37,7 @@ type Resolver interface {
 	// Parameters:
 	//   - schema (string): The schema to match.
 	//   - pathParts (...string): The path parts to match.
-	Query(schema string, pathParts ...string) []*framework.Addressable
+	Query(schema string, pathParts ...string) []framework.Addressable
 }
 
 // AddressBook is an interface that defines the methods for a catalog.
