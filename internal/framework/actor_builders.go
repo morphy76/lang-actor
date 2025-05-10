@@ -24,12 +24,6 @@ func NewActor[T any](
 	initialState T,
 	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
-	// TODO, future schema support:
-	// - actor+http:// to dispatch messages over HTTP
-	// - actor+https:// to dispatch messages over HTTPS
-	// - actor+unix:// to dispatch messages over Unix domain sockets
-	// - actor+tcp:// to dispatch messages over TCP
-	// - actor+udp:// to dispatch messages over UDP
 	// Validate the schema
 	if address.Scheme != "actor" {
 		return nil, f.ErrorInvalidActorAddress

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	c "github.com/morphy76/lang-actor/pkg/common"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
@@ -150,6 +151,14 @@ func (a *actor[T]) GetParent() (f.ActorRef, bool) {
 	return a.parent, true
 }
 
+// Visit visits the actor and its children.
+func (a *actor[T]) Visit(fn c.VisitFn) {
+	fn(a)
+	for _, child := range a.children {
+		child.Visit(fn)
+	}
+}
+
 func (a *actor[T]) verifyChildURL(url url.URL) error {
 	if url.Scheme != a.address.Scheme || url.Host != a.address.Host {
 		return f.ErrorInvalidChildURL
@@ -232,6 +241,5 @@ func (a *actor[T]) swapState(newState T) {
 }
 
 func (a actor[T]) handleFailure(err error) {
-	// TODO: Handle failure
 	fmt.Println("handleFailure", err)
 }

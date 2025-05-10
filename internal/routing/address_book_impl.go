@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"sync"
 
+	"github.com/morphy76/lang-actor/pkg/framework"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	r "github.com/morphy76/lang-actor/pkg/routing"
 )
@@ -15,32 +17,56 @@ var staticAddressBookAssertion r.AddressBook = (*addressBook)(nil)
 type addressBook struct {
 	lock *sync.Mutex
 
-	actors map[url.URL]f.Addressable
+	addressables map[url.URL]f.Addressable
 }
 
 // Register registers an actor in the addressBook.
-func (c *addressBook) Register(actor f.Addressable) error {
+func (c *addressBook) Register(addressable framework.Addressable) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if _, exists := c.actors[actor.Address()]; exists {
-		return errors.Join(r.ErrorActorAlreadyRegistered, fmt.Errorf("actor [%s] already registered for scheme [%s]", actor.Address().Host, actor.Address().Scheme))
+	if _, exists := c.addressables[addressable.Address()]; exists {
+		return errors.Join(r.ErrorActorAlreadyRegistered, fmt.Errorf("actor [%s] already registered for scheme [%s]", addressable.Address().Host, addressable.Address().Scheme))
 	}
 
-	c.actors[actor.Address()] = actor
+	c.addressables[addressable.Address()] = addressable
 
 	return nil
 }
 
 // Lookup looks up an actor in the addressBook by its address.
-func (c *addressBook) Lookup(address url.URL) (f.Addressable, error) {
+func (c *addressBook) Resolve(address url.URL) (f.Addressable, bool) {
+	rv, found := c.addressables[address]
+	return rv, found
+}
 
-	rv, found := c.actors[address]
-	if !found {
-		return nil, errors.Join(r.ErrorActorNotFound, fmt.Errorf("actor [%s] not found for scheme [%s]", address.Host, address.Scheme))
+// Query queries the addressBook for actors with a specific scheme and path.
+func (c *addressBook) Query(schema string, pathParts ...string) []f.Addressable {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	rv := make([]f.Addressable, 0, len(c.addressables))
+	for _, addressable := range c.addressables {
+		if addressable.Address().Scheme == schema {
+			if len(pathParts) == 0 {
+				rv = append(rv, addressable)
+				continue
+			}
+
+			addressableParts := strings.Split(addressable.Address().Path, "/")
+			addressableParts[0] = addressable.Address().Host
+			allMatch := true
+			for idx, part := range pathParts {
+				allMatch = allMatch && addressableParts[idx] == part
+				if !allMatch {
+					break
+				}
+			}
+			if allMatch {
+				rv = append(rv, addressable)
+			}
+		}
 	}
-
-	return rv.(f.Addressable), nil
+	return rv
 }
 
 // TearDown tears down the addressBook and releases any resources.
@@ -48,8 +74,8 @@ func (c *addressBook) TearDown() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	for key := range c.actors {
-		delete(c.actors, key)
+	for key := range c.addressables {
+		delete(c.addressables, key)
 	}
 }
 
@@ -58,6 +84,6 @@ func NewAddressBook() r.AddressBook {
 	return &addressBook{
 		lock: &sync.Mutex{},
 
-		actors: make(map[url.URL]f.Addressable),
+		addressables: make(map[url.URL]f.Addressable),
 	}
 }
