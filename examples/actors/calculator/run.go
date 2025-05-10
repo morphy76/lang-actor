@@ -395,7 +395,7 @@ func main() {
 
 	// Create the main calculator actor
 	calcURL, _ := url.Parse("actor://calculator")
-	calcActor, err := builders.NewTransientActor(*calcURL, calculatorFn, calcState{})
+	calcActor, err := builders.NewActor(*calcURL, calculatorFn, calcState{})
 	if err != nil {
 		fmt.Println("Error creating calculator actor:", err)
 		return
