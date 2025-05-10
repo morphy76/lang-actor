@@ -44,18 +44,22 @@ func TestConfigNode(t *testing.T) {
 		clientActor, err := framework.NewActor(
 			*clientURL,
 			func(msg f.Message, self f.Actor[chan []string]) (chan []string, error) {
+				useMex := msg.(*g.ConfigMessage)
+				self.State() <- useMex.Keys
 				return self.State(), nil
 			},
 			responseCh,
 		)
 
-		addressBook := routing.NewAddressBook()
-		addressBook.Register(clientActor)
-
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
 		if err != nil {
 			t.Fatalf("Failed to create config node: %v", err)
 		}
+
+		addressBook := routing.NewAddressBook()
+		addressBook.Register(clientActor)
+		addressBook.Register(configNode)
+		configNode.SetResolver(addressBook)
 
 		request, err := g.NewConfigMessage(*clientURL, g.Keys)
 		configNode.Deliver(request)
@@ -81,18 +85,22 @@ func TestConfigNode(t *testing.T) {
 		clientActor, err := framework.NewActor(
 			*clientURL,
 			func(msg f.Message, self f.Actor[chan map[string]any]) (chan map[string]any, error) {
+				useMex := msg.(*g.ConfigMessage)
+				self.State() <- useMex.Entries
 				return self.State(), nil
 			},
 			responseCh,
 		)
 
-		addressBook := routing.NewAddressBook()
-		addressBook.Register(clientActor)
-
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
 		if err != nil {
 			t.Fatalf("Failed to create config node: %v", err)
 		}
+
+		addressBook := routing.NewAddressBook()
+		addressBook.Register(clientActor)
+		addressBook.Register(configNode)
+		configNode.SetResolver(addressBook)
 
 		request, err := g.NewConfigMessage(*clientURL, g.Entries)
 		configNode.Deliver(request)
@@ -117,40 +125,35 @@ func TestConfigNode(t *testing.T) {
 	t.Run("Config node request to get a single value", func(t *testing.T) {
 		t.Log("Config node request to get a single value")
 
-		responseCh := make(chan map[string]any)
+		responseCh := make(chan any)
 		clientURL, err := url.Parse("actor://client")
 		clientActor, err := framework.NewActor(
 			*clientURL,
-			func(msg f.Message, self f.Actor[chan map[string]any]) (chan map[string]any, error) {
+			func(msg f.Message, self f.Actor[chan any]) (chan any, error) {
+				useMex := msg.(*g.ConfigMessage)
+				self.State() <- useMex.Value
 				return self.State(), nil
 			},
 			responseCh,
 		)
-
-		addressBook := routing.NewAddressBook()
-		addressBook.Register(clientActor)
 
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
 		if err != nil {
 			t.Fatalf("Failed to create config node: %v", err)
 		}
 
+		addressBook := routing.NewAddressBook()
+		addressBook.Register(clientActor)
+		addressBook.Register(configNode)
+		configNode.SetResolver(addressBook)
+
 		request, err := g.NewConfigMessage(*clientURL, g.Request, randomKey1)
 		configNode.Deliver(request)
 
 		result := <-responseCh
 
-		if len(result) != 1 {
-			t.Fatalf("Expected 1 entry, got %d", len(result))
-		}
-
-		value, ok := result[randomKey1]
-		if !ok {
-			t.Fatalf("Key %s not found in response", randomKey1)
-		}
-
-		if value != randomValue1 {
-			t.Fatalf("Expected value %v for key %s, got %v", randomValue1, randomKey1, value)
+		if result != randomValue1 {
+			t.Fatalf("Expected value %v for key %s, got %v", randomValue1, randomKey1, result)
 		}
 	})
 
@@ -162,18 +165,22 @@ func TestConfigNode(t *testing.T) {
 		clientActor, err := framework.NewActor(
 			*clientURL,
 			func(msg f.Message, self f.Actor[chan map[string]any]) (chan map[string]any, error) {
+				useMex := msg.(*g.ConfigMessage)
+				self.State() <- useMex.Entries
 				return self.State(), nil
 			},
 			responseCh,
 		)
 
-		addressBook := routing.NewAddressBook()
-		addressBook.Register(clientActor)
-
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
 		if err != nil {
 			t.Fatalf("Failed to create config node: %v", err)
 		}
+
+		addressBook := routing.NewAddressBook()
+		addressBook.Register(clientActor)
+		addressBook.Register(configNode)
+		configNode.SetResolver(addressBook)
 
 		request, err := g.NewConfigMessage(*clientURL, g.Request, randomKey1, randomKey2)
 		configNode.Deliver(request)
@@ -209,18 +216,22 @@ func TestConfigNode(t *testing.T) {
 		clientActor, err := framework.NewActor(
 			*clientURL,
 			func(msg f.Message, self f.Actor[chan map[string]any]) (chan map[string]any, error) {
+				useMex := msg.(*g.ConfigMessage)
+				self.State() <- useMex.Entries
 				return self.State(), nil
 			},
 			responseCh,
 		)
 
-		addressBook := routing.NewAddressBook()
-		addressBook.Register(clientActor)
-
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
 		if err != nil {
 			t.Fatalf("Failed to create config node: %v", err)
 		}
+
+		addressBook := routing.NewAddressBook()
+		addressBook.Register(clientActor)
+		addressBook.Register(configNode)
+		configNode.SetResolver(addressBook)
 
 		unknownKey := "unknown-key-" + uuid.NewString()
 		request, err := g.NewConfigMessage(*clientURL, g.Request, unknownKey)
