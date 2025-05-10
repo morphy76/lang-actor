@@ -2,8 +2,10 @@ package graph
 
 import (
 	"errors"
+	"net/url"
 
 	"github.com/morphy76/lang-actor/pkg/framework"
+	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
 // ErrorInvalidRouting is returned when a routing is invalid.
@@ -11,6 +13,10 @@ var ErrorInvalidRouting = errors.New("invalid routing")
 
 // Routable represents a node that can have routes to other nodes.
 type Routable interface {
+	// SetResolver sets the resolver for the node.
+	SetResolver(resolver routing.Resolver)
+	// GetResolver returns the resolver for the node.
+	GetResolver() routing.Resolver
 	// OneWayRoute add a new possible outgoing route from the node
 	//
 	// Parameters:
@@ -29,11 +35,14 @@ type Routable interface {
 	// Returns:
 	//   - (error): An error if the route is invalid.
 	TwoWayRoute(name string, destination Node) error
-	// RouteNames returns the names of the routes from this node
+	// Edges returns the edges of the node.
+	//
+	// Parameters:
+	//   - includeInverse (bool): Whether to include inverse edges.
 	//
 	// Returns:
-	//   - ([]string): A slice of strings containing the names of the routes.
-	RouteNames() []string
+	//   - ([]framework.Addressable): The edges of the node.
+	Edges(includeInverse bool) []url.URL
 	// ProceedOnAnyRoute proceeds the message on any route.
 	//
 	// Parameters:
@@ -44,8 +53,17 @@ type Routable interface {
 	ProceedOnAnyRoute(msg framework.Message) error
 }
 
+type Visitable interface {
+	// Visit visits the node and applies the given function.
+	//
+	// Parameters:
+	//   - fn (VisitFn): The function to apply to the node.
+	Visit(fn VisitFn)
+}
+
 // Node represents a node in the actor graph.
 type Node interface {
+	Visitable
 	Routable
 	framework.Addressable
 	// Name returns the name of the node.
@@ -69,3 +87,6 @@ type EndNode interface {
 type DebugNode interface {
 	Node
 }
+
+// VisitFn is a function type that takes a Visitable as an argument.
+type VisitFn func(visitable Visitable)

@@ -28,7 +28,7 @@ func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
 
 	r.edges[name] = edge{
 		Name:        name,
-		Destination: destination,
+		Destination: destination.Address(),
 	}
 
 	return nil

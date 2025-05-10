@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"net/url"
 
+	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
 var staticGraphAssertion g.Graph = (*graph)(nil)
 
 type graph struct {
-	graphURL   url.URL
-	rootNode   g.RootNode
-	configNode g.Node
+	resolvables map[url.URL]f.Addressable
+	graphURL    url.URL
+	rootNode    g.RootNode
+	configNode  g.Node
 }
 
 type acceptedMessage struct {
@@ -42,4 +44,20 @@ func (g *graph) Accept(todo any) error {
 	}
 
 	return nil
+}
+
+// Register registers the given URL with the provided Addressable.
+func (g *graph) Register(addressable f.Addressable) error {
+	_, found := g.resolvables[addressable.Address()]
+	if found {
+		return fmt.Errorf("addressable already registered")
+	}
+	g.resolvables[addressable.Address()] = addressable
+	return nil
+}
+
+// Resolve resolves the given URL to a framework.Addressable.
+func (g *graph) Resolve(address url.URL) (f.Addressable, bool) {
+	rv, found := g.resolvables[address]
+	return rv, found
 }

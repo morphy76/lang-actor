@@ -74,8 +74,8 @@ func TestAddressBookLookup(t *testing.T) {
 		err = addressBook.Register(actor)
 		assert.NilError(t, err)
 
-		foundActor, err := addressBook.Lookup(*address)
-		assert.NilError(t, err)
+		foundActor, found := addressBook.Resolve(*address)
+		assert.Assert(t, found)
 		assert.Equal(t, foundActor.Address(), actor.Address())
 	})
 
@@ -86,7 +86,7 @@ func TestAddressBookLookup(t *testing.T) {
 		address, err := url.Parse("actor://nonexistent")
 		assert.NilError(t, err)
 
-		_, err = addressBook.Lookup(*address)
-		assert.ErrorContains(t, err, "actor not found")
+		_, found := addressBook.Resolve(*address)
+		assert.Assert(t, !found)
 	})
 }

@@ -1,12 +1,12 @@
 package graph
 
 import (
-	g "github.com/morphy76/lang-actor/pkg/graph"
+	"net/url"
 )
 
 type edge struct {
 	// Name of the route
 	Name string
 	// Destination of the route
-	Destination g.Node
+	Destination url.URL
 }

@@ -44,49 +44,52 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 			for key := range useState {
 				keys = append(keys, key)
 			}
-			// replyMsg := newListKeysResponse(self.Address(), keys)
-			// addressable, err := baseAddressBook.Lookup(useMex.Sender())
-			// if err != nil {
-			// 	return nil, err
-			// }
-			// if err := addressable.Deliver(replyMsg); err != nil {
-			// 	return nil, err
-			// }
+			replyMsg := newListKeysResponse(self.Address(), keys)
+			addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
+			if !found {
+				return nil, fmt.Errorf("addressable not found")
+			}
+
+			if err := addressable.Deliver(replyMsg); err != nil {
+				return nil, err
+			}
 		case g.Entries:
 			entries := make(map[string]any, len(useState))
 			for key, value := range useState {
 				entries[key] = value
 			}
-			// replyMsg := newListEntriesResponse(self.Address(), entries)
-			// addressable, err := baseAddressBook.Lookup(useMex.Sender())
-			// if err != nil {
-			// 	return nil, err
-			// }
-			// if err := addressable.Deliver(replyMsg); err != nil {
-			// 	return nil, err
-			// }
+			replyMsg := newListEntriesResponse(self.Address(), entries)
+			addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
+			if !found {
+				return nil, fmt.Errorf("addressable not found")
+			}
+
+			if err := addressable.Deliver(replyMsg); err != nil {
+				return nil, err
+			}
 		case g.Request:
 			if len(useMex.RequestedKeys) == 0 {
-				// shouldReturn, result, err := sendEmptyResponse(self, baseAddressBook, useMex)
-				// if shouldReturn {
-				// 	return result, err
-				// }
+				shouldReturn, result, err := sendEmptyResponse(self, baseNode.GetResolver(), useMex)
+				if shouldReturn {
+					return result, err
+				}
 			} else if len(useMex.RequestedKeys) == 1 {
 				key := useMex.RequestedKeys[0]
-				if _, ok := useState[key]; ok {
-					// replyMsg := newSingleValueResponse(self.Address(), key, value)
-					// addressable, err := baseAddressBook.Lookup(useMex.Sender())
-					// if err != nil {
-					// 	return nil, err
-					// }
-					// if err := addressable.Deliver(replyMsg); err != nil {
-					// 	return nil, err
-					// }
+				if value, ok := useState[key]; ok {
+					replyMsg := newSingleValueResponse(self.Address(), key, value)
+					addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
+					if !found {
+						return nil, fmt.Errorf("addressable not found")
+					}
+
+					if err := addressable.Deliver(replyMsg); err != nil {
+						return nil, err
+					}
 				} else {
-					// shouldReturn, result, err := sendEmptyResponse(self, baseAddressBook, useMex)
-					// if shouldReturn {
-					// 	return result, err
-					// }
+					shouldReturn, result, err := sendEmptyResponse(self, baseNode.GetResolver(), useMex)
+					if shouldReturn {
+						return result, err
+					}
 				}
 			} else {
 				multiValueTmp := make(map[string]any, len(useMex.RequestedKeys))
@@ -101,14 +104,15 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 				for key, val := range multiValueTmp {
 					multiValue[key] = val
 				}
-				// replyMsg := newMultivalueResponse(self.Address(), multiValue)
-				// addressable, err := baseAddressBook.Lookup(useMex.Sender())
-				// if err != nil {
-				// 	return nil, err
-				// }
-				// if err := addressable.Deliver(replyMsg); err != nil {
-				// 	return nil, err
-				// }
+				replyMsg := newMultivalueResponse(self.Address(), multiValue)
+				addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
+				if !found {
+					return nil, fmt.Errorf("addressable not found")
+				}
+
+				if err := addressable.Deliver(replyMsg); err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -169,13 +173,14 @@ func newListEntriesResponse(sender url.URL, configuredEntries map[string]any) f.
 	}
 }
 
-func sendEmptyResponse(self f.Actor[map[string]any], addressBook r.AddressBook, useMex *g.ConfigMessage) (bool, map[string]any, error) {
+func sendEmptyResponse(self f.Actor[map[string]any], resolver r.Resolver, useMex *g.ConfigMessage) (bool, map[string]any, error) {
 	emptyPayload := make(map[string]any, 0)
 	replyMsg := newMultivalueResponse(self.Address(), emptyPayload)
-	addressable, err := addressBook.Lookup(useMex.Sender())
-	if err != nil {
-		return true, nil, err
+	addressable, found := resolver.Resolve(useMex.Sender())
+	if !found {
+		return true, nil, fmt.Errorf("addressable not found")
 	}
+
 	if err := addressable.Deliver(replyMsg); err != nil {
 		return true, nil, err
 	}
