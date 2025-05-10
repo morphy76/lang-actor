@@ -2,7 +2,6 @@ package graph
 
 import (
 	"errors"
-	"net/url"
 
 	"github.com/morphy76/lang-actor/pkg/common"
 	"github.com/morphy76/lang-actor/pkg/framework"
@@ -43,7 +42,7 @@ type Routable interface {
 	//
 	// Returns:
 	//   - ([]framework.Addressable): The edges of the node.
-	Edges(includeInverse bool) []url.URL
+	Edges(includeInverse bool) []framework.Addressable
 	// ProceedOnAnyRoute proceeds the message on any route.
 	//
 	// Parameters:

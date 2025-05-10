@@ -76,7 +76,7 @@ func main() {
 	ctx, cancelFn := context.WithCancel(context.Background())
 
 	pingURL, _ := url.Parse("actor://ping")
-	pingActor, err := builders.NewActor(*pingURL, pingPongFn, actorState{})
+	pingActor, err := builders.NewTransientActor(*pingURL, pingPongFn, actorState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return
@@ -88,7 +88,7 @@ func main() {
 	}()
 
 	pongURL, _ := url.Parse("actor://pong")
-	pongActor, err := builders.NewActor(*pongURL, pingPongFn, actorState{})
+	pongActor, err := builders.NewTransientActor(*pongURL, pingPongFn, actorState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return

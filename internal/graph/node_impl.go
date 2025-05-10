@@ -32,8 +32,8 @@ func (r *node) ActorRef() f.ActorRef {
 }
 
 // Edges returns the edges of the node
-func (r *node) Edges(includeInverse bool) []url.URL {
-	edges := make([]url.URL, 0, len(r.edges))
+func (r *node) Edges(includeInverse bool) []f.Addressable {
+	edges := make([]f.Addressable, 0, len(r.edges))
 	count := 0
 	for edgeName, edge := range r.edges {
 		if !includeInverse && strings.Contains(edgeName, "inverse-") {
@@ -46,7 +46,7 @@ func (r *node) Edges(includeInverse bool) []url.URL {
 		return edges
 	}
 
-	rv := make([]url.URL, count)
+	rv := make([]f.Addressable, count)
 	for _, edge := range edges {
 		rv = append(rv, edge)
 	}
@@ -65,7 +65,7 @@ func (r *node) OneWayRoute(name string, destination g.Node) error {
 
 	r.edges[name] = edge{
 		Name:        name,
-		Destination: destination.Address(),
+		Destination: destination,
 	}
 
 	return nil
@@ -86,7 +86,7 @@ func (r *node) TwoWayRoute(name string, destination g.Node) error {
 
 	r.edges[name] = edge{
 		Name:        name,
-		Destination: destination.Address(),
+		Destination: destination,
 	}
 
 	var meAsNode g.Node = r
@@ -109,8 +109,8 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 	defer r.lock.Unlock()
 
 	for _, route := range r.edges {
-		if route.Destination == addressable.Address() {
-			addressable, found := r.GetResolver().Resolve(route.Destination)
+		if route.Destination.Address() == addressable.Address() {
+			addressable, found := r.GetResolver().Resolve(route.Destination.Address())
 			if !found {
 				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 			} else {
@@ -133,7 +133,7 @@ func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 
 	for _, route := range r.edges {
 		resolver := r.GetResolver()
-		addressable, found := resolver.Resolve(route.Destination)
+		addressable, found := resolver.Resolve(route.Destination.Address())
 		if !found {
 			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 		} else {
@@ -161,11 +161,9 @@ func (r *node) Visit(fn c.VisitFn) {
 	fn(r.actor)
 
 	for _, edge := range r.edges {
-		addressable, found := r.GetResolver().Resolve(edge.Destination)
-		if !found {
-			if node, ok := addressable.(g.Node); ok {
-				node.Visit(fn)
-			}
+		visitableDestination, ok := edge.Destination.(c.Visitable)
+		if ok {
+			visitableDestination.Visit(fn)
 		}
 	}
 }

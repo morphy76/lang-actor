@@ -49,6 +49,7 @@ func TestConfigNode(t *testing.T) {
 				return self.State(), nil
 			},
 			responseCh,
+			true,
 		)
 
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
@@ -90,6 +91,7 @@ func TestConfigNode(t *testing.T) {
 				return self.State(), nil
 			},
 			responseCh,
+			true,
 		)
 
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
@@ -135,6 +137,7 @@ func TestConfigNode(t *testing.T) {
 				return self.State(), nil
 			},
 			responseCh,
+			true,
 		)
 
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
@@ -170,6 +173,7 @@ func TestConfigNode(t *testing.T) {
 				return self.State(), nil
 			},
 			responseCh,
+			true,
 		)
 
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())
@@ -221,6 +225,7 @@ func TestConfigNode(t *testing.T) {
 				return self.State(), nil
 			},
 			responseCh,
+			true,
 		)
 
 		configNode, err := graph.NewConfigNode(testConfig, uuid.NewString())

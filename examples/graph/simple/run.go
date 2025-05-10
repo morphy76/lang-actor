@@ -3,18 +3,15 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net/url"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/morphy76/lang-actor/pkg/builders"
 )
 
 func main() {
-
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Press a enter to start")
-
-	reader.ReadString('\n')
 
 	rootNode, err := builders.NewRootNode()
 	if err != nil {
@@ -49,6 +46,9 @@ func main() {
 	config["test"] = uuid.NewString()
 	config["test2"] = uuid.NewString()
 	config["test3"] = uuid.NewString()
+	config["test4"] = time.Now()
+	whateverURL, _ := url.Parse("https://example.com:8080/ctx?id=1234")
+	config["test5"] = whateverURL
 
 	graph, err := builders.NewGraph(rootNode, config)
 	if err != nil {
@@ -56,7 +56,16 @@ func main() {
 		return
 	}
 
-	graph.Accept(uuid.NewString())
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Press a enter to start")
+
+	reader.ReadString('\n')
+
+	err = graph.Accept(uuid.NewString())
+	if err != nil {
+		fmt.Printf("Error accepting message: %v\n", err)
+		return
+	}
 
 	<-endCh
 	fmt.Println("End of the graph")

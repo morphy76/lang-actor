@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -28,10 +29,14 @@ func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
 
 	r.edges[name] = edge{
 		Name:        name,
-		Destination: destination.Address(),
+		Destination: destination,
 	}
 
 	return nil
+}
+
+type debugNodeState struct {
+	originalMessage f.Message
 }
 
 // NewDebugNode creates a new instance of a debug node in the actor graph.
@@ -47,22 +52,38 @@ func NewDebugNode() (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode := newNode[string](nil, *address)
+	baseNode := newNode[debugNodeState](nil, *address)
 	useDebugNode := &debugNode{
 		node: *baseNode,
 	}
 
-	taskFn := func(msg f.Message, self f.Actor[string]) (string, error) {
-		fmt.Printf("Debug node received message: %+v\n", msg)
+	taskFn := func(msg f.Message, self f.Actor[debugNodeState]) (debugNodeState, error) {
 
 		// TODO timeout context between request (not a config message) and response (receiving a config message)
 
-		cfgMessage, ok := msg.(*g.ConfigMessage)
+		configResponse, ok := msg.(*g.ConfigMessage)
 		if ok {
-			for key, val := range cfgMessage.Entries {
-				fmt.Printf("Debug node received key: %s with value %v\n", key, val)
+			fmt.Println("==========================================")
+			fmt.Println("Debug node received message:")
+			jsonOriginalMessage, err := json.Marshal(self.State().originalMessage)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			} else {
+				fmt.Printf("%s\n", jsonOriginalMessage)
 			}
-			useDebugNode.ProceedOnAnyRoute(msg)
+			fmt.Println("---------------------------------")
+			fmt.Println("System config:")
+			jsonConfigResponse, err := json.Marshal(configResponse.Entries)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			} else {
+				fmt.Printf("%s\n", jsonConfigResponse)
+			}
+			fmt.Println("==========================================")
+			err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
+			if err != nil {
+				return self.State(), err
+			}
 		} else {
 			requestCfg, err := g.NewConfigMessage(self.Address(), g.Entries)
 			if err != nil {
@@ -73,7 +94,9 @@ func NewDebugNode() (g.Node, error) {
 				return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no config node found"))
 			}
 			cfgNodes[0].Deliver(requestCfg)
-			fmt.Printf("Debug node requesting config\n")
+			return debugNodeState{
+				originalMessage: msg,
+			}, nil
 		}
 
 		return self.State(), nil
@@ -82,7 +105,8 @@ func NewDebugNode() (g.Node, error) {
 	debugTask, err := framework.NewActor(
 		*actorAddress,
 		taskFn,
-		"",
+		debugNodeState{},
+		false,
 	)
 	if err != nil {
 		return nil, err

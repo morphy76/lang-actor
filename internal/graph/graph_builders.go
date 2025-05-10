@@ -36,13 +36,17 @@ func NewGraph(
 	}
 
 	var registerFn c.VisitFn = func(visitable c.Visitable) {
-		node, ok := visitable.(g.Node)
+		addressable, ok := visitable.(f.Addressable)
 		if !ok {
 			return
 		}
 
-		graph.Register(node)
-		node.SetResolver(graph)
+		graph.Register(addressable)
+
+		routable, ok := visitable.(g.Routable)
+		if ok {
+			routable.SetResolver(graph)
+		}
 	}
 	rootNode.Visit(registerFn)
 	configNode.Visit(registerFn)

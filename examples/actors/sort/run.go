@@ -173,7 +173,7 @@ func main() {
 	leaveCh := make(chan bool)
 
 	sorterURL, _ := url.Parse("actor://sorter")
-	sorterActor, err := builders.NewActor(*sorterURL, sortFn(leaveCh), sorterState{})
+	sorterActor, err := builders.NewTransientActor(*sorterURL, sortFn(leaveCh), sorterState{})
 	if err != nil {
 		fmt.Println("Error creating actor:", err)
 		return

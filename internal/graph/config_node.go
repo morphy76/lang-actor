@@ -127,6 +127,7 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 		*actorAddress,
 		taskFn,
 		config,
+		true,
 	)
 	if err != nil {
 		return nil, err

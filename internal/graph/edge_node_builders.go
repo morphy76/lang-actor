@@ -27,6 +27,7 @@ func NewRootNode() (g.Node, error) {
 			return "", nil
 		},
 		"",
+		true,
 	)
 	if err != nil {
 		return nil, err
@@ -58,6 +59,7 @@ func NewEndNode() (g.Node, chan bool, error) {
 			return "", nil
 		},
 		"",
+		true,
 	)
 	if err != nil {
 		return nil, nil, err

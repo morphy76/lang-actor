@@ -30,7 +30,8 @@ type actor[T any] struct {
 	parent   f.ActorRef
 	children map[url.URL]f.ActorRef
 
-	state T
+	state     T
+	transient bool
 }
 
 // Address returns the actor's address.
@@ -202,7 +203,7 @@ func (a *actor[T]) consume() {
 				a.handleFailure(err)
 			}
 
-			if msg.Mutation() {
+			if msg.Mutation() || !a.transient {
 				a.swapState(newState)
 			}
 		case <-a.ctx.Done():
