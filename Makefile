@@ -3,7 +3,7 @@ GO := go
 GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
 GCFLAGS := -gcflags="-m -l"
-TESTFLAGS := -v
+TESTFLAGS := -v -count=1
 
 test:
 	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -v '/tools')
