@@ -3,6 +3,7 @@ package graph
 import (
 	"net/url"
 
+	"github.com/morphy76/lang-actor/internal/routing"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
@@ -25,10 +26,11 @@ func NewGraph(
 	}
 
 	graph := &graph{
-		resolvables: make(map[url.URL]f.Addressable),
+		resolvables: make(map[url.URL]*f.Addressable),
 		graphURL:    *graphURL,
 		rootNode:    rootNode,
 		configNode:  configNode,
+		addressBook: routing.NewAddressBook(),
 	}
 
 	var registerFn g.VisitFn = func(visitable g.Visitable) {

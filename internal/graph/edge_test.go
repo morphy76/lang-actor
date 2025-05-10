@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/morphy76/lang-actor/internal/graph"
+	"github.com/morphy76/lang-actor/pkg/builders"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
@@ -27,17 +28,25 @@ func TestSimpleGraph(t *testing.T) {
 	t.Run("SimpleGraph", func(t *testing.T) {
 		t.Log("SimpleGraph test case")
 
+		addressBook := builders.NewAddressBook()
+
 		rootNode, err := graph.NewRootNode()
+		rootNode.SetResolver(addressBook)
+		addressBook.Register(rootNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
 		childNode, err := graph.NewDebugNode()
+		childNode.SetResolver(addressBook)
+		addressBook.Register(childNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
 		endNode, endCh, err := graph.NewEndNode()
+		endNode.SetResolver(addressBook)
+		addressBook.Register(endNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

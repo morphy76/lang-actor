@@ -6,15 +6,17 @@ import (
 
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
+	r "github.com/morphy76/lang-actor/pkg/routing"
 )
 
 var staticGraphAssertion g.Graph = (*graph)(nil)
 
 type graph struct {
-	resolvables map[url.URL]f.Addressable
+	resolvables map[url.URL]*f.Addressable
 	graphURL    url.URL
 	rootNode    g.RootNode
 	configNode  g.Node
+	addressBook r.AddressBook
 }
 
 type acceptedMessage struct {
@@ -48,16 +50,15 @@ func (g *graph) Accept(todo any) error {
 
 // Register registers the given URL with the provided Addressable.
 func (g *graph) Register(addressable f.Addressable) error {
-	_, found := g.resolvables[addressable.Address()]
-	if found {
-		return fmt.Errorf("addressable already registered")
-	}
-	g.resolvables[addressable.Address()] = addressable
-	return nil
+	return g.addressBook.Register(addressable)
 }
 
 // Resolve resolves the given URL to a framework.Addressable.
 func (g *graph) Resolve(address url.URL) (f.Addressable, bool) {
-	rv, found := g.resolvables[address]
-	return rv, found
+	return g.addressBook.Resolve(address)
+}
+
+// Query queries the address book for the given schema and path parts.
+func (g *graph) Query(schema string, pathParts ...string) []*f.Addressable {
+	return g.addressBook.Query(schema, pathParts...)
 }

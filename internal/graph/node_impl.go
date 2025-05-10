@@ -21,9 +21,8 @@ type node struct {
 
 	edges map[string]edge
 
-	name        string
-	actor       f.ActorRef
-	addressBook r.AddressBook
+	name  string
+	actor f.ActorRef
 }
 
 // Name returns the name of the node
@@ -112,7 +111,7 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 		if route.Destination == addressable.Address() {
 			addressable, found := r.GetResolver().Resolve(route.Destination)
 			if !found {
-				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown addres [%s] from node [%s]", route.Destination, r.Name()))
+				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%s]", route.Destination, r.Name()))
 			} else {
 				return addressable.Deliver(mex)
 			}
@@ -132,9 +131,10 @@ func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 	}
 
 	for _, route := range r.edges {
-		addressable, found := r.GetResolver().Resolve(route.Destination)
+		resolver := r.GetResolver()
+		addressable, found := resolver.Resolve(route.Destination)
 		if !found {
-			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown addres [%s] from node [%s]", route.Destination, r.Name()))
+			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%s]", route.Destination, r.Name()))
 		} else {
 			return addressable.Deliver(mex)
 		}
