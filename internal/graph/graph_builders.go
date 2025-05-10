@@ -18,12 +18,7 @@ func NewGraph(
 		return nil, err
 	}
 
-	configURL, err := url.Parse("graph://" + graphName + "/config")
-	if err != nil {
-		return nil, err
-	}
-
-	configNode, err := newConfigNode(configs, *configURL)
+	configNode, err := NewConfigNode(configs, graphName)
 	if err != nil {
 		return nil, err
 	}
