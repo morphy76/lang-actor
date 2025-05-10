@@ -21,7 +21,7 @@ func (r *rootNode) OneWayRoute(name string, destination g.Node) error {
 	defer r.lock.Unlock()
 
 	if len(r.edges) > 0 {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("root node [%s] already has a route", r.Name()))
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("root node [%v] already has a route", r.Address()))
 	}
 
 	r.edges[name] = edge{
@@ -34,7 +34,7 @@ func (r *rootNode) OneWayRoute(name string, destination g.Node) error {
 
 // TwoWayRoute adds a new possible outgoing route from the node
 func (r *rootNode) TwoWayRoute(name string, destination g.Node) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("root node [%s] cannot have a two way route", r.Name()))
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("root node [%v] cannot have a two way route", r.Address()))
 }
 
 type endNode struct {
@@ -43,15 +43,15 @@ type endNode struct {
 
 // OneWayRoute adds a new possible outgoing route from the node
 func (r *endNode) OneWayRoute(name string, destination g.Node) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from the end [%s]", name, r.Name()))
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%v] from the end [%v]", name, r.Address()))
 }
 
 // TwoWayRoute adds a new possible outgoing route from the node
 func (r *endNode) TwoWayRoute(name string, destination g.Node) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from the end [%s]", name, r.Name()))
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%v] from the end [%v]", name, r.Address()))
 }
 
 // ProceedOnFirstRoute proceeds with the first route available
 func (r *endNode) ProceedOnFirstRoute(mex f.Message) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the end [%s]", r.Name()))
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the end [%v]", r.Address()))
 }

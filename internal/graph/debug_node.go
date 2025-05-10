@@ -23,7 +23,7 @@ func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
 	defer r.lock.Unlock()
 
 	if len(r.edges) > 0 {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("debugNode node [%s] already has a route", r.Name()))
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("debugNode node [%v] already has a route", r.Address()))
 	}
 
 	r.edges[name] = edge{
@@ -48,25 +48,27 @@ func NewDebugNode() (g.Node, error) {
 	}
 
 	baseNode := newNode[string](nil, *address)
-	rv := &debugNode{
+	useDebugNode := &debugNode{
 		node: *baseNode,
 	}
 
 	taskFn := func(msg f.Message, self f.Actor[string]) (string, error) {
 		fmt.Printf("Debug node received message: %+v\n", msg)
 
+		// TODO timeout context between request (not a config message) and response (receiving a config message)
+
 		cfgMessage, ok := msg.(*g.ConfigMessage)
 		if ok {
 			for key, val := range cfgMessage.Entries {
 				fmt.Printf("Debug node received key: %s with value %v\n", key, val)
 			}
-			rv.ProceedOnAnyRoute(msg)
+			useDebugNode.ProceedOnAnyRoute(msg)
 		} else {
 			requestCfg, err := g.NewConfigMessage(self.Address(), g.Entries)
 			if err != nil {
 				return self.State(), err
 			}
-			cfgNodes := rv.GetResolver().Query("graph", "nodes", "config")
+			cfgNodes := useDebugNode.GetResolver().Query("graph", "nodes", "config")
 			if len(cfgNodes) == 0 {
 				return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no config node found"))
 			}
@@ -86,7 +88,7 @@ func NewDebugNode() (g.Node, error) {
 		return nil, err
 	}
 
-	rv.actor = debugTask
+	useDebugNode.actor = debugTask
 
-	return rv, nil
+	return useDebugNode, nil
 }
