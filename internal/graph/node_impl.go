@@ -12,13 +12,11 @@ import (
 )
 
 var staticNodeAssertion g.Node = (*node)(nil)
-var staticDebugAssertion g.DebugNode = (*debugNode)(nil)
-var staticConfigAssertion g.Node = (*configNode)(nil)
 
 type node struct {
 	lock *sync.Mutex
 
-	routes map[string]route
+	edges map[string]edge
 
 	name        string
 	actor       f.ActorRef
@@ -35,8 +33,8 @@ func (r *node) RouteNames() []string {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	names := make([]string, 0, len(r.routes))
-	for name := range r.routes {
+	names := make([]string, 0, len(r.edges))
+	for name := range r.edges {
 		names = append(names, name)
 	}
 
@@ -52,7 +50,7 @@ func (r *node) OneWayRoute(name string, destination g.Node) error {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%s] to root node", name, r.Name()))
 	}
 
-	r.routes[name] = route{
+	r.edges[name] = edge{
 		Name:        name,
 		Destination: destination,
 	}
@@ -73,7 +71,7 @@ func (r *node) TwoWayRoute(name string, destination g.Node) error {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%s] from end node", name, r.Name()))
 	}
 
-	r.routes[name] = route{
+	r.edges[name] = edge{
 		Name:        name,
 		Destination: destination,
 	}
@@ -97,7 +95,7 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	for _, route := range r.routes {
+	for _, route := range r.edges {
 		if route.Destination.Address() == addressable.Address() {
 			return route.Destination.Deliver(mex)
 		}
@@ -111,11 +109,11 @@ func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	if len(r.routes) == 0 {
+	if len(r.edges) == 0 {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%s] has no routes", r.Name()))
 	}
 
-	for _, route := range r.routes {
+	for _, route := range r.edges {
 		return route.Destination.Deliver(mex)
 	}
 
