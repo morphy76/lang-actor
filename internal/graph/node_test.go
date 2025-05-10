@@ -76,8 +76,8 @@ func TestNodeRelationships(t *testing.T) {
 			t.Errorf("Expected no error, but got: %v", err)
 		}
 
-		routes1 := childNode1.RouteNames()
-		routes2 := childNode2.RouteNames()
+		routes1 := childNode1.Edges(true)
+		routes2 := childNode2.Edges(true)
 
 		if len(routes1) != 1 {
 			t.Errorf("Expected 1 route, but got: %d", len(routes1))
@@ -85,8 +85,9 @@ func TestNodeRelationships(t *testing.T) {
 		if len(routes2) != 1 {
 			t.Errorf("Expected 1 route, but got: %d", len(routes2))
 		}
-		if routes2[0] != "inverse-"+routes1[0] {
-			t.Errorf("Expected route2 name to be 'inverse-' of route1 name, but got: %s and %s", routes1[0], routes2[0])
+		directRoutes2 := childNode2.Edges(false)
+		if len(directRoutes2) != 0 {
+			t.Errorf("Expected 0 direct routes, but got: %d", len(directRoutes2))
 		}
 	})
 }

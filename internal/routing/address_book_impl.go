@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/morphy76/lang-actor/pkg/framework"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	r "github.com/morphy76/lang-actor/pkg/routing"
 )
@@ -19,28 +20,23 @@ type addressBook struct {
 }
 
 // Register registers an actor in the addressBook.
-func (c *addressBook) Register(actor f.Addressable) error {
+func (c *addressBook) Register(addressable framework.Addressable) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if _, exists := c.actors[actor.Address()]; exists {
-		return errors.Join(r.ErrorActorAlreadyRegistered, fmt.Errorf("actor [%s] already registered for scheme [%s]", actor.Address().Host, actor.Address().Scheme))
+	if _, exists := c.actors[addressable.Address()]; exists {
+		return errors.Join(r.ErrorActorAlreadyRegistered, fmt.Errorf("actor [%s] already registered for scheme [%s]", addressable.Address().Host, addressable.Address().Scheme))
 	}
 
-	c.actors[actor.Address()] = actor
+	c.actors[addressable.Address()] = addressable
 
 	return nil
 }
 
 // Lookup looks up an actor in the addressBook by its address.
-func (c *addressBook) Lookup(address url.URL) (f.Addressable, error) {
-
+func (c *addressBook) Resolve(address url.URL) (f.Addressable, bool) {
 	rv, found := c.actors[address]
-	if !found {
-		return nil, errors.Join(r.ErrorActorNotFound, fmt.Errorf("actor [%s] not found for scheme [%s]", address.Host, address.Scheme))
-	}
-
-	return rv.(f.Addressable), nil
+	return rv, found
 }
 
 // TearDown tears down the addressBook and releases any resources.

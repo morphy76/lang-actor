@@ -58,7 +58,7 @@ func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actor
 		}
 		fmt.Println("Sending message to:", msg.Sender().Host)
 
-		addressable, _ := addressBook.Lookup(msg.Sender())
+		addressable, _ := addressBook.Resolve(msg.Sender())
 
 		self.Send(content, addressable)
 		fmt.Println("-----------------------------------")

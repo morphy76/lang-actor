@@ -13,25 +13,30 @@ var ErrorActorAlreadyRegistered = errors.New("actor already registered")
 // ErrorActorNotFound is returned when an actor is not found in the catalog.
 var ErrorActorNotFound = errors.New("actor not found")
 
+// Resolver is an interface for resolving addresses to framework.Addressable.
+type Resolver interface {
+	// Register registers the given URL with the provided Addressable.
+	//
+	// Parameters:
+	//   - addressable (framework.Addressable): The Addressable to associate with the URL.
+	//
+	// Returns:
+	//   - (error): An error if the registration fails.
+	Register(addressable framework.Addressable) error
+	// Resolve resolves the given URL to a framework.Addressable.
+	//
+	// Parameters:
+	//   - url (url.URL): The URL to resolve.
+	//
+	// Returns:
+	//   - (framework.Addressable): The resolved Addressable.
+	//   - (bool): A boolean indicating whether the resolution was successful.
+	Resolve(address url.URL) (framework.Addressable, bool)
+}
+
 // AddressBook is an interface that defines the methods for a catalog.
 type AddressBook interface {
-	// Register registers an actor in the catalog.
-	//
-	// Parameters:
-	//   - actor: The actor to register.
-	//
-	// Returns:
-	//   - error: An error if the registration fails.
-	Register(actor framework.Addressable) error
-	// Lookup looks up an actor in the catalog by its address.
-	//
-	// Parameters:
-	//   - url: The address of the actor to look up.
-	//
-	// Returns:
-	//   - actor: The actor if found, nil otherwise.
-	//   - error: An error if the lookup fails.
-	Lookup(address url.URL) (framework.Addressable, error)
+	Resolver
 	// Teardown tears down the catalog and releases any resources.
 	TearDown()
 }

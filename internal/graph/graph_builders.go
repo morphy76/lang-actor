@@ -3,6 +3,7 @@ package graph
 import (
 	"net/url"
 
+	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
@@ -24,10 +25,25 @@ func NewGraph(
 	}
 
 	graph := &graph{
-		graphURL:   *graphURL,
-		rootNode:   rootNode,
-		configNode: configNode,
+		resolvables: make(map[url.URL]f.Addressable),
+		graphURL:    *graphURL,
+		rootNode:    rootNode,
+		configNode:  configNode,
 	}
+
+	var registerFn g.VisitFn = func(visitable g.Visitable) {
+		node, ok := visitable.(g.Node)
+		if !ok {
+			return
+		}
+
+		graph.Register(node)
+		node.SetResolver(graph)
+	}
+	rootNode.Visit(registerFn)
+	configNode.SetResolver(graph)
+
+	// TODO it should send an init message to the root node which propagates to all its edges recursively
 
 	return graph, nil
 }
