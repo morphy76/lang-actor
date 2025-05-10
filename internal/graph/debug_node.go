@@ -48,6 +48,10 @@ func NewDebugNode() (g.Node, error) {
 	}
 
 	baseNode := newNode[string](nil, *address)
+	rv := &debugNode{
+		node: *baseNode,
+	}
+
 	taskFn := func(msg f.Message, self f.Actor[string]) (string, error) {
 		fmt.Printf("Debug node received message: %+v\n", msg)
 
@@ -56,15 +60,19 @@ func NewDebugNode() (g.Node, error) {
 			for key, val := range cfgMessage.Entries {
 				fmt.Printf("Debug node received key: %s with value %v\n", key, val)
 			}
+			rv.ProceedOnAnyRoute(msg)
 		} else {
-			_, err := g.NewConfigMessage(self.Address(), g.Entries)
+			requestCfg, err := g.NewConfigMessage(self.Address(), g.Entries)
 			if err != nil {
 				return self.State(), err
 			}
-			// TODO every node has to access the address book to send a message
+			cfgNodes := rv.GetResolver().Query("graph", "nodes", "config")
+			if len(cfgNodes) == 0 {
+				return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no config node found"))
+			}
+			(*cfgNodes[0]).Deliver(requestCfg)
+			fmt.Printf("Debug node requesting config\n")
 		}
-
-		baseNode.ProceedOnAnyRoute(msg)
 
 		return self.State(), nil
 	}
@@ -78,9 +86,6 @@ func NewDebugNode() (g.Node, error) {
 		return nil, err
 	}
 
-	rv := &debugNode{
-		node: *baseNode,
-	}
 	rv.actor = debugTask
 
 	return rv, nil

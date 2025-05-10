@@ -32,6 +32,12 @@ type Resolver interface {
 	//   - (framework.Addressable): The resolved Addressable.
 	//   - (bool): A boolean indicating whether the resolution was successful.
 	Resolve(address url.URL) (framework.Addressable, bool)
+	// Query queries the catalog for Addressables matching the given schema and path parts.
+	//
+	// Parameters:
+	//   - schema (string): The schema to match.
+	//   - pathParts (...string): The path parts to match.
+	Query(schema string, pathParts ...string) []*framework.Addressable
 }
 
 // AddressBook is an interface that defines the methods for a catalog.
