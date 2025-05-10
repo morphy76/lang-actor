@@ -3,6 +3,12 @@ package builders
 import "github.com/morphy76/lang-actor/pkg/framework"
 
 // NewMailboxConfigWithBlockPolicy creates a mailbox configuration with a block backpressure policy.
+//
+// Parameters:
+//   - capacity (int): The capacity of the mailbox.
+//
+// Returns:
+//   - (framework.MailboxConfig): The created MailboxConfig instance.
 func NewMailboxConfigWithBlockPolicy(capacity int) framework.MailboxConfig {
 	return framework.MailboxConfig{
 		Capacity: capacity,
@@ -11,6 +17,12 @@ func NewMailboxConfigWithBlockPolicy(capacity int) framework.MailboxConfig {
 }
 
 // NewMailboxConfigWithFailPolicy creates a mailbox configuration with a block backpressure policy.
+//
+// Parameters:
+//   - capacity (int): The capacity of the mailbox.
+//
+// Returns:
+//   - (framework.MailboxConfig): The created MailboxConfig instance.
 func NewMailboxConfigWithFailPolicy(capacity int) framework.MailboxConfig {
 	return framework.MailboxConfig{
 		Capacity: capacity,
@@ -19,6 +31,9 @@ func NewMailboxConfigWithFailPolicy(capacity int) framework.MailboxConfig {
 }
 
 // NewMailboxConfigWithUnboundedPolicy creates a mailbox configuration with an unbounded backpressure policy.
+//
+// Returns:
+//   - (framework.MailboxConfig): The created MailboxConfig instance.
 func NewMailboxConfigWithUnboundedPolicy() framework.MailboxConfig {
 	return framework.MailboxConfig{
 		Capacity: 1000000,
@@ -27,6 +42,12 @@ func NewMailboxConfigWithUnboundedPolicy() framework.MailboxConfig {
 }
 
 // NewMailboxConfigWithDropNewestPolicy creates a mailbox configuration with a drop backpressure policy.
+//
+// Parameters:
+//   - capacity (int): The capacity of the mailbox.
+//
+// Returns:
+//   - (framework.MailboxConfig): The created MailboxConfig instance.
 func NewMailboxConfigWithDropNewestPolicy(capacity int) framework.MailboxConfig {
 	return framework.MailboxConfig{
 		Capacity: capacity,
@@ -35,6 +56,12 @@ func NewMailboxConfigWithDropNewestPolicy(capacity int) framework.MailboxConfig 
 }
 
 // NewMailboxConfigWithDropOldestPolicy creates a mailbox configuration with a drop backpressure policy.
+//
+// Parameters:
+//   - capacity (int): The capacity of the mailbox.
+//
+// Returns:
+//   - (framework.MailboxConfig): The created MailboxConfig instance.
 func NewMailboxConfigWithDropOldestPolicy(capacity int) framework.MailboxConfig {
 	return framework.MailboxConfig{
 		Capacity: capacity,
