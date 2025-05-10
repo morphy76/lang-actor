@@ -3,6 +3,7 @@ package graph_test
 import (
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/morphy76/lang-actor/internal/graph"
 	"github.com/morphy76/lang-actor/pkg/builders"
@@ -25,14 +26,30 @@ func (m *mockMessage) Mutation() bool {
 func TestSimpleGraph(t *testing.T) {
 	t.Log("Simple Graph test suite")
 
+	cfg := make(map[string]any)
+	cfg["type"] = "test"
+	cfg["version"] = "1.0.0"
+	cfg["description"] = "test description"
+	cfg["author"] = "test author"
+	cfg["ts"] = time.Now()
+
 	t.Run("SimpleGraph", func(t *testing.T) {
 		t.Log("SimpleGraph test case")
 
 		addressBook := builders.NewAddressBook()
 
+		cfgNode, err := graph.NewConfigNode(cfg, "testGraph")
+		if err != nil {
+			t.Errorf("Error creating config node: %v", err)
+		}
+		cfgNode.SetResolver(addressBook)
+		addressBook.Register(cfgNode)
+		addressBook.Register(cfgNode.ActorRef())
+
 		rootNode, err := graph.NewRootNode()
 		rootNode.SetResolver(addressBook)
 		addressBook.Register(rootNode)
+		addressBook.Register(rootNode.ActorRef())
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -40,6 +57,7 @@ func TestSimpleGraph(t *testing.T) {
 		childNode, err := graph.NewDebugNode()
 		childNode.SetResolver(addressBook)
 		addressBook.Register(childNode)
+		addressBook.Register(childNode.ActorRef())
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -47,6 +65,7 @@ func TestSimpleGraph(t *testing.T) {
 		endNode, endCh, err := graph.NewEndNode()
 		endNode.SetResolver(addressBook)
 		addressBook.Register(endNode)
+		addressBook.Register(endNode.ActorRef())
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

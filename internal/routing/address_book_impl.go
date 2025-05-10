@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/morphy76/lang-actor/pkg/framework"
@@ -39,6 +40,7 @@ func (c *addressBook) Resolve(address url.URL) (f.Addressable, bool) {
 	return rv, found
 }
 
+// Query queries the addressBook for actors with a specific scheme and path.
 func (c *addressBook) Query(schema string, pathParts ...string) []f.Addressable {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -50,12 +52,17 @@ func (c *addressBook) Query(schema string, pathParts ...string) []f.Addressable 
 				continue
 			}
 
-			path := addressable.Address().Path
-			for _, part := range pathParts {
-				if path == part {
-					rv = append(rv, addressable)
+			addressableParts := strings.Split(addressable.Address().Path, "/")
+			addressableParts[0] = addressable.Address().Host
+			allMatch := true
+			for idx, part := range pathParts {
+				allMatch = allMatch && addressableParts[idx] == part
+				if !allMatch {
 					break
 				}
+			}
+			if allMatch {
+				rv = append(rv, addressable)
 			}
 		}
 	}

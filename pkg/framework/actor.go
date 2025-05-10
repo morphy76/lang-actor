@@ -3,6 +3,8 @@ package framework
 import (
 	"errors"
 	"net/url"
+
+	"github.com/morphy76/lang-actor/pkg/common"
 )
 
 // ErrorInvalidActorAddress is returned when an actor address is invalid.
@@ -127,6 +129,7 @@ type Relationable interface {
 
 // ActorRef is the interface for the actor reference.
 type ActorRef interface {
+	common.Visitable
 	Controllable
 	Controller
 	Addressable

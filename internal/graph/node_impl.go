@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	c "github.com/morphy76/lang-actor/pkg/common"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 	r "github.com/morphy76/lang-actor/pkg/routing"
@@ -21,13 +22,13 @@ type node struct {
 
 	edges map[string]edge
 
-	name  string
-	actor f.ActorRef
+	address url.URL
+	actor   f.ActorRef
 }
 
-// Name returns the name of the node
-func (r *node) Name() string {
-	return r.name
+// ActorRef returns the actor reference of the node
+func (r *node) ActorRef() f.ActorRef {
+	return r.actor
 }
 
 // Edges returns the edges of the node
@@ -59,7 +60,7 @@ func (r *node) OneWayRoute(name string, destination g.Node) error {
 	defer r.lock.Unlock()
 
 	if _, ok := destination.(*rootNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%s] to root node", name, r.Name()))
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] to root node", name, r.Address()))
 	}
 
 	r.edges[name] = edge{
@@ -76,11 +77,11 @@ func (r *node) TwoWayRoute(name string, destination g.Node) error {
 	defer r.lock.Unlock()
 
 	if _, ok := destination.(*rootNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%s] to root node", name, r.Name()))
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] to root node", name, r.Address()))
 	}
 
 	if _, ok := destination.(*endNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%s] from end node", name, r.Name()))
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] from end node", name, r.Address()))
 	}
 
 	r.edges[name] = edge{
@@ -94,7 +95,7 @@ func (r *node) TwoWayRoute(name string, destination g.Node) error {
 
 // DestinationAddress returns the address of the destination node
 func (r *node) Address() url.URL {
-	return r.actor.Address()
+	return r.address
 }
 
 // Deliver delivers a message to the node
@@ -111,14 +112,14 @@ func (r *node) Send(mex f.Message, addressable f.Addressable) error {
 		if route.Destination == addressable.Address() {
 			addressable, found := r.GetResolver().Resolve(route.Destination)
 			if !found {
-				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%s]", route.Destination, r.Name()))
+				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 			} else {
 				return addressable.Deliver(mex)
 			}
 		}
 	}
 	destinationAddress := fmt.Sprintf("%s%s", addressable.Address().Host, addressable.Address().Path)
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%s]", destinationAddress, r.Name()))
+	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%v]", destinationAddress, r.Address()))
 }
 
 // ProceedOnAnyRoute proceeds with the first route available
@@ -127,14 +128,14 @@ func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 	defer r.lock.Unlock()
 
 	if len(r.edges) == 0 {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%s] has no routes", r.Name()))
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%v] has no routes", r.Address()))
 	}
 
 	for _, route := range r.edges {
 		resolver := r.GetResolver()
 		addressable, found := resolver.Resolve(route.Destination)
 		if !found {
-			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%s]", route.Destination, r.Name()))
+			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 		} else {
 			return addressable.Deliver(mex)
 		}
@@ -154,9 +155,10 @@ func (r *node) GetResolver() r.Resolver {
 }
 
 // Visit visits the node and applies the given function
-func (r *node) Visit(fn g.VisitFn) {
+func (r *node) Visit(fn c.VisitFn) {
 
 	fn(r)
+	fn(r.actor)
 
 	for _, edge := range r.edges {
 		addressable, found := r.GetResolver().Resolve(edge.Destination)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/morphy76/lang-actor/pkg/common"
 	"github.com/morphy76/lang-actor/pkg/framework"
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
@@ -53,24 +54,13 @@ type Routable interface {
 	ProceedOnAnyRoute(msg framework.Message) error
 }
 
-type Visitable interface {
-	// Visit visits the node and applies the given function.
-	//
-	// Parameters:
-	//   - fn (VisitFn): The function to apply to the node.
-	Visit(fn VisitFn)
-}
-
 // Node represents a node in the actor graph.
 type Node interface {
-	Visitable
+	common.Visitable
 	Routable
 	framework.Addressable
-	// Name returns the name of the node.
-	//
-	// Returns:
-	//   - (string): The name of the node.
-	Name() string
+
+	ActorRef() framework.ActorRef
 }
 
 // RootNode represents the root node of the actor graph.
@@ -87,6 +77,3 @@ type EndNode interface {
 type DebugNode interface {
 	Node
 }
-
-// VisitFn is a function type that takes a Visitable as an argument.
-type VisitFn func(visitable Visitable)

@@ -4,6 +4,8 @@ import (
 	"net/url"
 
 	"github.com/morphy76/lang-actor/internal/routing"
+
+	c "github.com/morphy76/lang-actor/pkg/common"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
@@ -33,7 +35,7 @@ func NewGraph(
 		addressBook: routing.NewAddressBook(),
 	}
 
-	var registerFn g.VisitFn = func(visitable g.Visitable) {
+	var registerFn c.VisitFn = func(visitable c.Visitable) {
 		node, ok := visitable.(g.Node)
 		if !ok {
 			return
@@ -43,6 +45,7 @@ func NewGraph(
 		node.SetResolver(graph)
 	}
 	rootNode.Visit(registerFn)
+	configNode.Visit(registerFn)
 	configNode.SetResolver(graph)
 
 	// TODO it should send an init message to the root node which propagates to all its edges recursively
