@@ -6,7 +6,7 @@ import (
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
-var staticStatusMessageAssertion f.Message = (*StatusMessage[any])(nil)
+var staticStatusMessageAssertion f.Message = (*StatusMessage)(nil)
 
 // StatusMessageType is the type of status message.
 type StatusMessageType int8
@@ -21,20 +21,20 @@ const (
 )
 
 // StatusMessage is the graph status access message.
-type StatusMessage[T any] struct {
+type StatusMessage struct {
 	From              url.URL
 	StatusMessageType StatusMessageType
 
-	Value T
+	Value interface{}
 }
 
 // Sender returns the sender of the message.
-func (c *StatusMessage[T]) Sender() url.URL {
+func (c *StatusMessage) Sender() url.URL {
 	return c.From
 }
 
 // Mutation returns whether the message is a mutation.
-func (c *StatusMessage[T]) Mutation() bool {
+func (c *StatusMessage) Mutation() bool {
 	return true
 }
 
@@ -47,35 +47,50 @@ func (c *StatusMessage[T]) Mutation() bool {
 // - sender: The URL of the sender.
 //
 // Returns:
-// - A pointer to the created status message.
-func NewStatusMessageRequest[T any](
+// - The created status message.
+func NewStatusMessageRequest(
 	sender url.URL,
-) (*StatusMessage[T], error) {
-	return &StatusMessage[T]{
+) StatusMessage {
+	return StatusMessage{
 		From:              sender,
 		StatusMessageType: StatusRequest,
-	}, nil
+	}
 }
 
 // NewStatusMessageUpdate creates a new status message.
-//
-// Type parameters:
-// - T: The type of the status message.
 //
 // Parameters:
 // - sender: The URL of the sender.
 // - value: The value of the status message.
 //
 // Returns:
-// - A pointer to the created status message.
-// - An error if the message type is Response.
-func NewStatusMessageUpdate[T any](
+// - The created status message.
+func NewStatusMessageUpdate(
 	sender url.URL,
-	value T,
-) (*StatusMessage[T], error) {
-	return &StatusMessage[T]{
+	value interface{},
+) StatusMessage {
+	return StatusMessage{
 		From:              sender,
 		StatusMessageType: StatusUpdate,
 		Value:             value,
-	}, nil
+	}
+}
+
+// NewStatusMessageResponse creates a new status message.
+//
+// Parameters:
+// - sender: The URL of the sender.
+// - value: The value of the status message.
+//
+// Returns:
+// - The created status message.
+func NewStatusMessageResponse(
+	sender url.URL,
+	value interface{},
+) StatusMessage {
+	return StatusMessage{
+		From:              sender,
+		StatusMessageType: StatusResponse,
+		Value:             value,
+	}
 }

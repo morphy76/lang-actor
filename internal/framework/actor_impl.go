@@ -242,5 +242,5 @@ func (a *actor[T]) swapState(newState T) {
 }
 
 func (a actor[T]) handleFailure(err error) {
-	fmt.Println("handleFailure", err)
+	fmt.Printf("(%v) handleFailure: %s\n", a.address, err)
 }

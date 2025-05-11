@@ -46,6 +46,14 @@ func TestSimpleGraph(t *testing.T) {
 		addressBook.Register(cfgNode)
 		addressBook.Register(cfgNode.ActorRef())
 
+		statusNode, err := graph.NewStatusNode(cfg, "testGraph")
+		if err != nil {
+			t.Errorf("Error creating status node: %v", err)
+		}
+		statusNode.SetResolver(addressBook)
+		addressBook.Register(statusNode)
+		addressBook.Register(statusNode.ActorRef())
+
 		rootNode, err := graph.NewRootNode()
 		rootNode.SetResolver(addressBook)
 		addressBook.Register(rootNode)

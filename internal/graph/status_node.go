@@ -12,7 +12,7 @@ import (
 )
 
 // NewStatusNode creates a new status node with the given configuration and graph name.
-func NewStatusNode[T any](initialStatus T, graphName string) (g.Node, error) {
+func NewStatusNode(initialStatus interface{}, graphName string) (g.Node, error) {
 
 	address, err := url.Parse("graph://nodes/status/" + graphName)
 	if err != nil {
@@ -24,33 +24,37 @@ func NewStatusNode[T any](initialStatus T, graphName string) (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode := newNode[T](nil, *address)
+	baseNode := newNode[interface{}](nil, *address)
+	useNode := &statusNode{
+		node: *baseNode,
+	}
 
-	taskFn := func(msg f.Message, self f.Actor[T]) (T, error) {
+	taskFn := func(msg f.Message, self f.Actor[interface{}]) (interface{}, error) {
 		// TODO optimistic locking to manage ghost reads
 		if msg == nil {
 			return self.State(), fmt.Errorf("message is nil")
 		}
-		if _, ok := msg.(*g.StatusMessage[T]); !ok {
+		if _, ok := msg.(*g.StatusMessage); !ok {
+			fmt.Printf("message type: %T\n", msg)
 			return self.State(), fmt.Errorf("message is not a status message")
 		}
-		useMex := msg.(*g.StatusMessage[T])
+		useMex := msg.(*g.StatusMessage)
 		switch useMex.StatusMessageType {
 		case g.StatusRequest:
-			replyMsg := &g.StatusMessage[T]{
-				From:              self.Address(),
-				StatusMessageType: g.StatusResponse,
-				Value:             self.State(),
-			}
-			addressable, found := baseNode.GetResolver().Resolve(useMex.Sender())
+			replyMsg := g.NewStatusMessageResponse(self.Address(), self.State())
+			addressable, found := useNode.GetResolver().Resolve(useMex.Sender())
 			if !found {
 				return self.State(), fmt.Errorf("addressable not found")
 			}
-			if err := addressable.Deliver(replyMsg); err != nil {
+			if err := addressable.Deliver(&replyMsg); err != nil {
 				return self.State(), err
 			}
 		case g.StatusUpdate:
-			return useMex.Value, nil
+			useMexWithPayload, ok := msg.(*g.StatusMessage)
+			if !ok {
+				return self.State(), fmt.Errorf("message is not a status message with payload")
+			}
+			return useMexWithPayload.Value, nil
 		}
 
 		return self.State(), nil
@@ -66,11 +70,9 @@ func NewStatusNode[T any](initialStatus T, graphName string) (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode.actor = statusTask
+	useNode.actor = statusTask
 
-	return &statusNode{
-		node: *baseNode,
-	}, nil
+	return useNode, nil
 }
 
 var staticStatusAssertion g.Node = (*statusNode)(nil)

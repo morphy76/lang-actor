@@ -23,10 +23,10 @@ func NewRootNode() (g.Node, error) {
 
 	rootTask, err := framework.NewActor(
 		*actorAddress,
-		func(msg f.Message, self f.Actor[string]) (string, error) {
+		func(msg f.Message, self f.Actor[interface{}]) (interface{}, error) {
 			return "", nil
 		},
-		"",
+		nil,
 		true,
 	)
 	if err != nil {
@@ -54,11 +54,11 @@ func NewEndNode() (g.Node, chan bool, error) {
 	endCh := make(chan bool)
 	endTask, err := framework.NewActor(
 		*actorAddress,
-		func(msg f.Message, self f.Actor[string]) (string, error) {
+		func(msg f.Message, self f.Actor[interface{}]) (interface{}, error) {
 			endCh <- true
 			return "", nil
 		},
-		"",
+		nil,
 		true,
 	)
 	if err != nil {

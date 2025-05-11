@@ -59,14 +59,12 @@ func NewDebugNode() (g.Node, error) {
 
 	taskFn := func(msg f.Message, self f.Actor[debugNodeState]) (debugNodeState, error) {
 
-		// TODO timeout context between request (not a config message) and response (receiving a config message)
+		// TODO timeout context between request (not a config message or status) and response (receiving a config message)
 
-		statusResponse, okStatus := msg.(*g.StatusMessage[any])
+		statusResponse, okStatus := msg.(*g.StatusMessage)
 		configResponse, okConfig := msg.(*g.ConfigMessage)
 
 		if okStatus {
-			fmt.Println("==========================================")
-			fmt.Printf("Debug node [%+v] received message:\n", useDebugNode.Address())
 			fmt.Println("---------------------------------")
 			fmt.Println("Status response:")
 			jsonStatusResponse, err := json.Marshal(statusResponse)
@@ -98,21 +96,13 @@ func NewDebugNode() (g.Node, error) {
 				} else {
 					fmt.Printf("%s\n", jsonConfigResponse)
 				}
-				fmt.Println("==========================================")
-				err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
-				if err != nil {
-					return self.State(), err
-				}
 
-				requestStatus, err := g.NewStatusMessageRequest[any](self.Address())
-				if err != nil {
-					return self.State(), err
-				}
+				requestStatus := g.NewStatusMessageRequest(self.Address())
 				statusNodes := useDebugNode.GetResolver().Query("graph", "nodes", "status")
 				if len(statusNodes) == 0 {
 					return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no status node found"))
 				}
-				statusNodes[0].Deliver(requestStatus)
+				statusNodes[0].Deliver(&requestStatus)
 				return self.State(), nil
 			} else {
 				requestCfg, err := g.NewConfigMessage(self.Address(), g.ConfigEntries)

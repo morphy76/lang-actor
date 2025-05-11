@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"time"
@@ -10,6 +11,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/morphy76/lang-actor/pkg/builders"
 )
+
+type graphStatus struct {
+	Attr1 string
+	Attr2 time.Time
+	Attr3 int
+	Attr4 *url.URL
+	Attr5 map[string]any
+	Attr6 []string
+}
 
 func main() {
 
@@ -43,14 +53,27 @@ func main() {
 	}
 
 	config := make(map[string]any)
-	config["test"] = uuid.NewString()
+	config["test1"] = uuid.NewString()
 	config["test2"] = uuid.NewString()
 	config["test3"] = uuid.NewString()
 	config["test4"] = time.Now()
 	whateverURL, _ := url.Parse("https://example.com:8080/ctx?id=1234")
 	config["test5"] = whateverURL
 
-	graph, err := builders.NewGraph(rootNode, "", config)
+	graphStatus := graphStatus{
+		Attr1: uuid.NewString(),
+		Attr2: time.Now(),
+		Attr3: rand.Intn(100),
+		Attr4: whateverURL,
+		Attr5: map[string]any{
+			"key1": "value1",
+			"key2": 123,
+			"key3": true,
+		},
+		Attr6: []string{"item1", "item2", "item3"},
+	}
+
+	graph, err := builders.NewGraph(rootNode, graphStatus, config)
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
 		return

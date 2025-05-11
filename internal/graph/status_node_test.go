@@ -47,8 +47,8 @@ func TestStatusNode(t *testing.T) {
 		clientActor, err := framework.NewActor(
 			*clientURL,
 			func(msg f.Message, self f.Actor[chan testStatus]) (chan testStatus, error) {
-				if useMex, ok := msg.(*g.StatusMessage[testStatus]); ok {
-					self.State() <- useMex.Value
+				if useMex, ok := msg.(*g.StatusMessage); ok {
+					self.State() <- useMex.Value.(testStatus)
 				}
 				return self.State(), nil
 			},
@@ -70,13 +70,10 @@ func TestStatusNode(t *testing.T) {
 		statusNode.SetResolver(addressBook)
 
 		// Create a request message
-		request := &g.StatusMessage[testStatus]{
-			From:              *clientURL,
-			StatusMessageType: g.StatusRequest,
-		}
+		request := g.NewStatusMessageRequest(*clientURL)
 
 		// Send the request
-		err = statusNode.Deliver(request)
+		err = statusNode.Deliver(&request)
 		if err != nil {
 			t.Fatalf("Failed to deliver status request message: %v", err)
 		}
@@ -108,8 +105,8 @@ func TestStatusNode(t *testing.T) {
 		clientActor, err := framework.NewActor(
 			*clientURL,
 			func(msg f.Message, self f.Actor[chan testStatus]) (chan testStatus, error) {
-				if useMex, ok := msg.(*g.StatusMessage[testStatus]); ok {
-					self.State() <- useMex.Value
+				if useMex, ok := msg.(*g.StatusMessage); ok {
+					self.State() <- useMex.Value.(testStatus)
 				}
 				return self.State(), nil
 			},
@@ -138,25 +135,18 @@ func TestStatusNode(t *testing.T) {
 		}
 
 		// Create an update message
-		updateMsg := &g.StatusMessage[testStatus]{
-			From:              *clientURL,
-			StatusMessageType: g.StatusUpdate,
-			Value:             updatedStatus,
-		}
+		updateMsg := g.NewStatusMessageUpdate(*clientURL, updatedStatus)
 
 		// Send the update
-		err = statusNode.Deliver(updateMsg)
+		err = statusNode.Deliver(&updateMsg)
 		if err != nil {
 			t.Fatalf("Failed to deliver status update message: %v", err)
 		}
 
 		// Now send a request to check if the status was updated
-		requestMsg := &g.StatusMessage[testStatus]{
-			From:              *clientURL,
-			StatusMessageType: g.StatusRequest,
-		}
+		requestMsg := g.NewStatusMessageRequest(*clientURL)
 
-		err = statusNode.Deliver(requestMsg)
+		err = statusNode.Deliver(&requestMsg)
 		if err != nil {
 			t.Fatalf("Failed to deliver status request message: %v", err)
 		}
@@ -202,11 +192,8 @@ func TestStatusNode(t *testing.T) {
 		}
 
 		// Try ProceedOnAnyRoute (should fail)
-		msg, err := g.NewStatusMessageRequest[any](dummyNode.Address())
-		if err != nil {
-			t.Fatalf("Failed to create status message: %v", err)
-		}
-		err = statusNode.ProceedOnAnyRoute(msg)
+		msg := g.NewStatusMessageRequest(dummyNode.Address())
+		err = statusNode.ProceedOnAnyRoute(&msg)
 		if err == nil {
 			t.Errorf("Expected error for ProceedOnAnyRoute, got nil")
 		}
