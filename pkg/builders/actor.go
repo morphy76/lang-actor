@@ -4,10 +4,10 @@ import (
 	"net/url"
 
 	i "github.com/morphy76/lang-actor/internal/framework"
-	f "github.com/morphy76/lang-actor/pkg/framework"
+	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
-// NewActor creates a new actor with the given address.
+// NewActor creates a new actor with the given address. Mutation is fully driven by the message.
 // Supported schemas are:
 // - actor://
 //
@@ -15,21 +15,46 @@ import (
 //   - T: The type of the actor state.
 //
 // Parameters:
-//   - address (url.URL): The URL address that specifies the actor's location and protocol.
-//   - processingFn (ProcessingFn): The function to process messages sent to the actor.
+//   - address (url.URL): The address of the actor.
+//   - processingFn (framework.ProcessingFn): The function to process messages sent to the actor.
 //   - initialState (T): The initial state of the actor.
-//   - mailboxConfig (MailboxConfig): Optional configuration for the actor's mailbox.
+//   - mailboxConfig (framework.MailboxConfig): Optional configuration for the actor's mailbox.
 //
 // Returns:
-//   - (Actor): The created Actor instance.
+//   - (framework.Actor): The created Actor instance.
 //   - (error): An error if the actor could not be created.
 func NewActor[T any](
 	address url.URL,
-	processingFn f.ProcessingFn[T],
+	processingFn framework.ProcessingFn[T],
 	initialState T,
-	mailboxConfig ...f.MailboxConfig,
-) (f.Actor[T], error) {
-	return i.NewActor(address, processingFn, initialState, mailboxConfig...)
+	mailboxConfig ...framework.MailboxConfig,
+) (framework.Actor[T], error) {
+	return i.NewActor(address, processingFn, initialState, true, mailboxConfig...)
+}
+
+// NewMutableActor creates a new actor with the given address alwways mutable.
+// Supported schemas are:
+// - actor://
+//
+// Type Parameters:
+//   - T: The type of the actor state.
+//
+// Parameters:
+//   - address (url.URL): The address of the actor.
+//   - processingFn (framework.ProcessingFn): The function to process messages sent to the actor.
+//   - initialState (T): The initial state of the actor.
+//   - mailboxConfig (framework.MailboxConfig): Optional configuration for the actor's mailbox.
+//
+// Returns:
+//   - (framework.Actor): The created Actor instance.
+//   - (error): An error if the actor could not be created.
+func NewMutableActor[T any](
+	address url.URL,
+	processingFn framework.ProcessingFn[T],
+	initialState T,
+	mailboxConfig ...framework.MailboxConfig,
+) (framework.Actor[T], error) {
+	return i.NewActor(address, processingFn, initialState, false, mailboxConfig...)
 }
 
 // SpawnChild creates a new child actor with the given processing function and initial state.
@@ -38,21 +63,21 @@ func NewActor[T any](
 //   - T: The type of the actor state.
 //
 // Parameters:
-//   - parent (Actor): The parent actor that will spawn the child actor.
-//   - processingFn (ProcessingFn): The function to process messages sent to the child actor.
+//   - parent (framework.ActorRef): The reference to the parent actor.
+//   - processingFn (framework.ProcessingFn): The function to process messages sent to the child actor.
 //   - initialState (T): The initial state of the child actor.
-//   - mailboxConfig (MailboxConfig): Optional configuration for the child actor's mailbox.
+//   - mailboxConfig (framework.MailboxConfig): Optional configuration for the child's mailbox.
 //
 // Returns:
-//   - (Actor): The created child Actor instance.
+//   - (framework.Actor): The created child Actor instance.
 //   - (error): An error if the child actor could not be created.
 func SpawnChild[T any](
-	parent f.ActorRef,
-	processingFn f.ProcessingFn[T],
+	parent framework.ActorRef,
+	processingFn framework.ProcessingFn[T],
 	initialState T,
-	mailboxConfig ...f.MailboxConfig,
-) (f.Actor[T], error) {
-	child, err := i.NewActorWithParent(processingFn, initialState, parent, mailboxConfig...)
+	mailboxConfig ...framework.MailboxConfig,
+) (framework.Actor[T], error) {
+	child, err := i.NewActorWithParent(processingFn, initialState, true, parent, mailboxConfig...)
 	if err != nil {
 		return nil, err
 	}

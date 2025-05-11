@@ -8,8 +8,8 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestNewMailboxConfigWithBlockPolicy(t *testing.T) {
-	t.Log("NewMailboxConfigWithBlockPolicy test suite")
+func TestNewMailboxConfig(t *testing.T) {
+	t.Log("TestNewMailboxConfig test suite")
 
 	t.Run("Creates mailbox with block policy and specified capacity", func(t *testing.T) {
 		t.Log("Should create a mailbox configuration with block policy and specified capacity")
@@ -20,10 +20,6 @@ func TestNewMailboxConfigWithBlockPolicy(t *testing.T) {
 		assert.Equal(t, config.Capacity, capacity)
 		assert.Equal(t, config.Policy, framework.BackpressurePolicyBlock)
 	})
-}
-
-func TestNewMailboxConfigWithFailPolicy(t *testing.T) {
-	t.Log("NewMailboxConfigWithFailPolicy test suite")
 
 	t.Run("Creates mailbox with fail policy and specified capacity", func(t *testing.T) {
 		t.Log("Should create a mailbox configuration with fail policy and specified capacity")
@@ -34,10 +30,6 @@ func TestNewMailboxConfigWithFailPolicy(t *testing.T) {
 		assert.Equal(t, config.Capacity, capacity)
 		assert.Equal(t, config.Policy, framework.BackpressurePolicyFail)
 	})
-}
-
-func TestNewMailboxConfigWithUnboundedPolicy(t *testing.T) {
-	t.Log("NewMailboxConfigWithUnboundedPolicy test suite")
 
 	t.Run("Creates mailbox with fail policy and large capacity", func(t *testing.T) {
 		t.Log("Should create a mailbox configuration with fail policy and large capacity for unbounded behavior")
@@ -47,10 +39,6 @@ func TestNewMailboxConfigWithUnboundedPolicy(t *testing.T) {
 		assert.Equal(t, config.Capacity, 1000000)
 		assert.Equal(t, config.Policy, framework.BackpressurePolicyFail)
 	})
-}
-
-func TestNewMailboxConfigWithDropNewestPolicy(t *testing.T) {
-	t.Log("NewMailboxConfigWithDropNewestPolicy test suite")
 
 	t.Run("Creates mailbox with drop newest policy and specified capacity", func(t *testing.T) {
 		t.Log("Should create a mailbox configuration with drop newest policy and specified capacity")
@@ -61,10 +49,6 @@ func TestNewMailboxConfigWithDropNewestPolicy(t *testing.T) {
 		assert.Equal(t, config.Capacity, capacity)
 		assert.Equal(t, config.Policy, framework.BackpressurePolicyDropNewest)
 	})
-}
-
-func TestNewMailboxConfigWithDropOldestPolicy(t *testing.T) {
-	t.Log("NewMailboxConfigWithDropOldestPolicy test suite")
 
 	t.Run("Creates mailbox with drop oldest policy and specified capacity", func(t *testing.T) {
 		t.Log("Should create a mailbox configuration with drop oldest policy and specified capacity")

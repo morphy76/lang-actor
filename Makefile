@@ -2,8 +2,8 @@ GO := go
 
 GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
-GCFLAGS := #-gcflags="-m -l"
-TESTFLAGS := -v
+GCFLAGS := -gcflags="-m -l"
+TESTFLAGS := -v -count=1
 
 test:
 	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -v '/tools')
@@ -27,3 +27,6 @@ run-calculator-case:
 run-echowithchild-case:
 	@echo "With Full Vibes (Github Copilot using Claude 3.7 Sonnet)"
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echowithchild/run.go
+
+run-simplegraph-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/simple/run.go

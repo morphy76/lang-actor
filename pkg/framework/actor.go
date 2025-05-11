@@ -3,6 +3,8 @@ package framework
 import (
 	"errors"
 	"net/url"
+
+	"github.com/morphy76/lang-actor/pkg/common"
 )
 
 // ErrorInvalidActorAddress is returned when an actor address is invalid.
@@ -49,7 +51,6 @@ type MailboxConfig struct {
 	// Capacity defines the maximum number of messages the mailbox can hold
 	// Ignored when using BackpressurePolicyUnbounded
 	Capacity int
-
 	// Policy defines how the mailbox handles pressure when reaching capacity
 	Policy BackpressurePolicy
 }
@@ -57,37 +58,78 @@ type MailboxConfig struct {
 // Addressable is the interface for the routing layer of the actor model.
 type Addressable interface {
 	// Actor URI
+	//
+	// Returns:
+	//   - (url.URL): The URL of the actor.
 	Address() url.URL
 	// Deliver a message to the actor
+	//
+	// Parameters:
+	//   - msg (Message): The message to be delivered.
+	//
+	// Returns:
+	//   - (error): An error if the delivery fails, otherwise nil.
 	Deliver(msg Message) error
 	// Send is a function to send messages to other actors.
+	//
+	// Parameters:
+	//   - msg (Message): The message to be sent.
+	//   - addressable (Addressable): The addressable actor to which the message is sent.
+	//
+	// Returns:
+	//   - (error): An error if the sending fails, otherwise nil.
 	Send(msg Message, addressable Addressable) error
 }
 
 // Controllable is the interface for controllable actors.
 type Controllable interface {
 	// Stop the actor
+	//
+	// Returns:
+	//   - (chan bool): A channel that is closed when the actor is stopped.
+	//   - (error): An error if the stopping fails, otherwise nil.
 	Stop() (chan bool, error)
 	// Status of the actor
+	//
+	// Returns:
+	//   - (ActorStatus): The status of the actor.
 	Status() ActorStatus
 }
 
 // Controller is the interface for the controller of the actor model.
 type Controller interface {
 	// Append a child actor
+	//
+	// Parameters:
+	//   - child (ActorRef): The child actor to be appended.
+	//
+	// Returns:
+	//   - (error): An error if the appending fails, otherwise nil.
 	Append(child ActorRef) error
 	// Crop a child actor
+	//
+	// Parameters:
+	//   - child (url.URL): The URL of the child actor to be cropped.
+	//
+	// Returns:
+	//   - (ActorRef): The cropped child actor.
+	//   - (error): An error if the cropping fails, otherwise nil.
 	Crop(url.URL) (ActorRef, error)
 }
 
 // Relationable is the interface for the relationable actors.
 type Relationable interface {
 	// GetParent returns the parent actor of the current actor.
+	//
+	// Returns:
+	//   - (ActorRef): The parent actor.
+	//   - (bool): A boolean indicating whether the parent actor exists.
 	GetParent() (ActorRef, bool)
 }
 
 // ActorRef is the interface for the actor reference.
 type ActorRef interface {
+	common.Visitable
 	Controllable
 	Controller
 	Addressable
@@ -101,17 +143,23 @@ type ActorRef interface {
 type Actor[T any] interface {
 	ActorRef
 	// State of the actor
+	//
+	// Returns:
+	//   - (T): The state of the actor.
 	State() T
 }
 
 // Message is the interface for messages sent to actors.
-//
-// Type Parameters:
-//   - T: The type of the message.
 type Message interface {
 	// Sender returns the URL of the sender.
+	//
+	// Returns:
+	//   - (url.URL): The URL of the sender.
 	Sender() url.URL
 	// Mutation returns true if the message is an actor mutation.
+	//
+	// Returns:
+	//   - (bool): A boolean indicating whether the message is a mutation.
 	Mutation() bool
 }
 
@@ -127,8 +175,8 @@ type Message interface {
 //   - T: The type of the actor state.
 //
 // Parameters:
-//   - msg: The message of type T to be processed.
-//   - self: The actor view of type T that is processing the message.
+//   - msg: The message of type M to be processed.
+//   - self: The actor instance that is processing the message.
 //
 // Returns:
 //   - Payload[T]: The updated state of the actor after processing the message.
@@ -144,9 +192,6 @@ type ProcessingFn[T any] func(
 //
 // This function is typically used within the actor system to send messages
 // between actors.
-//
-// Type Parameters:
-//   - M: The type of the message.
 //
 // Parameters:
 //   - msg: The message of type M to be sent.
