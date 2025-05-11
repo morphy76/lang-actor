@@ -7,6 +7,5 @@ import (
 // Graph represents the actor, runnable, graph.
 type Graph interface {
 	r.Resolver
-	// TODO Accept accepts a todo item.
 	Accept(todo any) error
 }

@@ -30,7 +30,6 @@ func NewStatusNode(initialStatus interface{}, graphName string) (g.Node, error) 
 	}
 
 	taskFn := func(msg f.Message, self f.Actor[interface{}]) (interface{}, error) {
-		// TODO optimistic locking to manage ghost reads
 		if msg == nil {
 			return self.State(), fmt.Errorf("message is nil")
 		}

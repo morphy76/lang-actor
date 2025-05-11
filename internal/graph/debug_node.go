@@ -59,8 +59,6 @@ func NewDebugNode() (g.Node, error) {
 
 	taskFn := func(msg f.Message, self f.Actor[debugNodeState]) (debugNodeState, error) {
 
-		// TODO timeout context between request (not a config message or status) and response (receiving a config message)
-
 		statusResponse, okStatus := msg.(*g.StatusMessage)
 		configResponse, okConfig := msg.(*g.ConfigMessage)
 

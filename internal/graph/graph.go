@@ -34,7 +34,6 @@ func (m *acceptedMessage) Mutation() bool {
 // Accept accepts a todo item and proceeds it on the root node.
 func (g *graph) Accept(todo any) error {
 	if g.rootNode == nil {
-		// TODO: handle error
 		return fmt.Errorf("TODO error")
 	}
 

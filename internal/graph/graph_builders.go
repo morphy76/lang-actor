@@ -61,7 +61,5 @@ func NewGraph[T any](
 	statusNode.Visit(registerFn)
 	statusNode.SetResolver(graph)
 
-	// TODO it should send an init message to the root node which propagates to all its edges recursively
-
 	return graph, nil
 }
