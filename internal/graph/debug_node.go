@@ -52,7 +52,7 @@ func NewDebugNode() (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode := newNode[debugNodeState](nil, *address)
+	baseNode := NewNode(*address)
 	useDebugNode := &debugNode{
 		node: *baseNode,
 	}

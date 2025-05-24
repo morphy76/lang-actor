@@ -24,7 +24,7 @@ func NewStatusNode(initialStatus interface{}, graphName string) (g.Node, error) 
 		return nil, err
 	}
 
-	baseNode := newNode[interface{}](nil, *address)
+	baseNode := NewNode(*address)
 	useNode := &statusNode{
 		node: *baseNode,
 	}

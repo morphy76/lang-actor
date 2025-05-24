@@ -25,7 +25,7 @@ func NewConfigNode(config map[string]any, graphName string) (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode := newNode[map[string]any](nil, *address)
+	baseNode := NewNode(*address)
 
 	taskFn := func(msg f.Message, self f.Actor[map[string]any]) (map[string]any, error) {
 

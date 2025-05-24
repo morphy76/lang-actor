@@ -33,10 +33,12 @@ func NewRootNode() (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode := newNode(rootTask, *address)
-	return &rootNode{
+	baseNode := NewNode(*address)
+	rv := &rootNode{
 		node: *baseNode,
-	}, nil
+	}
+	rv.actor = rootTask
+	return rv, nil
 }
 
 // NewEndNode creates a new instance of the end node in the actor graph.
@@ -65,8 +67,10 @@ func NewEndNode() (g.Node, chan bool, error) {
 		return nil, nil, err
 	}
 
-	baseNode := newNode(endTask, *address)
-	return &endNode{
+	baseNode := NewNode(*address)
+	rv := &endNode{
 		node: *baseNode,
-	}, endCh, nil
+	}
+	rv.actor = endTask
+	return rv, endCh, nil
 }
