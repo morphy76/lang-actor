@@ -3,10 +3,10 @@ GO := go
 GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
 GCFLAGS := -gcflags="-m -l"
-TESTFLAGS := -v -count=1
+TESTFLAGS := -v -count=1 -timeout=2s
 
 test:
-	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -v '/tools')
+	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -vE '/tools/|/examples/')
 
 run-echo-case:
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echo/run.go

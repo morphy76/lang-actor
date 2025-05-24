@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/url"
 
-	f "github.com/morphy76/lang-actor/pkg/framework"
+	"github.com/morphy76/lang-actor/pkg/common"
+	c "github.com/morphy76/lang-actor/pkg/common"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 	r "github.com/morphy76/lang-actor/pkg/routing"
 )
@@ -12,11 +13,11 @@ import (
 var staticGraphAssertion g.Graph = (*graph)(nil)
 
 type graph struct {
-	resolvables map[url.URL]*f.Addressable
+	resolvables map[url.URL]*c.Addressable
 	graphURL    url.URL
 	rootNode    g.RootNode
-	configNode  g.Node
-	statusNode  g.Node
+	config      g.GraphConfiguration
+	status      g.GraphState
 	addressBook r.AddressBook
 }
 
@@ -32,7 +33,7 @@ func (m *acceptedMessage) Mutation() bool {
 }
 
 // Accept accepts a todo item and proceeds it on the root node.
-func (g *graph) Accept(todo any) error {
+func (g *graph) Accept(todo common.Message) error {
 	if g.rootNode == nil {
 		return fmt.Errorf("TODO error")
 	}
@@ -41,7 +42,7 @@ func (g *graph) Accept(todo any) error {
 		sender: g.graphURL,
 	}
 
-	if err := g.rootNode.ProceedOnAnyRoute(mex); err != nil {
+	if err := g.rootNode.Accept(mex); err != nil {
 		return err
 	}
 
@@ -49,16 +50,26 @@ func (g *graph) Accept(todo any) error {
 }
 
 // Register registers the given URL with the provided Addressable.
-func (g *graph) Register(addressable f.Addressable) error {
+func (g *graph) Register(addressable c.Addressable) error {
 	return g.addressBook.Register(addressable)
 }
 
 // Resolve resolves the given URL to a framework.Addressable.
-func (g *graph) Resolve(address url.URL) (f.Addressable, bool) {
+func (g *graph) Resolve(address url.URL) (c.Addressable, bool) {
 	return g.addressBook.Resolve(address)
 }
 
 // Query queries the address book for the given schema and path parts.
-func (g *graph) Query(schema string, pathParts ...string) []f.Addressable {
+func (g *graph) Query(schema string, pathParts ...string) []c.Addressable {
 	return g.addressBook.Query(schema, pathParts...)
+}
+
+// State returns the current state of the graph.
+func (g *graph) State() g.GraphState {
+	return g.status
+}
+
+// Config returns the configuration of the graph.
+func (g *graph) Config() g.GraphConfiguration {
+	return g.config
 }

@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/morphy76/lang-actor/internal/routing"
-	f "github.com/morphy76/lang-actor/pkg/framework"
+	c "github.com/morphy76/lang-actor/pkg/common"
 	"gotest.tools/v3/assert"
 )
 
-var staticMockActorAssertion f.Addressable = (*mockActor)(nil)
+var staticMockActorAssertion c.Addressable = (*mockActor)(nil)
 
 type mockActor struct {
 	address url.URL
@@ -19,11 +19,11 @@ func (m *mockActor) Address() url.URL {
 	return m.address
 }
 
-func (m *mockActor) Deliver(msg f.Message) error {
+func (m *mockActor) Deliver(msg c.Message) error {
 	return nil
 }
 
-func (m *mockActor) Send(msg f.Message, actor f.Addressable) error {
+func (m *mockActor) Send(msg c.Message, actor c.Addressable) error {
 	return nil
 }
 

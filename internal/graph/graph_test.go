@@ -21,7 +21,11 @@ func TestNewGraph(t *testing.T) {
 			t.Errorf("Expected a RootNode, but got: %v", rootNode)
 		}
 
-		newGraph, err := graph.NewGraph(uuid.NewString(), rootNode, "", make(map[string]any))
+		initialState := make(map[string]any)
+		initialState["key1"] = "value1"
+		initialState["key2"] = 42
+
+		newGraph, err := graph.NewGraph(uuid.NewString(), rootNode, initialState, make(map[string]any))
 		if err != nil {
 			t.Errorf("Expected no error, but got: %v", err)
 		}

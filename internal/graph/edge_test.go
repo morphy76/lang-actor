@@ -38,26 +38,9 @@ func TestSimpleGraph(t *testing.T) {
 
 		addressBook := builders.NewAddressBook()
 
-		cfgNode, err := graph.NewConfigNode(cfg, "testGraph")
-		if err != nil {
-			t.Errorf("Error creating config node: %v", err)
-		}
-		cfgNode.SetResolver(addressBook)
-		addressBook.Register(cfgNode)
-		addressBook.Register(cfgNode.ActorRef())
-
-		statusNode, err := graph.NewStatusNode(cfg, "testGraph")
-		if err != nil {
-			t.Errorf("Error creating status node: %v", err)
-		}
-		statusNode.SetResolver(addressBook)
-		addressBook.Register(statusNode)
-		addressBook.Register(statusNode.ActorRef())
-
 		rootNode, err := graph.NewRootNode()
 		rootNode.SetResolver(addressBook)
 		addressBook.Register(rootNode)
-		addressBook.Register(rootNode.ActorRef())
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -65,7 +48,6 @@ func TestSimpleGraph(t *testing.T) {
 		childNode, err := graph.NewDebugNode()
 		childNode.SetResolver(addressBook)
 		addressBook.Register(childNode)
-		addressBook.Register(childNode.ActorRef())
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -73,7 +55,6 @@ func TestSimpleGraph(t *testing.T) {
 		endNode, endCh, err := graph.NewEndNode()
 		endNode.SetResolver(addressBook)
 		addressBook.Register(endNode)
-		addressBook.Register(endNode.ActorRef())
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -87,7 +68,7 @@ func TestSimpleGraph(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.ProceedOnAnyRoute(&mockMessage{
+		err = rootNode.Accept(&mockMessage{
 			sender: rootNode.Address(),
 		})
 		if err != nil {

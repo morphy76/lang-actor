@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/morphy76/lang-actor/pkg/builders"
+	"github.com/morphy76/lang-actor/pkg/common"
 	"github.com/morphy76/lang-actor/pkg/framework"
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
@@ -59,8 +60,13 @@ func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actor
 		fmt.Println("Sending message to:", msg.Sender().Host)
 
 		addressable, _ := addressBook.Resolve(msg.Sender())
+		destination, ok := addressable.(common.Transport)
+		if !ok {
+			return self.State(), fmt.Errorf("cannot resolve addressable %s to transport", msg.Sender().Host)
+		} else {
+			self.Send(content, destination)
+		}
 
-		self.Send(content, addressable)
 		fmt.Println("-----------------------------------")
 		return actorState{processedMessages: self.State().processedMessages + 1}, nil
 	}

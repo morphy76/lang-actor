@@ -13,10 +13,6 @@ type GraphStatus struct {
 	Counter int
 }
 
-type nodeState struct {
-	originalMessage f.Message
-}
-
 func NewCounterNode() (g.Node, error) {
 
 	address, err := url.Parse("graph://nodes/counter/" + uuid.NewString())
@@ -24,41 +20,41 @@ func NewCounterNode() (g.Node, error) {
 		return nil, err
 	}
 
-	taskFn := func(msg f.Message, self f.Actor[nodeState]) (nodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 
-		statusResponse, okStatus := msg.(*g.StatusMessage)
+		// statusResponse, okStatus := msg.(*g.StatusMessage)
 
-		if okStatus {
-			curVal := statusResponse.Value.(*GraphStatus).Counter
-			if curVal < 10 {
-				// g.NewStatusMessageUpdate(self.Address(), &GraphStatus{
-				// 	Counter: curVal + 1,
-				// }).Deliver(statusResponse.Sender())
-				// route to 'iterate'
+		// if okStatus {
+		// 	curVal := statusResponse.Value.(*GraphStatus).Counter
+		// 	if curVal < 10 {
+		// 		// g.NewStatusMessageUpdate(self.Address(), &GraphStatus{
+		// 		// 	Counter: curVal + 1,
+		// 		// }).Deliver(statusResponse.Sender())
+		// 		// route to 'iterate'
 
-				// err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
-				// if err != nil {
-				// 	return self.State(), err
-				// }
-			} else {
-				// route to 'leavingCounter'
+		// 		// err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
+		// 		// if err != nil {
+		// 		// 	return self.State(), err
+		// 		// }
+		// 	} else {
+		// 		// route to 'leavingCounter'
 
-				// err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
-				// if err != nil {
-				// 	return self.State(), err
-				// }
-			}
-		} else {
-			// requestStatus := g.NewStatusMessageRequest(self.Address())
-			// statusNodes := useDebugNode.GetResolver().Query("graph", "nodes", "status")
-			// if len(statusNodes) == 0 {
-			// 	return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no status node found"))
-			// }
-			// statusNodes[0].Deliver(&requestStatus)
-			return nodeState{
-				originalMessage: msg,
-			}, nil
-		}
+		// 		// err = useDebugNode.ProceedOnAnyRoute(self.State().originalMessage)
+		// 		// if err != nil {
+		// 		// 	return self.State(), err
+		// 		// }
+		// 	}
+		// } else {
+		// 	// requestStatus := g.NewStatusMessageRequest(self.Address())
+		// 	// statusNodes := useDebugNode.GetResolver().Query("graph", "nodes", "status")
+		// 	// if len(statusNodes) == 0 {
+		// 	// 	return self.State(), errors.Join(g.ErrorInvalidRouting, fmt.Errorf("no status node found"))
+		// 	// }
+		// 	// statusNodes[0].Deliver(&requestStatus)
+		// 	return nodeState{
+		// 		originalMessage: msg,
+		// 	}, nil
+		// }
 
 		return self.State(), nil
 	}
@@ -66,7 +62,6 @@ func NewCounterNode() (g.Node, error) {
 	return builders.NewCustomNode(
 		address,
 		taskFn,
-		nodeState{},
-		false,
+		true,
 	)
 }

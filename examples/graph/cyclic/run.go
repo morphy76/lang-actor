@@ -59,11 +59,7 @@ func main() {
 
 	config := make(map[string]any)
 
-	graphStatus := nodes.GraphStatus{
-		Counter: 0,
-	}
-
-	graph, err := builders.NewGraph(rootNode, graphStatus, config)
+	graph, err := builders.NewGraph(rootNode, config)
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
 		return
@@ -81,5 +77,11 @@ func main() {
 	}
 
 	<-endCh
-	fmt.Println("End of the graph having counter value:", graphStatus.Counter)
+	val, found := graph.State().Value("counter")
+	if !found {
+		fmt.Println("Counter value not found in the graph state")
+		return
+	}
+
+	fmt.Println("End of the graph having counter value:", val)
 }

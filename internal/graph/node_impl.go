@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 	"sync"
 
 	c "github.com/morphy76/lang-actor/pkg/common"
@@ -24,31 +23,17 @@ type node struct {
 
 	address url.URL
 	actor   f.ActorRef
-}
 
-// ActorRef returns the actor reference of the node
-func (r *node) ActorRef() f.ActorRef {
-	return r.actor
+	actorOutcome chan string
+
+	nodeState g.NodeState
 }
 
 // Edges returns the edges of the node
-func (r *node) Edges(includeInverse bool) []f.Addressable {
-	edges := make([]f.Addressable, 0, len(r.edges))
-	count := 0
-	for edgeName, edge := range r.edges {
-		if !includeInverse && strings.Contains(edgeName, "inverse-") {
-			continue
-		}
-		count++
-		edges = append(edges, edge.Destination)
-	}
-	if includeInverse {
-		return edges
-	}
-
-	rv := make([]f.Addressable, count)
-	for _, edge := range edges {
-		rv = append(rv, edge)
+func (r *node) Edges() []c.Addressable {
+	rv := make([]c.Addressable, 0, len(r.edges))
+	for _, edge := range r.edges {
+		rv = append(rv, edge.Destination)
 	}
 
 	return rv
@@ -71,59 +56,13 @@ func (r *node) OneWayRoute(name string, destination g.Node) error {
 	return nil
 }
 
-// TwoWayRoute adds a new possible outgoing route from the node
-func (r *node) TwoWayRoute(name string, destination g.Node) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	if _, ok := destination.(*rootNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] to root node", name, r.Address()))
-	}
-
-	if _, ok := destination.(*endNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] from end node", name, r.Address()))
-	}
-
-	r.edges[name] = edge{
-		Name:        name,
-		Destination: destination,
-	}
-
-	var meAsNode g.Node = r
-	return destination.OneWayRoute("inverse-"+name, meAsNode)
-}
-
 // DestinationAddress returns the address of the destination node
 func (r *node) Address() url.URL {
 	return r.address
 }
 
-// Deliver delivers a message to the node
-func (r *node) Deliver(mex f.Message) error {
-	return r.actor.Deliver(mex)
-}
-
-// Send sends a message to the node
-func (r *node) Send(mex f.Message, addressable f.Addressable) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	for _, route := range r.edges {
-		if route.Destination.Address() == addressable.Address() {
-			addressable, found := r.GetResolver().Resolve(route.Destination.Address())
-			if !found {
-				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
-			} else {
-				return addressable.Deliver(mex)
-			}
-		}
-	}
-	destinationAddress := fmt.Sprintf("%s%s", addressable.Address().Host, addressable.Address().Path)
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%v]", destinationAddress, r.Address()))
-}
-
 // ProceedOnAnyRoute proceeds with the first route available
-func (r *node) ProceedOnAnyRoute(mex f.Message) error {
+func (r *node) ProceedOnAnyRoute(mex c.Message) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
@@ -137,8 +76,32 @@ func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 		if !found {
 			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 		} else {
-			return addressable.Deliver(mex)
+			handler, ok := addressable.(c.MessageHandler)
+			if !ok {
+				return fmt.Errorf("destination [%v] is not a message handler", addressable.Address())
+			}
+			return handler.Accept(mex)
 		}
+	}
+
+	return nil
+}
+
+func (r *node) Accept(message c.Message) error {
+	if r.actor == nil {
+		return fmt.Errorf("node [%v] has no actor", r.Address())
+	}
+
+	if err := r.actor.Deliver(message); err != nil {
+		return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
+	}
+
+	// TODO implement a timeout for the outcome channel
+	outcome := <-r.actorOutcome
+	if outcome != "" {
+		// todo:pick a route according to the outcome
+	} else {
+		r.ProceedOnAnyRoute(message)
 	}
 
 	return nil
@@ -158,7 +121,6 @@ func (r *node) GetResolver() r.Resolver {
 func (r *node) Visit(fn c.VisitFn) {
 
 	fn(r)
-	fn(r.actor)
 
 	for _, edge := range r.edges {
 		visitableDestination, ok := edge.Destination.(c.Visitable)
@@ -166,4 +128,24 @@ func (r *node) Visit(fn c.VisitFn) {
 			visitableDestination.Visit(fn)
 		}
 	}
+}
+
+// SetConfig sets the configuration for the graph-aware component.
+func (r *node) SetConfig(config g.GraphConfiguration) {
+	r.nodeState.GraphConfig = config
+}
+
+// SetState sets the state for the graph-aware component.
+func (r *node) SetState(state g.GraphState) {
+	r.nodeState.GraphState = state
+}
+
+// GetConfig retrieves the configuration of the graph-aware component.
+func (r *node) GetConfig() g.GraphConfiguration {
+	return r.nodeState.GraphConfig
+}
+
+// GetState retrieves the state of the graph-aware component.
+func (r *node) GetState() g.GraphState {
+	return r.nodeState.GraphState
 }

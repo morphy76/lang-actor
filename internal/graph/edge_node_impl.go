@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	f "github.com/morphy76/lang-actor/pkg/framework"
+	c "github.com/morphy76/lang-actor/pkg/common"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
@@ -32,11 +32,6 @@ func (r *rootNode) OneWayRoute(name string, destination g.Node) error {
 	return nil
 }
 
-// TwoWayRoute adds a new possible outgoing route from the node
-func (r *rootNode) TwoWayRoute(name string, destination g.Node) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("root node [%v] cannot have a two way route", r.Address()))
-}
-
 type endNode struct {
 	node
 }
@@ -46,12 +41,7 @@ func (r *endNode) OneWayRoute(name string, destination g.Node) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%v] from the end [%v]", name, r.Address()))
 }
 
-// TwoWayRoute adds a new possible outgoing route from the node
-func (r *endNode) TwoWayRoute(name string, destination g.Node) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%v] from the end [%v]", name, r.Address()))
-}
-
 // ProceedOnAnyRoute proceeds with the first route available
-func (r *endNode) ProceedOnAnyRoute(mex f.Message) error {
+func (r *endNode) ProceedOnAnyRoute(mex c.Message) error {
 	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the end [%v]", r.Address()))
 }
