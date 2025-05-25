@@ -9,13 +9,13 @@ import (
 )
 
 // NewRootNode creates a new instance of the actor graph.
-func NewRootNode() (g.Node, error) {
+func NewRootNode(forGraph g.Graph) (g.Node, error) {
 	address, err := url.Parse("graph://edge/root/" + uuid.NewString())
 	if err != nil {
 		return nil, err
 	}
 
-	baseNode, err := NewNode(*address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	baseNode, err := NewNode(forGraph, *address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		self.State().Outcome <- ""
 		return self.State(), nil
 	}, true)
@@ -29,24 +29,21 @@ func NewRootNode() (g.Node, error) {
 }
 
 // NewEndNode creates a new instance of the end node in the actor graph.
-func NewEndNode() (g.Node, chan bool, error) {
+func NewEndNode(forGraph g.Graph) (g.Node, error) {
 	address, err := url.Parse("graph://edge/end/" + uuid.NewString())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	endCh := make(chan bool)
-
-	baseNode, err := NewNode(*address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	baseNode, err := NewNode(forGraph, *address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		self.State().Outcome <- ""
-		endCh <- true
 		return self.State(), nil
 	}, true)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return &endNode{
 		node: *baseNode,
-	}, endCh, nil
+	}, nil
 }

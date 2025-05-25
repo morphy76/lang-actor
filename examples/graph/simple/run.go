@@ -13,35 +13,6 @@ import (
 
 func main() {
 
-	rootNode, err := builders.NewRootNode()
-	if err != nil {
-		fmt.Printf("Error creating root node: %v\n", err)
-		return
-	}
-
-	childNode, err := builders.NewDebugNode()
-	if err != nil {
-		fmt.Printf("Error creating child node: %v\n", err)
-		return
-	}
-
-	endNode, endCh, err := builders.NewEndNode()
-	if err != nil {
-		fmt.Printf("Error creating end node: %v\n", err)
-		return
-	}
-
-	err = rootNode.OneWayRoute("leavingStart", childNode)
-	if err != nil {
-		fmt.Printf("Error creating route from root to child: %v\n", err)
-		return
-	}
-	err = childNode.OneWayRoute("leavingDebug", endNode)
-	if err != nil {
-		fmt.Printf("Error creating route from child to end: %v\n", err)
-		return
-	}
-
 	config := make(map[string]any)
 	config["testCfg1"] = uuid.NewString()
 	config["testCfg2"] = uuid.NewString()
@@ -58,9 +29,38 @@ func main() {
 	whateverURL, _ = url.Parse("https://example.com:8080/ctx?id=1234")
 	initialState["testState5"] = whateverURL
 
-	graph, err := builders.NewGraph(rootNode, config)
+	graph, err := builders.NewGraph(config)
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
+		return
+	}
+
+	rootNode, err := builders.NewRootNode(graph)
+	if err != nil {
+		fmt.Printf("Error creating root node: %v\n", err)
+		return
+	}
+
+	childNode, err := builders.NewDebugNode(graph)
+	if err != nil {
+		fmt.Printf("Error creating child node: %v\n", err)
+		return
+	}
+
+	endNode, err := builders.NewEndNode(graph)
+	if err != nil {
+		fmt.Printf("Error creating end node: %v\n", err)
+		return
+	}
+
+	err = rootNode.OneWayRoute("leavingStart", childNode)
+	if err != nil {
+		fmt.Printf("Error creating route from root to child: %v\n", err)
+		return
+	}
+	err = childNode.OneWayRoute("leavingDebug", endNode)
+	if err != nil {
+		fmt.Printf("Error creating route from child to end: %v\n", err)
 		return
 	}
 
@@ -69,12 +69,11 @@ func main() {
 
 	reader.ReadString('\n')
 
-	err = graph.Accept(uuid.NewString())
+	err = rootNode.Accept(uuid.NewString())
 	if err != nil {
 		fmt.Printf("Error accepting message: %v\n", err)
 		return
 	}
 
-	<-endCh
 	fmt.Println("End of the graph")
 }

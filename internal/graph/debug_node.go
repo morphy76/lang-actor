@@ -35,7 +35,7 @@ func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
 }
 
 // NewDebugNode creates a new instance of a debug node in the actor graph.
-func NewDebugNode() (g.Node, error) {
+func NewDebugNode(forGraph g.Graph) (g.Node, error) {
 
 	address, err := url.Parse("graph://nodes/debug/" + uuid.NewString())
 	if err != nil {
@@ -53,11 +53,7 @@ func NewDebugNode() (g.Node, error) {
 		}
 		fmt.Println("---------------------------------")
 		fmt.Println("System config:")
-		entries := make(map[string]any, len(self.State().GraphConfig.Keys()))
-		for _, key := range self.State().GraphConfig.Keys() {
-			entries[key], _ = self.State().GraphConfig.Value(key)
-		}
-		jsonConfigResponse, err := json.Marshal(entries)
+		jsonConfigResponse, err := json.Marshal(self.State().GraphConfig)
 		if err != nil {
 			fmt.Printf("%s\n", err)
 		} else {
@@ -65,11 +61,7 @@ func NewDebugNode() (g.Node, error) {
 		}
 		fmt.Println("---------------------------------")
 		fmt.Println("Graph status:")
-		entries = make(map[string]any, len(self.State().GraphState.Keys()))
-		for _, key := range self.State().GraphState.Keys() {
-			entries[key], _ = self.State().GraphState.Value(key)
-		}
-		jsonStateResponse, err := json.Marshal(entries)
+		jsonStateResponse, err := json.Marshal(self.State().GraphState)
 		if err != nil {
 			fmt.Printf("%s\n", err)
 		} else {
@@ -80,7 +72,7 @@ func NewDebugNode() (g.Node, error) {
 		return self.State(), nil
 	}
 
-	baseNode, err := NewNode(*address, taskFn, true)
+	baseNode, err := NewNode(forGraph, *address, taskFn, true)
 	if err != nil {
 		return nil, err
 	}

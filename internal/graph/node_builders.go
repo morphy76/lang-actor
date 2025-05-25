@@ -13,6 +13,7 @@ import (
 
 // NewNode creates a new instance of a node in the graph with the given address and actor.
 func NewNode(
+	forGraph g.Graph,
 	address url.URL,
 	taskFn f.ProcessingFn[g.NodeState],
 	transient bool,
@@ -36,12 +37,21 @@ func NewNode(
 		return nil, err
 	}
 
-	return &node{
+	rv := &node{
 		lock:         &sync.Mutex{},
 		edges:        make(map[string]edge, 0),
 		address:      address,
 		actor:        task,
 		actorOutcome: actorOutcome,
 		nodeState:    nodeState,
-	}, nil
+	}
+
+	if forGraph != nil {
+		forGraph.Register(rv)
+		rv.SetResolver(forGraph)
+		rv.SetConfig(forGraph.Config())
+		rv.SetState(forGraph.State())
+	}
+
+	return rv, nil
 }

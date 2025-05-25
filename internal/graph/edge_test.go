@@ -38,21 +38,21 @@ func TestSimpleGraph(t *testing.T) {
 
 		addressBook := builders.NewAddressBook()
 
-		rootNode, err := graph.NewRootNode()
+		rootNode, err := graph.NewRootNode(nil)
 		rootNode.SetResolver(addressBook)
 		addressBook.Register(rootNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode, err := graph.NewDebugNode()
+		childNode, err := graph.NewDebugNode(nil)
 		childNode.SetResolver(addressBook)
 		addressBook.Register(childNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		endNode, endCh, err := graph.NewEndNode()
+		endNode, err := graph.NewEndNode(nil)
 		endNode.SetResolver(addressBook)
 		addressBook.Register(endNode)
 		if err != nil {
@@ -74,7 +74,6 @@ func TestSimpleGraph(t *testing.T) {
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
-		<-endCh
 		t.Log("End node received message, process finished")
 	})
 }

@@ -13,6 +13,7 @@ import (
 )
 
 var staticNodeAssertion g.Node = (*node)(nil)
+var staticNodeMessageAssertion f.Message = (*nodeMessage)(nil)
 
 type node struct {
 	lock *sync.Mutex
@@ -27,6 +28,21 @@ type node struct {
 	actorOutcome chan string
 
 	nodeState g.NodeState
+}
+
+type nodeMessage struct {
+	sender  url.URL
+	payload any
+}
+
+// Sender returns the sender of the message
+func (m nodeMessage) Sender() url.URL {
+	return m.sender
+}
+
+// Mutation returns false, indicating that this message is not a mutation
+func (m nodeMessage) Mutation() bool {
+	return false
 }
 
 // Edges returns the edges of the node
@@ -87,19 +103,47 @@ func (r *node) ProceedOnAnyRoute(mex c.Message) error {
 	return nil
 }
 
-func (r *node) Accept(message c.Message) error {
-	if r.actor == nil {
-		return fmt.Errorf("node [%v] has no actor", r.Address())
+// ProceedOnRoute proceeds the message on a specific route
+func (r *node) ProceedOnRoute(name string, mex c.Message) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	edge, ok := r.edges[name]
+	if !ok {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%v] has no route named [%s]", r.Address(), name))
 	}
+	resolver := r.GetResolver()
+	addressable, found := resolver.Resolve(edge.Destination.Address())
+	if !found {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", edge.Destination.Address(), r.Address()))
+	} else {
+		handler, ok := addressable.(c.MessageHandler)
+		if !ok {
+			return fmt.Errorf("destination [%v] is not a message handler", addressable.Address())
+		}
+		return handler.Accept(mex)
+	}
+}
 
-	if err := r.actor.Deliver(message); err != nil {
-		return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
+func (r *node) Accept(message c.Message) error {
+	_, ok := message.(f.Message)
+	if ok {
+		if err := r.actor.Deliver(message); err != nil {
+			return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
+		}
+	} else {
+		actorMessage := &nodeMessage{
+			sender:  r.actor.Address(),
+			payload: message,
+		}
+		if err := r.actor.Deliver(actorMessage); err != nil {
+			return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
+		}
 	}
 
 	// TODO implement a timeout for the outcome channel
 	outcome := <-r.actorOutcome
 	if outcome != "" {
-		// todo:pick a route according to the outcome
+		r.ProceedOnRoute(outcome, message)
 	} else {
 		r.ProceedOnAnyRoute(message)
 	}
@@ -115,19 +159,6 @@ func (r *node) SetResolver(resolver r.Resolver) {
 // GetResolver returns the resolver for the node
 func (r *node) GetResolver() r.Resolver {
 	return r.resolver
-}
-
-// Visit visits the node and applies the given function
-func (r *node) Visit(fn c.VisitFn) {
-
-	fn(r)
-
-	for _, edge := range r.edges {
-		visitableDestination, ok := edge.Destination.(c.Visitable)
-		if ok {
-			visitableDestination.Visit(fn)
-		}
-	}
 }
 
 // SetConfig sets the configuration for the graph-aware component.

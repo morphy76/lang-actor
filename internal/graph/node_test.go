@@ -15,7 +15,7 @@ func TestNewNode(t *testing.T) {
 
 	t.Run("NewDebugNode", func(t *testing.T) {
 		t.Log("NewDebugNode test case")
-		node, err := graph.NewDebugNode()
+		node, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -33,22 +33,22 @@ func TestNodeRelationships(t *testing.T) {
 
 	t.Run("Add node route", func(t *testing.T) {
 		t.Log("Add node route test case")
-		startNode, err := graph.NewRootNode()
+		startNode, err := graph.NewRootNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		endNode, _, err := graph.NewEndNode()
+		endNode, err := graph.NewEndNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode1, err := graph.NewDebugNode()
+		childNode1, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode2, err := graph.NewDebugNode()
+		childNode2, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"github.com/morphy76/lang-actor/pkg/common"
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
@@ -50,7 +49,6 @@ type GraphState interface {
 // Graph represents the actor, runnable, graph.
 type Graph interface {
 	routing.Resolver
-	common.MessageHandler
 	// Config retrieves the configuration of the graph.
 	//
 	// Returns:

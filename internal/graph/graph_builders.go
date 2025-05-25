@@ -77,7 +77,6 @@ func (g *graphState) Keys() []string {
 // NewGraph creates a new instance of the actor graph.
 func NewGraph(
 	graphName string,
-	rootNode g.RootNode,
 	initialState map[string]any,
 	configs map[string]any,
 ) (g.Graph, error) {
@@ -97,7 +96,6 @@ func NewGraph(
 	graph := &graph{
 		resolvables: make(map[url.URL]*c.Addressable),
 		graphURL:    *graphURL,
-		rootNode:    rootNode,
 		config:      useCfg,
 		status: &graphState{
 			lock: sync.Mutex{},
@@ -110,27 +108,6 @@ func NewGraph(
 	for k, v := range initialState {
 		graph.status.Set(k, v)
 	}
-
-	var registerFn c.VisitFn = func(visitable c.Visitable) {
-		addressable, ok := visitable.(c.Addressable)
-		if !ok {
-			return
-		}
-
-		graph.Register(addressable)
-
-		routable, ok := visitable.(g.Routable)
-		if ok {
-			routable.SetResolver(graph)
-		}
-
-		graphAware, ok := visitable.(g.GraphAware)
-		if ok {
-			graphAware.SetConfig(graph.Config())
-			graphAware.SetState(graph.State())
-		}
-	}
-	rootNode.Visit(registerFn)
 
 	return graph, nil
 }

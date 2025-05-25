@@ -44,6 +44,15 @@ type Routable interface {
 	// Returns:
 	//   - (error): An error if the routing is invalid.
 	ProceedOnAnyRoute(msg common.Message) error
+	// ProceedOnRoute proceeds the message on a specific route.
+	//
+	// Parameters:
+	//   - name (string): The name of the route.
+	//   - msg (common.Message): The message to be sent.
+	//
+	// Returns:
+	//   - (error): An error if the routing is invalid.
+	ProceedOnRoute(name string, msg common.Message) error
 }
 
 type NodeState struct {
@@ -54,7 +63,6 @@ type NodeState struct {
 
 // Node represents a node in the actor graph.
 type Node interface {
-	common.Visitable
 	common.Addressable
 	common.MessageHandler
 	Routable

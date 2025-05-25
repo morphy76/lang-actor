@@ -103,7 +103,6 @@ type Relationable interface {
 
 // ActorRef is the interface for the actor reference.
 type ActorRef interface {
-	common.Visitable
 	common.Addressable
 	common.Transport
 	Controllable

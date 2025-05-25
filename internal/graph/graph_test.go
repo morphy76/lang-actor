@@ -13,19 +13,11 @@ func TestNewGraph(t *testing.T) {
 	t.Run("NewGraph", func(t *testing.T) {
 		t.Log("NewGraph test case")
 
-		rootNode, err := graph.NewRootNode()
-		if err != nil {
-			t.Errorf("Expected no error, but got: %v", err)
-		}
-		if rootNode == nil {
-			t.Errorf("Expected a RootNode, but got: %v", rootNode)
-		}
-
 		initialState := make(map[string]any)
 		initialState["key1"] = "value1"
 		initialState["key2"] = 42
 
-		newGraph, err := graph.NewGraph(uuid.NewString(), rootNode, initialState, make(map[string]any))
+		newGraph, err := graph.NewGraph(uuid.NewString(), initialState, make(map[string]any))
 		if err != nil {
 			t.Errorf("Expected no error, but got: %v", err)
 		}

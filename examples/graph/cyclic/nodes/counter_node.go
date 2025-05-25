@@ -13,7 +13,7 @@ type GraphStatus struct {
 	Counter int
 }
 
-func NewCounterNode() (g.Node, error) {
+func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 
 	address, err := url.Parse("graph://nodes/counter/" + uuid.NewString())
 	if err != nil {
@@ -60,6 +60,7 @@ func NewCounterNode() (g.Node, error) {
 	}
 
 	return builders.NewCustomNode(
+		forGraph,
 		address,
 		taskFn,
 		true,

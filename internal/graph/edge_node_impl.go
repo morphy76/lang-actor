@@ -43,5 +43,10 @@ func (r *endNode) OneWayRoute(name string, destination g.Node) error {
 
 // ProceedOnAnyRoute proceeds with the first route available
 func (r *endNode) ProceedOnAnyRoute(mex c.Message) error {
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route from the end [%v]", r.Address()))
+	return nil
+}
+
+// ProceedOnRoute proceeds with the first route available
+func (r *endNode) ProceedOnRoute(name string, mex c.Message) error {
+	return nil
 }

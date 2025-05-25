@@ -1,10 +1,8 @@
 package graph
 
 import (
-	"fmt"
 	"net/url"
 
-	"github.com/morphy76/lang-actor/pkg/common"
 	c "github.com/morphy76/lang-actor/pkg/common"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 	r "github.com/morphy76/lang-actor/pkg/routing"
@@ -15,7 +13,6 @@ var staticGraphAssertion g.Graph = (*graph)(nil)
 type graph struct {
 	resolvables map[url.URL]*c.Addressable
 	graphURL    url.URL
-	rootNode    g.RootNode
 	config      g.GraphConfiguration
 	status      g.GraphState
 	addressBook r.AddressBook
@@ -30,23 +27,6 @@ func (m *acceptedMessage) Sender() url.URL {
 }
 func (m *acceptedMessage) Mutation() bool {
 	return false
-}
-
-// Accept accepts a todo item and proceeds it on the root node.
-func (g *graph) Accept(todo common.Message) error {
-	if g.rootNode == nil {
-		return fmt.Errorf("TODO error")
-	}
-
-	mex := &acceptedMessage{
-		sender: g.graphURL,
-	}
-
-	if err := g.rootNode.Accept(mex); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Register registers the given URL with the provided Addressable.

@@ -13,7 +13,7 @@ func TestNewEdgeNode(t *testing.T) {
 
 	t.Run("NewRootNode", func(t *testing.T) {
 		t.Log("NewRootNode test case")
-		node, err := graph.NewRootNode()
+		node, err := graph.NewRootNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -27,7 +27,7 @@ func TestNewEdgeNode(t *testing.T) {
 
 	t.Run("NewEndNode", func(t *testing.T) {
 		t.Log("NewEndNode test case")
-		node, _, err := graph.NewEndNode()
+		node, err := graph.NewEndNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -45,12 +45,12 @@ func TestRootNodeRelationships(t *testing.T) {
 
 	t.Run("RootNode can have a single oneway route", func(t *testing.T) {
 		t.Log("RootNode single oneway route test case")
-		rootNode, err := graph.NewRootNode()
+		rootNode, err := graph.NewRootNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode, err := graph.NewDebugNode()
+		childNode, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -60,7 +60,7 @@ func TestRootNodeRelationships(t *testing.T) {
 			t.Errorf("Expected no error, but got: %v", err)
 		}
 
-		anotherChildNode, err := graph.NewDebugNode()
+		anotherChildNode, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -77,12 +77,12 @@ func TestEndNodeRelationships(t *testing.T) {
 
 	t.Run("EndNode cannot have routes", func(t *testing.T) {
 		t.Log("EndNode route restriction test case")
-		endNode, _, err := graph.NewEndNode()
+		endNode, err := graph.NewEndNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode, err := graph.NewDebugNode()
+		childNode, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

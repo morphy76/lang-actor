@@ -12,25 +12,33 @@ import (
 
 func main() {
 
-	rootNode, err := builders.NewRootNode()
+	config := make(map[string]any)
+
+	graph, err := builders.NewGraph(config)
+	if err != nil {
+		fmt.Printf("Error creating graph: %v\n", err)
+		return
+	}
+
+	rootNode, err := builders.NewRootNode(graph)
 	if err != nil {
 		fmt.Printf("Error creating root node: %v\n", err)
 		return
 	}
 
-	debugNode, err := builders.NewDebugNode()
+	debugNode, err := builders.NewDebugNode(graph)
 	if err != nil {
 		fmt.Printf("Error creating debug node: %v\n", err)
 		return
 	}
 
-	counterNode, err := nodes.NewCounterNode()
+	counterNode, err := nodes.NewCounterNode(graph)
 	if err != nil {
 		fmt.Printf("Error creating counter node: %v\n", err)
 		return
 	}
 
-	endNode, endCh, err := builders.NewEndNode()
+	endNode, err := builders.NewEndNode(graph)
 	if err != nil {
 		fmt.Printf("Error creating end node: %v\n", err)
 		return
@@ -57,26 +65,17 @@ func main() {
 		return
 	}
 
-	config := make(map[string]any)
-
-	graph, err := builders.NewGraph(rootNode, config)
-	if err != nil {
-		fmt.Printf("Error creating graph: %v\n", err)
-		return
-	}
-
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Press a enter to start")
 
 	reader.ReadString('\n')
 
-	err = graph.Accept(uuid.NewString())
+	err = rootNode.Accept(uuid.NewString())
 	if err != nil {
 		fmt.Printf("Error accepting message: %v\n", err)
 		return
 	}
 
-	<-endCh
 	val, found := graph.State().Value("counter")
 	if !found {
 		fmt.Println("Counter value not found in the graph state")
