@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -53,29 +52,11 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		fmt.Println("==========================================")
-		fmt.Printf("Debug node [%+v] received message:\n", self.Address())
-		jsonOriginalMessage, err := json.Marshal(msg)
-		if err != nil {
-			fmt.Printf("%s\n", err)
-		} else {
-			fmt.Printf("%s\n", jsonOriginalMessage)
-		}
+		fmt.Printf("Debug node [%+v] received message [%+v]\n", self.Address(), msg)
 		fmt.Println("---------------------------------")
-		fmt.Println("System config:")
-		jsonConfigResponse, err := json.Marshal(self.State().GraphConfig())
-		if err != nil {
-			fmt.Printf("%s\n", err)
-		} else {
-			fmt.Printf("%s\n", jsonConfigResponse)
-		}
+		fmt.Printf("System config [%+v]\n", self.State().GraphConfig())
 		fmt.Println("---------------------------------")
-		fmt.Println("Graph status:")
-		jsonStateResponse, err := json.Marshal(self.State().GraphState())
-		if err != nil {
-			fmt.Printf("%s\n", err)
-		} else {
-			fmt.Printf("%s\n", jsonStateResponse)
-		}
+		fmt.Printf("Graph status [%+v]\n", self.State().GraphState())
 		fmt.Println("==========================================")
 		self.State().Outcome() <- g.WhateverOutcome
 		return self.State(), nil

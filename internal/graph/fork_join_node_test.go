@@ -13,6 +13,11 @@ import (
 
 const errorAddressMessage = "Error generating address: %v"
 
+type simpleConfiguration struct {
+	whatever string
+	anyway   int
+}
+
 func TestForkAndThenJoinNode(t *testing.T) {
 	t.Log("Fork and then join test suite")
 
@@ -20,8 +25,11 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		t.Log("SimpleForkAndThenJoin test case")
 
 		testGraph, err := b.NewGraph(&uUUIDGraphState{
-			uuids: []string{},
-		}, g.NoConfiguration{})
+			uuids: []any{},
+		}, simpleConfiguration{
+			whatever: "test",
+			anyway:   42,
+		})
 		if err != nil {
 			t.Errorf("Error creating graph: %v", err)
 		}
@@ -167,7 +175,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 			t.Errorf("Expected %d UUIDs, but got %d", len(uuids), len(actualUUIDs))
 		}
 
-		uuidMap := make(map[string]bool)
+		uuidMap := make(map[any]bool)
 		for _, u := range uuids {
 			uuidMap[u] = true
 		}
@@ -181,6 +189,8 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		if len(actualUUIDs) > len(uuids) {
 			t.Errorf("Received more UUIDs than expected: got %d, want %d", len(actualUUIDs), len(uuids))
 		}
+
+		t.Logf("Test completed successfully configured with [%v] resulting in state [%+v]", testGraph.Config(), testGraph.State())
 	})
 }
 

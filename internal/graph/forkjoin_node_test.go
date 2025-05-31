@@ -13,7 +13,7 @@ import (
 var staticUUIDGraphStateAssertion g.State = (*uUUIDGraphState)(nil)
 
 type uUUIDGraphState struct {
-	uuids []string
+	uuids []any
 }
 
 func (s *uUUIDGraphState) AppendGraphState(purpose any, value any) error {
@@ -28,7 +28,7 @@ func TestForkJoinNode(t *testing.T) {
 		t.Log("SimpleForkJoin test case")
 
 		testGraph, err := b.NewGraph(&uUUIDGraphState{
-			uuids: []string{},
+			uuids: []any{},
 		}, g.NoConfiguration{})
 		if err != nil {
 			t.Errorf("Error creating graph: %v", err)
@@ -85,7 +85,7 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf("Expected %d UUIDs, but got %d", len(uuids), len(actualUUIDs))
 		}
 
-		uuidMap := make(map[string]bool)
+		uuidMap := make(map[any]bool)
 		for _, u := range uuids {
 			uuidMap[u] = true
 		}
