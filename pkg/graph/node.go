@@ -55,10 +55,11 @@ type Routable interface {
 	ProceedOnRoute(name string, msg common.Message) error
 }
 
+// NodeState holds the state of a node in the actor graph, including its configuration and current state.
 type NodeState struct {
 	Outcome     chan string
-	GraphConfig GraphConfiguration
-	GraphState  GraphState
+	GraphConfig Configuration
+	GraphState  State
 }
 
 // Node represents a node in the actor graph.
@@ -66,7 +67,7 @@ type Node interface {
 	common.Addressable
 	common.MessageHandler
 	Routable
-	GraphAware
+	WithNodeState
 }
 
 // RootNode represents the root node of the actor graph.

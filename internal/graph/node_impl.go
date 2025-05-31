@@ -162,21 +162,11 @@ func (r *node) GetResolver() r.Resolver {
 }
 
 // SetConfig sets the configuration for the graph-aware component.
-func (r *node) SetConfig(config g.GraphConfiguration) {
+func (r *node) SetConfig(config g.Configuration) {
 	r.nodeState.GraphConfig = config
 }
 
 // SetState sets the state for the graph-aware component.
-func (r *node) SetState(state g.GraphState) {
+func (r *node) SetState(state g.State) {
 	r.nodeState.GraphState = state
-}
-
-// GetConfig retrieves the configuration of the graph-aware component.
-func (r *node) GetConfig() g.GraphConfiguration {
-	return r.nodeState.GraphConfig
-}
-
-// GetState retrieves the state of the graph-aware component.
-func (r *node) GetState() g.GraphState {
-	return r.nodeState.GraphState
 }

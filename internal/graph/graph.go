@@ -13,8 +13,8 @@ var staticGraphAssertion g.Graph = (*graph)(nil)
 type graph struct {
 	resolvables map[url.URL]*c.Addressable
 	graphURL    url.URL
-	config      g.GraphConfiguration
-	status      g.GraphState
+	config      g.Configuration
+	status      g.State
 	addressBook r.AddressBook
 }
 
@@ -45,11 +45,11 @@ func (g *graph) Query(schema string, pathParts ...string) []c.Addressable {
 }
 
 // State returns the current state of the graph.
-func (g *graph) State() g.GraphState {
+func (g *graph) State() g.State {
 	return g.status
 }
 
 // Config returns the configuration of the graph.
-func (g *graph) Config() g.GraphConfiguration {
+func (g *graph) Configuration() g.Configuration {
 	return g.config
 }

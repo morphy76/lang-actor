@@ -29,7 +29,7 @@ func main() {
 	whateverURL, _ = url.Parse("https://example.com:8080/ctx?id=1234")
 	initialState["testState5"] = whateverURL
 
-	graph, err := builders.NewGraph(config)
+	graph, err := builders.NewGraph(initialState, config)
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
 		return

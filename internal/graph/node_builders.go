@@ -4,8 +4,6 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/google/uuid"
-
 	"github.com/morphy76/lang-actor/internal/framework"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
@@ -18,7 +16,7 @@ func NewNode(
 	taskFn f.ProcessingFn[g.NodeState],
 	transient bool,
 ) (*node, error) {
-	actorAddress, err := url.Parse("actor://" + address.Host + address.Path + "/" + uuid.NewString())
+	actorAddress, err := url.Parse("actor://" + address.Host + address.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +47,7 @@ func NewNode(
 	if forGraph != nil {
 		forGraph.Register(rv)
 		rv.SetResolver(forGraph)
-		rv.SetConfig(forGraph.Config())
+		rv.SetConfig(forGraph.Configuration())
 		rv.SetState(forGraph.State())
 	}
 

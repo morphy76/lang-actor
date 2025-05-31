@@ -35,9 +35,17 @@ func (r *debugNode) OneWayRoute(name string, destination g.Node) error {
 }
 
 // NewDebugNode creates a new instance of a debug node in the actor graph.
-func NewDebugNode(forGraph g.Graph) (g.Node, error) {
+func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 
-	address, err := url.Parse("graph://nodes/debug/" + uuid.NewString())
+	baseName := "graph://nodes/debug/" + uuid.NewString()
+	if len(nameParts) > 0 {
+		baseName = "graph://nodes/debug/" + nameParts[0] + "/" + uuid.NewString()
+		for i := 1; i < len(nameParts); i++ {
+			baseName += "/" + nameParts[i]
+		}
+	}
+
+	address, err := url.Parse(baseName)
 	if err != nil {
 		return nil, err
 	}
