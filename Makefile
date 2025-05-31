@@ -30,3 +30,9 @@ run-echowithchild-case:
 
 run-simplegraph-case:
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/simple/run.go
+
+run-forknode-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/forknode/run.go
+
+run-forkgraph-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/forkgraph/run.go

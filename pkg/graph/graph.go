@@ -4,12 +4,33 @@ import (
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
+const (
+	// SkipOutcome is a special outcome that indicates the graph should skip to the next step without any action.
+	SkipOutcome = "/dev/null"
+	// WhateverOutcome is a special outcome that indicates the graph can proceed with any action.
+	WhateverOutcome = ""
+)
+
+var staticNoConfiguration Configuration = (*NoConfiguration)(nil)
+
+// NoConfiguration is an empty struct that implements the Configuration interface.
+type NoConfiguration struct{}
+
 // Configuration defines the interface for a graph configuration.
 type Configuration interface {
 }
 
 // State defines the interface for managing state within a graph.
 type State interface {
+	// AppendGraphState appends a new state to the graph.
+	//
+	// Parameters:
+	//   - purpose (any): The purpose of the state.
+	//   - value (any): The value of the state.
+	//
+	// Returns:
+	//   - error: An error if the append operation fails, nil otherwise.
+	AppendGraphState(purpose any, value any) error
 }
 
 // Graph represents the actor, runnable, graph.

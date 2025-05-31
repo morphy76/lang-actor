@@ -14,7 +14,6 @@ import (
 
 var staticNodeAssertion g.Node = (*node)(nil)
 var staticNodeMessageAssertion f.Message = (*nodeMessage)(nil)
-var staticNodeStateAssertion g.NodeState = (*nodeState)(nil)
 
 type nodeMessage struct {
 	sender  url.URL
@@ -31,37 +30,6 @@ func (m nodeMessage) Mutation() bool {
 	return false
 }
 
-type nodeState struct {
-	outcome chan string
-	graph   g.Graph
-}
-
-// Outcome returns the outcome channel for the node state.
-func (ns *nodeState) Outcome() chan string {
-	return ns.outcome
-}
-
-// GraphConfig returns the configuration of the graph associated with the node state.
-func (ns *nodeState) GraphConfig() g.Configuration {
-	if ns.graph == nil {
-		return nil
-	}
-	return ns.graph.Config()
-}
-
-// GraphState returns the state of the graph associated with the node state.
-func (ns *nodeState) GraphState() g.State {
-	if ns.graph == nil {
-		return nil
-	}
-	return ns.graph.State()
-}
-
-// InitState initializes the state for the node state.
-func (ns *nodeState) UpdateGraphState(state g.State) error {
-	return ns.graph.UpdateState(state)
-}
-
 type node struct {
 	lock *sync.Mutex
 
@@ -75,6 +43,8 @@ type node struct {
 	actorOutcome chan string
 
 	nodeState g.NodeState
+
+	multipleOutcomes bool
 }
 
 // Edges returns the edges of the node
@@ -82,6 +52,16 @@ func (r *node) Edges() []c.Addressable {
 	rv := make([]c.Addressable, 0, len(r.edges))
 	for _, edge := range r.edges {
 		rv = append(rv, edge.Destination)
+	}
+
+	return rv
+}
+
+// EdgeNames returns the edges of the node
+func (r *node) EdgeNames() []string {
+	rv := make([]string, 0, len(r.edges))
+	for name := range r.edges {
+		rv = append(rv, name)
 	}
 
 	return rv
@@ -154,6 +134,7 @@ func (r *node) ProceedOnRoute(name string, mex c.Message) error {
 	}
 }
 
+// Accept accepts a message and delivers it to the actor
 func (r *node) Accept(message c.Message) error {
 	_, ok := message.(f.Message)
 	if ok {
@@ -171,11 +152,25 @@ func (r *node) Accept(message c.Message) error {
 	}
 
 	// TODO implement a timeout for the outcome channel
-	outcome := <-r.actorOutcome
-	if outcome != "" {
-		r.ProceedOnRoute(outcome, message)
+	if r.multipleOutcomes {
+		for {
+			outcome := <-r.actorOutcome
+			if outcome == g.SkipOutcome {
+				return nil
+			} else if outcome == g.WhateverOutcome {
+				r.ProceedOnAnyRoute(message)
+				return nil
+			} else {
+				r.ProceedOnRoute(outcome, message)
+			}
+		}
 	} else {
-		r.ProceedOnAnyRoute(message)
+		outcome := <-r.actorOutcome
+		if outcome != g.WhateverOutcome {
+			r.ProceedOnRoute(outcome, message)
+		} else {
+			r.ProceedOnAnyRoute(message)
+		}
 	}
 
 	return nil

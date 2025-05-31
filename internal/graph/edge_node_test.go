@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
 	"github.com/morphy76/lang-actor/internal/graph"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )

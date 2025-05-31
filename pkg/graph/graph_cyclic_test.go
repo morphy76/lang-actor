@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/morphy76/lang-actor/internal/graph"
-	"github.com/morphy76/lang-actor/pkg/builders"
+
+	b "github.com/morphy76/lang-actor/pkg/builders"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
@@ -20,7 +20,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		cfg, okCfg := self.State().GraphConfig().(graphConfig)
-		graphState, okState := self.State().GraphState().(graphState)
+		graphState, okState := self.State().GraphState().(*graphState)
 
 		if !okCfg || !okState {
 			// TODO handle functional error
@@ -28,8 +28,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		}
 
 		if graphState.Counter < cfg.Iterations {
-			graphState.Counter++
-			self.State().UpdateGraphState(graphState)
+			self.State().GraphState().AppendGraphState(nil, nil)
 			self.State().Outcome() <- "iterate"
 		} else {
 			self.State().Outcome() <- "leavingCounter"
@@ -38,7 +37,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		return self.State(), nil
 	}
 
-	return graph.NewCustomNode(
+	return b.NewCustomNode(
 		forGraph,
 		address,
 		taskFn,
@@ -51,6 +50,11 @@ var staticGraphStateAssetion g.State = (*graphState)(nil)
 
 type graphState struct {
 	Counter int
+}
+
+func (s *graphState) AppendGraphState(purpose any, value any) error {
+	s.Counter++
+	return nil
 }
 
 type graphConfig struct {
@@ -71,25 +75,25 @@ func TestNewCyclicGraph(t *testing.T) {
 			Iterations: 10,
 		}
 
-		graph, err := builders.NewGraph(
-			state,
+		graph, err := b.NewGraph(
+			&state,
 			cfg,
 		)
 		if err != nil {
 			t.Errorf("Error creating graph: %v\n", err)
 		}
 
-		rootNode, err := builders.NewRootNode(graph)
+		rootNode, err := b.NewRootNode(graph)
 		if err != nil {
 			t.Errorf("Error creating root node: %v\n", err)
 		}
 
-		upstreamDebugNode, err := builders.NewDebugNode(graph, "upstream")
+		upstreamDebugNode, err := b.NewDebugNode(graph, "upstream")
 		if err != nil {
 			t.Errorf("Error creating upstream debug node: %v\n", err)
 		}
 
-		downstreamDebugNode, err := builders.NewDebugNode(graph, "downstream")
+		downstreamDebugNode, err := b.NewDebugNode(graph, "downstream")
 		if err != nil {
 			t.Errorf("Error creating downstream debug node: %v\n", err)
 		}
@@ -99,7 +103,7 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Error creating counter node: %v\n", err)
 		}
 
-		endNode, err := builders.NewEndNode(graph)
+		endNode, err := b.NewEndNode(graph)
 		if err != nil {
 			t.Errorf("Error creating end node: %v\n", err)
 		}
@@ -135,7 +139,7 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Expected graph config to be of type graphConfig, got %T", graph.Config())
 		}
 
-		currentGraphState, ok := graph.State().(graphState)
+		currentGraphState, ok := graph.State().(*graphState)
 		if !ok {
 			t.Errorf("Expected graph state to be of type graphState, got %T", graph.State())
 		}

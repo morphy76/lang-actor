@@ -4,9 +4,10 @@ import (
 	"net/url"
 	"testing"
 
+	"gotest.tools/v3/assert"
+
 	"github.com/morphy76/lang-actor/internal/routing"
 	c "github.com/morphy76/lang-actor/pkg/common"
-	"gotest.tools/v3/assert"
 )
 
 var staticMockActorAssertion c.Addressable = (*mockActor)(nil)

@@ -9,11 +9,12 @@ import (
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
-func newNode(
+func newNode[T g.NodeState](
 	forGraph g.Graph,
 	address url.URL,
-	taskFn f.ProcessingFn[g.NodeState],
+	taskFn f.ProcessingFn[T],
 	transient bool,
+	attrs ...map[string]any,
 ) (*node, error) {
 
 	actorAddress, err := url.Parse("actor://" + address.Host + address.Path)
@@ -21,12 +22,18 @@ func newNode(
 		return nil, err
 	}
 
-	actorOutcome := make(chan string, 1)
-	useState := &nodeState{
-		outcome: actorOutcome,
-		graph:   forGraph,
+	rv := &node{
+		lock:             &sync.Mutex{},
+		edges:            make(map[string]edge, 0),
+		address:          address,
+		resolver:         forGraph,
+		multipleOutcomes: false,
 	}
-	task, err := framework.NewActor[g.NodeState](
+
+	actorOutcome := make(chan string, 1)
+	useState := g.BasicNodeStateBuilder[T](forGraph, rv, actorOutcome, attrs...)
+
+	task, err := framework.NewActor(
 		*actorAddress,
 		taskFn,
 		useState,
@@ -36,19 +43,13 @@ func newNode(
 		return nil, err
 	}
 
-	rv := &node{
-		lock:         &sync.Mutex{},
-		edges:        make(map[string]edge, 0),
-		address:      address,
-		actor:        task,
-		actorOutcome: actorOutcome,
-		nodeState:    useState,
-		resolver:     forGraph,
-	}
-
 	if forGraph != nil {
 		forGraph.Register(rv)
 	}
+
+	rv.actor = task
+	rv.actorOutcome = actorOutcome
+	rv.nodeState = useState
 
 	return rv, nil
 }

@@ -152,6 +152,15 @@ func (a *actor[T]) GetParent() (f.ActorRef, bool) {
 	return a.parent, true
 }
 
+// Children returns the children of the actor.
+func (a *actor[T]) Children() []f.ActorRef {
+	children := make([]f.ActorRef, 0, len(a.children))
+	for _, child := range a.children {
+		children = append(children, child)
+	}
+	return children
+}
+
 func (a *actor[T]) verifyChildURL(url url.URL) error {
 	if url.Scheme != a.address.Scheme || url.Host != a.address.Host {
 		return f.ErrorInvalidChildURL

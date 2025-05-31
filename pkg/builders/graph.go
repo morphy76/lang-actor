@@ -4,6 +4,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+
 	g "github.com/morphy76/lang-actor/internal/graph"
 	"github.com/morphy76/lang-actor/pkg/framework"
 	"github.com/morphy76/lang-actor/pkg/graph"
@@ -12,8 +13,8 @@ import (
 // NewGraph creates a new instance of the actor graph.
 //
 // Type parameters:
-//   - T (*any): The type of the initial state of the graph.
-//   - C (any): The type of the configurations for the graph.
+//   - T (graph.State): The type of the initial state for the graph.
+//   - C (graph.Configuration): The type of the configuration for the graph.
 //
 // Parameters:
 //   - initialState (T graph.State): The initial state of the graph.
@@ -84,4 +85,50 @@ func NewCustomNode(
 	transient bool,
 ) (graph.Node, error) {
 	return g.NewCustomNode(forGraph, address, taskFn, transient)
+}
+
+// NewForkJoingNode creates a new fork-join node for the given graph for node-scope processing.
+//
+// Type parameters:
+//   - C (graph.NodeState): The type of the state for the child nodes.
+//
+// Parameters:
+//   - forGraph (graph.Graph): The graph to which the fork-join node belongs.
+//   - transient (bool): Whether the node is transient or not.
+//   - taskFn (...framework.ProcessingFn[graph.NodeState]): Optional processing functions for the node.
+//
+// Returns:
+//   - (graph.Node): The created fork-join node.
+//   - (error): An error if the node creation fails.
+func NewForkJoingNode[C graph.NodeState](
+	forGraph graph.Graph,
+	transient bool,
+	taskFn ...framework.ProcessingFn[C],
+) (graph.Node, error) {
+	return g.NewForkJoingNode(forGraph, transient, taskFn...)
+}
+
+// NewForkNode creates a new instance of a fork node in the actor graph.
+//
+// Parameters:
+//   - forGraph (graph.Graph): The graph to which the fork node belongs.
+//
+// Returns:
+//   - (graph.Node): The created fork node.
+//   - (error): An error if the node creation fails.
+func NewForkNode(forGraph graph.Graph) (graph.Node, error) {
+	return g.NewForkNode(forGraph)
+}
+
+// NewJoinNode creates a new instance of a join node in the actor graph.
+//
+// Parameters:
+//   - forGraph (graph.Graph): The graph to which the join node belongs.
+//   - forkNode (graph.Node): The fork node that this join node will connect to.
+//
+// Returns:
+//   - (graph.Node): The created join node.
+//   - (error): An error if the node creation fails.
+func NewJoinNode(forGraph graph.Graph, forkNode graph.Node) (graph.Node, error) {
+	return g.NewJoinNode(forGraph, forkNode)
 }

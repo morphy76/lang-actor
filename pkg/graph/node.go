@@ -36,6 +36,11 @@ type Routable interface {
 	// Returns:
 	//   - ([]common.Addressable): The edges of the node.
 	Edges() []common.Addressable
+	// EdgeNames returns the names of the edges of the node.
+	//
+	// Returns:
+	//   - ([]string): The names of the edges of the node.
+	EdgeNames() []string
 	// ProceedOnAnyRoute proceeds the message on any route.
 	//
 	// Parameters:
@@ -55,12 +60,47 @@ type Routable interface {
 	ProceedOnRoute(name string, msg common.Message) error
 }
 
+// Stateful represents a graph that can maintain its state and configuration.
+type Stateful interface {
+	// GraphConfig returns the configuration of the graph.
+	GraphConfig() Configuration
+	// GraphState returns the current state of the graph.
+	GraphState() State
+	// UpdateGraphState updates the state of the graph.
+	UpdateGraphState(state State) error
+}
+
+// Connected represents a node that is connected to other nodes in the actor graph.
+type Connected interface {
+	// Routes returns the routes of the node.
+	Routes() []string
+}
+
+// WithMutableAttributes represents a node that can have mutable attributes.
+type WithMutableAttributes interface {
+	// SetAttribute sets an attribute for the node.
+	//
+	// Parameters:
+	//   - key (string): The key of the attribute.
+	//   - value (any): The value of the attribute.
+	SetAttribute(key string, value any)
+	// GetAttribute retrieves an attribute for the node.
+	//
+	// Parameters:
+	//   - key (string): The key of the attribute.
+	// Returns:
+	//   - (any): The value of the attribute, or nil if not found.
+	//   - (bool): True if the attribute exists, false otherwise.
+	GetAttribute(key string) (any, bool)
+}
+
 // NodeState holds the state of a node in the actor graph, including its configuration and current state.
 type NodeState interface {
+	Stateful
+	Connected
+	WithMutableAttributes
+	// Outcome returns a channel that will receive the outcome of the node's processing.
 	Outcome() chan string
-	GraphConfig() Configuration
-	GraphState() State
-	UpdateGraphState(state State) error
 }
 
 // Node represents a node in the actor graph.
@@ -82,5 +122,20 @@ type EndNode interface {
 
 // DebugNode represents a node used for debugging purposes.
 type DebugNode interface {
+	Node
+}
+
+// ForkJoinNode represents a node that can handle fork-join patterns in the actor graph.
+type ForkJoinNode interface {
+	Node
+}
+
+// ForkNode is a node that can handle forking in the actor graph.
+type ForkNode interface {
+	Node
+}
+
+// JoinNode is a node that can handle joining in the actor graph.
+type JoinNode interface {
 	Node
 }

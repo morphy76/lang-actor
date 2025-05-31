@@ -3,7 +3,7 @@ package builders
 import (
 	"net/url"
 
-	i "github.com/morphy76/lang-actor/internal/framework"
+	f "github.com/morphy76/lang-actor/internal/framework"
 	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
@@ -29,7 +29,7 @@ func NewActor[T any](
 	initialState T,
 	mailboxConfig ...framework.MailboxConfig,
 ) (framework.Actor[T], error) {
-	return i.NewActor(address, processingFn, initialState, true, mailboxConfig...)
+	return f.NewActor(address, processingFn, initialState, true, mailboxConfig...)
 }
 
 // NewMutableActor creates a new actor with the given address alwways mutable.
@@ -54,7 +54,7 @@ func NewMutableActor[T any](
 	initialState T,
 	mailboxConfig ...framework.MailboxConfig,
 ) (framework.Actor[T], error) {
-	return i.NewActor(address, processingFn, initialState, false, mailboxConfig...)
+	return f.NewActor(address, processingFn, initialState, false, mailboxConfig...)
 }
 
 // SpawnChild creates a new child actor with the given processing function and initial state.
@@ -77,7 +77,7 @@ func SpawnChild[T any](
 	initialState T,
 	mailboxConfig ...framework.MailboxConfig,
 ) (framework.Actor[T], error) {
-	child, err := i.NewActorWithParent(processingFn, initialState, true, parent, mailboxConfig...)
+	child, err := f.NewActorWithParent(processingFn, initialState, true, parent, mailboxConfig...)
 	if err != nil {
 		return nil, err
 	}

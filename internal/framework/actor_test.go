@@ -4,9 +4,10 @@ import (
 	"net/url"
 	"testing"
 
+	"gotest.tools/v3/assert"
+
 	"github.com/morphy76/lang-actor/internal/framework"
 	f "github.com/morphy76/lang-actor/pkg/framework"
-	"gotest.tools/v3/assert"
 )
 
 const actorURI = "actor://example"
