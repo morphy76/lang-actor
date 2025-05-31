@@ -172,7 +172,6 @@ func (r *node) Accept(message c.Message) error {
 
 	// TODO implement a timeout for the outcome channel
 	outcome := <-r.actorOutcome
-	fmt.Printf("-------> Node [%v] received outcome: %s\n", r.Address(), outcome)
 	if outcome != "" {
 		r.ProceedOnRoute(outcome, message)
 	} else {

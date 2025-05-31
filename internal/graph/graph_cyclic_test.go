@@ -1,7 +1,6 @@
 package graph_test
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
 
@@ -27,12 +26,6 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 			// TODO handle functional error
 			self.State().Outcome() <- "leavingCounter"
 		}
-
-		fmt.Printf("-------> Counter Node: %v, Counter: %d, Iterations: %d\n",
-			self.Address(),
-			graphState.Counter,
-			cfg.Iterations,
-		)
 
 		if graphState.Counter < cfg.Iterations {
 			graphState.Counter++
