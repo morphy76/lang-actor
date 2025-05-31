@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/morphy76/lang-actor/internal/graph"
-	"github.com/morphy76/lang-actor/pkg/builders"
+	b "github.com/morphy76/lang-actor/pkg/builders"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
@@ -36,7 +36,7 @@ func TestSimpleGraph(t *testing.T) {
 	t.Run("SimpleGraph", func(t *testing.T) {
 		t.Log("SimpleGraph test case")
 
-		addressBook := builders.NewAddressBook()
+		addressBook := b.NewAddressBook()
 
 		rootNode, err := graph.NewRootNode(nil)
 		rootNode.SetResolver(addressBook)

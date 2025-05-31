@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/morphy76/lang-actor/internal/graph"
-	"github.com/morphy76/lang-actor/pkg/builders"
+
+	b "github.com/morphy76/lang-actor/pkg/builders"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
@@ -38,7 +38,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		return self.State(), nil
 	}
 
-	return graph.NewCustomNode(
+	return b.NewCustomNode(
 		forGraph,
 		address,
 		taskFn,
@@ -71,7 +71,7 @@ func TestNewCyclicGraph(t *testing.T) {
 			Iterations: 10,
 		}
 
-		graph, err := builders.NewGraph(
+		graph, err := b.NewGraph(
 			state,
 			cfg,
 		)
@@ -79,17 +79,17 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Error creating graph: %v\n", err)
 		}
 
-		rootNode, err := builders.NewRootNode(graph)
+		rootNode, err := b.NewRootNode(graph)
 		if err != nil {
 			t.Errorf("Error creating root node: %v\n", err)
 		}
 
-		upstreamDebugNode, err := builders.NewDebugNode(graph, "upstream")
+		upstreamDebugNode, err := b.NewDebugNode(graph, "upstream")
 		if err != nil {
 			t.Errorf("Error creating upstream debug node: %v\n", err)
 		}
 
-		downstreamDebugNode, err := builders.NewDebugNode(graph, "downstream")
+		downstreamDebugNode, err := b.NewDebugNode(graph, "downstream")
 		if err != nil {
 			t.Errorf("Error creating downstream debug node: %v\n", err)
 		}
@@ -99,7 +99,7 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Error creating counter node: %v\n", err)
 		}
 
-		endNode, err := builders.NewEndNode(graph)
+		endNode, err := b.NewEndNode(graph)
 		if err != nil {
 			t.Errorf("Error creating end node: %v\n", err)
 		}

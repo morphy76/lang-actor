@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/morphy76/lang-actor/internal/routing"
-
 	c "github.com/morphy76/lang-actor/pkg/common"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
