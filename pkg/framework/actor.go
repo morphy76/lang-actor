@@ -121,6 +121,8 @@ type Actor[T any] interface {
 	// Returns:
 	//   - (T): The state of the actor.
 	State() T
+	// Children returns the children of the actor.
+	Children() []ActorRef
 }
 
 // Message is the interface for messages sent to actors.

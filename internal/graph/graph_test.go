@@ -7,15 +7,25 @@ import (
 	"github.com/morphy76/lang-actor/internal/graph"
 )
 
+type graphState struct {
+	stateAsMap map[string]any
+}
+
+func (s graphState) AppendGraphState(purpose any, value any) error {
+	return nil
+}
+
 func TestNewGraph(t *testing.T) {
 	t.Log("Graph Builders test suite")
 
 	t.Run("NewGraph", func(t *testing.T) {
 		t.Log("NewGraph test case")
 
-		initialState := make(map[string]any)
-		initialState["key1"] = "value1"
-		initialState["key2"] = 42
+		initialStateMap := make(map[string]any)
+		initialStateMap["key1"] = "value1"
+		initialStateMap["key2"] = 42
+
+		initialState := graphState{stateAsMap: initialStateMap}
 
 		newGraph, err := graph.NewGraph(uuid.NewString(), initialState, make(map[string]any))
 		if err != nil {

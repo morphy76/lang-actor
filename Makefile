@@ -30,3 +30,6 @@ run-echowithchild-case:
 
 run-simplegraph-case:
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/simple/run.go
+
+run-advancedgraph-case:
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/advanced/run.go

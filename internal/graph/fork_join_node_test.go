@@ -16,13 +16,18 @@ type uUUIDGraphState struct {
 	uuids []string
 }
 
+func (s *uUUIDGraphState) AppendGraphState(purpose any, value any) error {
+	s.uuids = append(s.uuids, value.(string))
+	return nil
+}
+
 func TestForkJoinNode(t *testing.T) {
 	t.Log("Fork join test suite")
 
 	t.Run("SimpleForkJoin", func(t *testing.T) {
 		t.Log("SimpleForkJoin test case")
 
-		testGraph, err := b.NewGraph(uUUIDGraphState{
+		testGraph, err := b.NewGraph(&uUUIDGraphState{
 			uuids: []string{},
 		}, g.NoConfiguration{})
 		if err != nil {
@@ -37,7 +42,9 @@ func TestForkJoinNode(t *testing.T) {
 		uuids := []string{uuid.NewString(), uuid.NewString(), uuid.NewString()}
 		uuidGenFn := func(i int) f.ProcessingFn[g.NodeState] {
 			return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
-				self.State().Outcome() <- uuids[i]
+				rv := uuids[i]
+				t.Logf("Processing UUID: %s", rv)
+				self.State().Outcome() <- rv
 				return self.State(), nil
 			}
 		}
@@ -73,7 +80,7 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf("Expected uuids to be generated, but got nil")
 		}
 
-		actualUUIDs := testGraph.State().(uUUIDGraphState).uuids
+		actualUUIDs := testGraph.State().(*uUUIDGraphState).uuids
 		if len(actualUUIDs) != len(uuids) {
 			t.Errorf("Expected %d UUIDs, but got %d", len(uuids), len(actualUUIDs))
 		}

@@ -11,6 +11,14 @@ import (
 	"github.com/morphy76/lang-actor/pkg/builders"
 )
 
+type graphState struct {
+	stateAsMap map[string]any
+}
+
+func (s graphState) AppendGraphState(purpose any, value any) error {
+	return nil
+}
+
 func main() {
 
 	config := make(map[string]any)
@@ -21,13 +29,17 @@ func main() {
 	whateverURL, _ := url.Parse("https://example.com:8080/ctx?id=1234")
 	config["testCfg5"] = whateverURL
 
-	initialState := make(map[string]any)
-	initialState["testState1"] = uuid.NewString()
-	initialState["testState2"] = uuid.NewString()
-	initialState["testState3"] = uuid.NewString()
-	initialState["testState4"] = time.Now()
+	initialStateMap := make(map[string]any)
+	initialStateMap["testState1"] = uuid.NewString()
+	initialStateMap["testState2"] = uuid.NewString()
+	initialStateMap["testState3"] = uuid.NewString()
+	initialStateMap["testState4"] = time.Now()
 	whateverURL, _ = url.Parse("https://example.com:8080/ctx?id=1234")
-	initialState["testState5"] = whateverURL
+	initialStateMap["testState5"] = whateverURL
+
+	initialState := graphState{
+		stateAsMap: initialStateMap,
+	}
 
 	graph, err := builders.NewGraph(initialState, config)
 	if err != nil {
