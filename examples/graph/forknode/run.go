@@ -179,7 +179,7 @@ func createGraphNodes(graph g.Graph, processNames []string) (g.Node, g.Node, g.N
 		processingFuncs = append(processingFuncs, createProcessingFn(name))
 	}
 
-	forkJoinNode, err := builders.NewForkJoingNode[g.NodeState](
+	forkJoinNode, err := builders.NewForkJoingNode(
 		graph,
 		false,
 		processingFuncs...,
