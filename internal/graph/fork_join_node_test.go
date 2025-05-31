@@ -50,28 +50,28 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		if err != nil {
 			t.Errorf(errorAddressMessage, err)
 		}
-		addr2, err := genAddress(2)
-		if err != nil {
-			t.Errorf(errorAddressMessage, err)
-		}
-		addr3, err := genAddress(3)
-		if err != nil {
-			t.Errorf(errorAddressMessage, err)
-		}
 		branch1, err := graph.NewCustomNode(testGraph, addr1, uuidGenFn(0), true)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
+		addr2, err := genAddress(2)
+		if err != nil {
+			t.Errorf(errorAddressMessage, err)
+		}
 		branch2, err := graph.NewCustomNode(testGraph, addr2, uuidGenFn(1), true)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
+		}
+		addr3, err := genAddress(3)
+		if err != nil {
+			t.Errorf(errorAddressMessage, err)
 		}
 		branch3, err := graph.NewCustomNode(testGraph, addr3, uuidGenFn(2), true)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		joinNode, err := graph.NewJoinNode(testGraph)
+		joinNode, err := graph.NewJoinNode(testGraph, forkNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

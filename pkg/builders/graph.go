@@ -13,8 +13,8 @@ import (
 // NewGraph creates a new instance of the actor graph.
 //
 // Type parameters:
-//   - T (*any): The type of the initial state of the graph.
-//   - C (any): The type of the configurations for the graph.
+//   - T (graph.State): The type of the initial state for the graph.
+//   - C (graph.Configuration): The type of the configuration for the graph.
 //
 // Parameters:
 //   - initialState (T graph.State): The initial state of the graph.
@@ -124,10 +124,11 @@ func NewForkNode(forGraph graph.Graph) (graph.Node, error) {
 //
 // Parameters:
 //   - forGraph (graph.Graph): The graph to which the join node belongs.
+//   - forkNode (graph.Node): The fork node that this join node will connect to.
 //
 // Returns:
 //   - (graph.Node): The created join node.
 //   - (error): An error if the node creation fails.
-func NewJoinNode(forGraph graph.Graph) (graph.Node, error) {
-	return g.NewJoinNode(forGraph)
+func NewJoinNode(forGraph graph.Graph, forkNode graph.Node) (graph.Node, error) {
+	return g.NewJoinNode(forGraph, forkNode)
 }

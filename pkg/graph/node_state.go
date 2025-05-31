@@ -11,14 +11,21 @@ var staticNodeStateAssertion NodeState = (*BasicNodeState)(nil)
 //   - forGraph (Graph): The graph to which the node state belongs.
 //   - owner (Node): The owner node of the state.
 //   - outcome (chan string): A channel to receive the outcome of the node's processing.
+//   - attrs (...map[string]any): Optional attributes for the node state.
 //
 // Returns:
 //   - (NodeState): A new instance of BasicNodeState.
-func BasicNodeStateBuilder[T NodeState](forGraph Graph, owner Node, outcome chan string) T {
+func BasicNodeStateBuilder[T NodeState](forGraph Graph, owner Node, outcome chan string, attrs ...map[string]any) T {
 	var rv NodeState = &BasicNodeState{
 		outcome: outcome,
 		graph:   forGraph,
 		owner:   owner,
+		attrs:   make(map[string]any),
+	}
+	for _, attr := range attrs {
+		for k, v := range attr {
+			rv.(*BasicNodeState).attrs[k] = v
+		}
 	}
 	return rv.(T)
 }
@@ -28,6 +35,7 @@ type BasicNodeState struct {
 	outcome chan string
 	graph   Graph
 	owner   Node
+	attrs   map[string]any
 }
 
 // Outcome returns the outcome channel for the node state.
@@ -74,4 +82,15 @@ func (ns *BasicNodeState) UpdateGraphState(state State) error {
 // Routes returns the routes of the node state.
 func (ns *BasicNodeState) Routes() []string {
 	return ns.owner.EdgeNames()
+}
+
+// SetAttribute sets an attribute for the node state.
+func (ns *BasicNodeState) SetAttribute(key string, value any) {
+	ns.attrs[key] = value
+}
+
+// GetAttribute retrieves an attribute for the node state.
+func (ns *BasicNodeState) GetAttribute(key string) (any, bool) {
+	val, found := ns.attrs[key]
+	return val, found
 }

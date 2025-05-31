@@ -14,6 +14,7 @@ func newNode[T g.NodeState](
 	address url.URL,
 	taskFn f.ProcessingFn[T],
 	transient bool,
+	attrs ...map[string]any,
 ) (*node, error) {
 
 	actorAddress, err := url.Parse("actor://" + address.Host + address.Path)
@@ -30,7 +31,7 @@ func newNode[T g.NodeState](
 	}
 
 	actorOutcome := make(chan string, 1)
-	useState := g.BasicNodeStateBuilder[T](forGraph, rv, actorOutcome)
+	useState := g.BasicNodeStateBuilder[T](forGraph, rv, actorOutcome, attrs...)
 
 	task, err := framework.NewActor(
 		*actorAddress,

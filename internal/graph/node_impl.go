@@ -60,7 +60,7 @@ func (r *node) Edges() []c.Addressable {
 // EdgeNames returns the edges of the node
 func (r *node) EdgeNames() []string {
 	rv := make([]string, 0, len(r.edges))
-	for name, _ := range r.edges {
+	for name := range r.edges {
 		rv = append(rv, name)
 	}
 
@@ -134,6 +134,7 @@ func (r *node) ProceedOnRoute(name string, mex c.Message) error {
 	}
 }
 
+// Accept accepts a message and delivers it to the actor
 func (r *node) Accept(message c.Message) error {
 	_, ok := message.(f.Message)
 	if ok {
@@ -154,11 +155,13 @@ func (r *node) Accept(message c.Message) error {
 	if r.multipleOutcomes {
 		for {
 			outcome := <-r.actorOutcome
-			if outcome == "" {
+			if outcome == "/dev/null" {
 				return nil
-			}
-			if err := r.ProceedOnRoute(outcome, message); err != nil {
-				return fmt.Errorf("failed to proceed on route [%s]: %w", outcome, err)
+			} else if outcome == "" {
+				r.ProceedOnAnyRoute(message)
+				return nil
+			} else if outcome != "" {
+				r.ProceedOnRoute(outcome, message)
 			}
 		}
 	} else {

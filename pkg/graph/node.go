@@ -60,18 +60,47 @@ type Routable interface {
 	ProceedOnRoute(name string, msg common.Message) error
 }
 
-// NodeState holds the state of a node in the actor graph, including its configuration and current state.
-type NodeState interface {
-	// Outcome returns a channel that will receive the outcome of the node's processing.
-	Outcome() chan string
+// Stateful represents a graph that can maintain its state and configuration.
+type Stateful interface {
 	// GraphConfig returns the configuration of the graph.
 	GraphConfig() Configuration
 	// GraphState returns the current state of the graph.
 	GraphState() State
 	// UpdateGraphState updates the state of the graph.
 	UpdateGraphState(state State) error
+}
+
+// Connected represents a node that is connected to other nodes in the actor graph.
+type Connected interface {
 	// Routes returns the routes of the node.
 	Routes() []string
+}
+
+// WithMutableAttributes represents a node that can have mutable attributes.
+type WithMutableAttributes interface {
+	// SetAttribute sets an attribute for the node.
+	//
+	// Parameters:
+	//   - key (string): The key of the attribute.
+	//   - value (any): The value of the attribute.
+	SetAttribute(key string, value any)
+	// GetAttribute retrieves an attribute for the node.
+	//
+	// Parameters:
+	//   - key (string): The key of the attribute.
+	// Returns:
+	//   - (any): The value of the attribute, or nil if not found.
+	//   - (bool): True if the attribute exists, false otherwise.
+	GetAttribute(key string) (any, bool)
+}
+
+// NodeState holds the state of a node in the actor graph, including its configuration and current state.
+type NodeState interface {
+	Stateful
+	Connected
+	WithMutableAttributes
+	// Outcome returns a channel that will receive the outcome of the node's processing.
+	Outcome() chan string
 }
 
 // Node represents a node in the actor graph.

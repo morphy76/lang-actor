@@ -88,7 +88,7 @@ func NewForkNode(forGraph g.Graph) (g.Node, error) {
 		for _, edgeName := range self.State().Routes() {
 			self.State().Outcome() <- edgeName
 		}
-		self.State().Outcome() <- ""
+		self.State().Outcome() <- "/dev/null"
 		return self.State(), nil
 	}
 
@@ -104,21 +104,35 @@ func NewForkNode(forGraph g.Graph) (g.Node, error) {
 }
 
 // NewJoinNode creates a new instance of a join node in the actor graph.
-func NewJoinNode(forGraph g.Graph) (g.Node, error) {
+func NewJoinNode(forGraph g.Graph, forkNode g.Node) (g.Node, error) {
 	address, err := url.Parse("graph://nodes/join/" + uuid.NewString())
 	if err != nil {
 		return nil, err
 	}
 
+	inbounds := len(forkNode.EdgeNames())
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+		received, _ := self.State().GetAttribute("received")
+
+		if received.(int) < inbounds {
+			self.State().SetAttribute("received", received.(int)+1)
+			self.State().Outcome() <- "/dev/null"
+			return self.State(), nil
+		}
+
 		self.State().Outcome() <- ""
+		self.State().SetAttribute("received", 0)
 		return self.State(), nil
 	}
 
-	baseNode, err := newNode(forGraph, *address, taskFn, true)
+	attrs := make(map[string]any)
+	attrs["received"] = 0
+
+	baseNode, err := newNode(forGraph, *address, taskFn, false, attrs)
 	if err != nil {
 		return nil, err
 	}
+	baseNode.multipleOutcomes = true
 
 	return &joinNode{
 		node: *baseNode,
