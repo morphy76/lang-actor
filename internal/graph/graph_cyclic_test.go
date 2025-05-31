@@ -1,6 +1,7 @@
 package graph_test
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -19,19 +20,26 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 	}
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
-		cfg, okCfg := self.State().GraphConfig.(graphConfig)
-		graphState, okState := self.State().GraphState.(graphState)
+		cfg, okCfg := self.State().GraphConfig().(graphConfig)
+		graphState, okState := self.State().GraphState().(graphState)
 
 		if !okCfg || !okState {
 			// TODO handle functional error
-			self.State().Outcome <- "leavingCounter"
+			self.State().Outcome() <- "leavingCounter"
 		}
+
+		fmt.Printf("-------> Counter Node: %v, Counter: %d, Iterations: %d\n",
+			self.Address(),
+			graphState.Counter,
+			cfg.Iterations,
+		)
 
 		if graphState.Counter < cfg.Iterations {
 			graphState.Counter++
-			self.State().Outcome <- "iterate"
+			self.State().UpdateGraphState(graphState)
+			self.State().Outcome() <- "iterate"
 		} else {
-			self.State().Outcome <- "leavingCounter"
+			self.State().Outcome() <- "leavingCounter"
 		}
 
 		return self.State(), nil
@@ -129,8 +137,17 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Error accepting message: %v\n", err)
 		}
 
-		if state.Counter != cfg.Iterations {
-			t.Errorf("Expected counter to be %d, got %d", cfg.Iterations, state.Counter)
+		currentConfig, ok := graph.Config().(graphConfig)
+		if !ok {
+			t.Errorf("Expected graph config to be of type graphConfig, got %T", graph.Config())
+		}
+
+		currentGraphState, ok := graph.State().(graphState)
+		if !ok {
+			t.Errorf("Expected graph state to be of type graphState, got %T", graph.State())
+		}
+		if currentGraphState.Counter != currentConfig.Iterations {
+			t.Errorf("Expected counter to be %d, got %d", currentConfig.Iterations, currentGraphState.Counter)
 		}
 		t.Log("Cyclic Graph test case completed successfully")
 	})

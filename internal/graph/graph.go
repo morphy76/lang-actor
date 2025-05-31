@@ -2,6 +2,7 @@ package graph
 
 import (
 	"net/url"
+	"sync"
 
 	c "github.com/morphy76/lang-actor/pkg/common"
 	g "github.com/morphy76/lang-actor/pkg/graph"
@@ -11,10 +12,12 @@ import (
 var staticGraphAssertion g.Graph = (*graph)(nil)
 
 type graph struct {
+	lock *sync.Mutex
+
 	resolvables map[url.URL]*c.Addressable
 	graphURL    url.URL
 	config      g.Configuration
-	status      g.State
+	state       g.State
 	addressBook r.AddressBook
 }
 
@@ -46,10 +49,24 @@ func (g *graph) Query(schema string, pathParts ...string) []c.Addressable {
 
 // State returns the current state of the graph.
 func (g *graph) State() g.State {
-	return g.status
+	return g.state
 }
 
 // Config returns the configuration of the graph.
-func (g *graph) Configuration() g.Configuration {
+func (g *graph) Config() g.Configuration {
 	return g.config
+}
+
+// SetState sets the state of the graph.
+func (g *graph) UpdateState(state g.State) error {
+	g.lock.Lock()
+	defer g.lock.Unlock()
+
+	g.state = state
+	return nil
+}
+
+// SetConfiguration sets the configuration of the graph.
+func (g *graph) SetConfig(config g.Configuration) {
+	g.config = config
 }

@@ -19,24 +19,18 @@ type Graph interface {
 	//
 	// Returns:
 	//   - Configuration: The configuration of the graph.
-	Configuration() Configuration
+	Config() Configuration
 	// State retrieves the current state of the graph.
 	//
 	// Returns:
 	//   - State: The current state of the graph.
 	State() State
-}
-
-// WithNodeState defines the interface for components that can be configured and have a state within a graph.
-type WithNodeState interface {
-	// SetConfig sets the configuration for the graph-aware component.
+	// UpdateState updates the state of the graph.
 	//
 	// Parameters:
-	//   - config (GraphConfiguration): The configuration to set for the component.
-	SetConfig(config Configuration)
-	// SetState sets the state for the graph-aware component.
+	//   - state State: The new state to set for the graph.
 	//
-	// Parameters:
-	//   - state (GraphState): The state to set for the component.
-	SetState(state State)
+	// Returns:
+	//   - error: An error if the update fails, nil otherwise.
+	UpdateState(state State) error
 }

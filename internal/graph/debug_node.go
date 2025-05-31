@@ -61,7 +61,7 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 		}
 		fmt.Println("---------------------------------")
 		fmt.Println("System config:")
-		jsonConfigResponse, err := json.Marshal(self.State().GraphConfig)
+		jsonConfigResponse, err := json.Marshal(self.State().GraphConfig())
 		if err != nil {
 			fmt.Printf("%s\n", err)
 		} else {
@@ -69,14 +69,14 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 		}
 		fmt.Println("---------------------------------")
 		fmt.Println("Graph status:")
-		jsonStateResponse, err := json.Marshal(self.State().GraphState)
+		jsonStateResponse, err := json.Marshal(self.State().GraphState())
 		if err != nil {
 			fmt.Printf("%s\n", err)
 		} else {
 			fmt.Printf("%s\n", jsonStateResponse)
 		}
 		fmt.Println("==========================================")
-		self.State().Outcome <- ""
+		self.State().Outcome() <- ""
 		return self.State(), nil
 	}
 

@@ -15,19 +15,21 @@ func newNode(
 	taskFn f.ProcessingFn[g.NodeState],
 	transient bool,
 ) (*node, error) {
+
 	actorAddress, err := url.Parse("actor://" + address.Host + address.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	actorOutcome := make(chan string, 1)
-	nodeState := &g.NodeState{
-		Outcome: actorOutcome,
+	useState := &nodeState{
+		outcome: actorOutcome,
+		graph:   forGraph,
 	}
-	task, err := framework.NewActor(
+	task, err := framework.NewActor[g.NodeState](
 		*actorAddress,
 		taskFn,
-		*nodeState,
+		useState,
 		transient,
 	)
 	if err != nil {
@@ -40,14 +42,12 @@ func newNode(
 		address:      address,
 		actor:        task,
 		actorOutcome: actorOutcome,
-		nodeState:    *nodeState,
+		nodeState:    useState,
+		resolver:     forGraph,
 	}
 
 	if forGraph != nil {
 		forGraph.Register(rv)
-		rv.SetResolver(forGraph)
-		rv.SetConfig(forGraph.Configuration())
-		rv.SetState(forGraph.State())
 	}
 
 	return rv, nil

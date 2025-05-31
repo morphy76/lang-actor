@@ -14,21 +14,7 @@ import (
 
 var staticNodeAssertion g.Node = (*node)(nil)
 var staticNodeMessageAssertion f.Message = (*nodeMessage)(nil)
-
-type node struct {
-	lock *sync.Mutex
-
-	resolver r.Resolver
-
-	edges map[string]edge
-
-	address url.URL
-	actor   f.ActorRef
-
-	actorOutcome chan string
-
-	nodeState g.NodeState
-}
+var staticNodeStateAssertion g.NodeState = (*nodeState)(nil)
 
 type nodeMessage struct {
 	sender  url.URL
@@ -43,6 +29,52 @@ func (m nodeMessage) Sender() url.URL {
 // Mutation returns false, indicating that this message is not a mutation
 func (m nodeMessage) Mutation() bool {
 	return false
+}
+
+type nodeState struct {
+	outcome chan string
+	graph   g.Graph
+}
+
+// Outcome returns the outcome channel for the node state.
+func (ns *nodeState) Outcome() chan string {
+	return ns.outcome
+}
+
+// GraphConfig returns the configuration of the graph associated with the node state.
+func (ns *nodeState) GraphConfig() g.Configuration {
+	if ns.graph == nil {
+		return nil
+	}
+	return ns.graph.Config()
+}
+
+// GraphState returns the state of the graph associated with the node state.
+func (ns *nodeState) GraphState() g.State {
+	if ns.graph == nil {
+		return nil
+	}
+	return ns.graph.State()
+}
+
+// InitState initializes the state for the node state.
+func (ns *nodeState) UpdateGraphState(state g.State) error {
+	return ns.graph.UpdateState(state)
+}
+
+type node struct {
+	lock *sync.Mutex
+
+	resolver r.Resolver
+
+	edges map[string]edge
+
+	address url.URL
+	actor   f.ActorRef
+
+	actorOutcome chan string
+
+	nodeState g.NodeState
 }
 
 // Edges returns the edges of the node
@@ -105,8 +137,6 @@ func (r *node) ProceedOnAnyRoute(mex c.Message) error {
 
 // ProceedOnRoute proceeds the message on a specific route
 func (r *node) ProceedOnRoute(name string, mex c.Message) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
 	edge, ok := r.edges[name]
 	if !ok {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%v] has no route named [%s]", r.Address(), name))
@@ -142,6 +172,7 @@ func (r *node) Accept(message c.Message) error {
 
 	// TODO implement a timeout for the outcome channel
 	outcome := <-r.actorOutcome
+	fmt.Printf("-------> Node [%v] received outcome: %s\n", r.Address(), outcome)
 	if outcome != "" {
 		r.ProceedOnRoute(outcome, message)
 	} else {
@@ -161,12 +192,7 @@ func (r *node) GetResolver() r.Resolver {
 	return r.resolver
 }
 
-// SetConfig sets the configuration for the graph-aware component.
-func (r *node) SetConfig(config g.Configuration) {
-	r.nodeState.GraphConfig = config
-}
-
-// SetState sets the state for the graph-aware component.
-func (r *node) SetState(state g.State) {
-	r.nodeState.GraphState = state
+// State returns the current state of the graph.
+func (r *node) State() g.NodeState {
+	return r.nodeState
 }

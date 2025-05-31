@@ -2,6 +2,7 @@ package graph
 
 import (
 	"net/url"
+	"sync"
 
 	"github.com/morphy76/lang-actor/internal/routing"
 
@@ -22,10 +23,12 @@ func NewGraph[T g.State, C g.Configuration](
 	}
 
 	graph := &graph{
+		lock: &sync.Mutex{},
+
 		resolvables: make(map[url.URL]*c.Addressable),
 		graphURL:    *graphURL,
 		config:      config,
-		status:      initialState,
+		state:       initialState,
 		addressBook: routing.NewAddressBook(),
 	}
 
