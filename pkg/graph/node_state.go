@@ -9,13 +9,16 @@ var staticNodeStateAssertion NodeState = (*BasicNodeState)(nil)
 //
 // Parameters:
 //   - forGraph (Graph): The graph to which the node state belongs.
+//   - owner (Node): The owner node of the state.
+//   - outcome (chan string): A channel to receive the outcome of the node's processing.
 //
 // Returns:
 //   - (NodeState): A new instance of BasicNodeState.
-func BasicNodeStateBuilder[T NodeState](forGraph Graph, outcome chan string) T {
+func BasicNodeStateBuilder[T NodeState](forGraph Graph, owner Node, outcome chan string) T {
 	var rv NodeState = &BasicNodeState{
 		outcome: outcome,
 		graph:   forGraph,
+		owner:   owner,
 	}
 	return rv.(T)
 }
@@ -24,6 +27,7 @@ func BasicNodeStateBuilder[T NodeState](forGraph Graph, outcome chan string) T {
 type BasicNodeState struct {
 	outcome chan string
 	graph   Graph
+	owner   Node
 }
 
 // Outcome returns the outcome channel for the node state.
@@ -65,4 +69,9 @@ func (ns *BasicNodeState) GraphState() State {
 //   - (error): An error if the update fails, nil otherwise.
 func (ns *BasicNodeState) UpdateGraphState(state State) error {
 	return ns.graph.UpdateState(state)
+}
+
+// Routes returns the routes of the node state.
+func (ns *BasicNodeState) Routes() []string {
+	return ns.owner.EdgeNames()
 }

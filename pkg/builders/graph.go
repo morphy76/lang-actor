@@ -87,7 +87,7 @@ func NewCustomNode(
 	return g.NewCustomNode(forGraph, address, taskFn, transient)
 }
 
-// NewForkJoingNode creates a new fork-join node for the given graph.
+// NewForkJoingNode creates a new fork-join node for the given graph for node-scope processing.
 //
 // Type parameters:
 //   - C (graph.NodeState): The type of the state for the child nodes.
@@ -100,10 +100,34 @@ func NewCustomNode(
 // Returns:
 //   - (graph.Node): The created fork-join node.
 //   - (error): An error if the node creation fails.
-func NewForkJoingNode[T graph.NodeState, C graph.NodeState](
+func NewForkJoingNode[C graph.NodeState](
 	forGraph graph.Graph,
 	transient bool,
 	taskFn ...framework.ProcessingFn[C],
 ) (graph.Node, error) {
-	return g.NewForkJoingNode[C](forGraph, transient, taskFn...)
+	return g.NewForkJoingNode(forGraph, transient, taskFn...)
+}
+
+// NewForkNode creates a new instance of a fork node in the actor graph.
+//
+// Parameters:
+//   - forGraph (graph.Graph): The graph to which the fork node belongs.
+//
+// Returns:
+//   - (graph.Node): The created fork node.
+//   - (error): An error if the node creation fails.
+func NewForkNode(forGraph graph.Graph) (graph.Node, error) {
+	return g.NewForkNode(forGraph)
+}
+
+// NewJoinNode creates a new instance of a join node in the actor graph.
+//
+// Parameters:
+//   - forGraph (graph.Graph): The graph to which the join node belongs.
+//
+// Returns:
+//   - (graph.Node): The created join node.
+//   - (error): An error if the node creation fails.
+func NewJoinNode(forGraph graph.Graph) (graph.Node, error) {
+	return g.NewJoinNode(forGraph)
 }

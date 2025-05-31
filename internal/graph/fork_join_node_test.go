@@ -1,6 +1,7 @@
 package graph_test
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/google/uuid"
@@ -10,22 +11,13 @@ import (
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
-var staticUUIDGraphStateAssertion g.State = (*uUUIDGraphState)(nil)
+const errorAddressMessage = "Error generating address: %v"
 
-type uUUIDGraphState struct {
-	uuids []string
-}
+func TestForkAndThenJoinNode(t *testing.T) {
+	t.Log("Fork and then join test suite")
 
-func (s *uUUIDGraphState) AppendGraphState(purpose any, value any) error {
-	s.uuids = append(s.uuids, value.(string))
-	return nil
-}
-
-func TestForkJoinNode(t *testing.T) {
-	t.Log("Fork join test suite")
-
-	t.Run("SimpleForkJoin", func(t *testing.T) {
-		t.Log("SimpleForkJoin test case")
+	t.Run("SimpleForkAndThenJoin", func(t *testing.T) {
+		t.Log("SimpleForkAndThenJoin test case")
 
 		testGraph, err := b.NewGraph(&uUUIDGraphState{
 			uuids: []string{},
@@ -39,17 +31,67 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
+		forkNode, err := graph.NewForkNode(testGraph)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+
 		uuids := []string{uuid.NewString(), uuid.NewString(), uuid.NewString()}
 		uuidGenFn := func(i int) f.ProcessingFn[g.NodeState] {
 			return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 				rv := uuids[i]
 				t.Logf("Processing UUID: %s", rv)
-				self.State().Outcome() <- rv
+				self.State().GraphState().AppendGraphState(nil, rv)
+				self.State().Outcome() <- ""
 				return self.State(), nil
 			}
 		}
+		addr1, err := genAddress(1)
+		if err != nil {
+			t.Errorf(errorAddressMessage, err)
+		}
+		addr2, err := genAddress(2)
+		if err != nil {
+			t.Errorf(errorAddressMessage, err)
+		}
+		addr3, err := genAddress(3)
+		if err != nil {
+			t.Errorf(errorAddressMessage, err)
+		}
+		branch1, err := graph.NewCustomNode(testGraph, addr1, uuidGenFn(0), true)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		branch2, err := graph.NewCustomNode(testGraph, addr2, uuidGenFn(1), true)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		branch3, err := graph.NewCustomNode(testGraph, addr3, uuidGenFn(2), true)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
 
-		childNode, err := graph.NewForkJoingNode(testGraph, false, uuidGenFn(0), uuidGenFn(1), uuidGenFn(2))
+		joinNode, err := graph.NewJoinNode(testGraph)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+
+		debugNode1, err := graph.NewDebugNode(testGraph, "debug1")
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+
+		debugNode2, err := graph.NewDebugNode(testGraph, "debug2")
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+
+		debugNode3, err := graph.NewDebugNode(testGraph, "debug3")
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+
+		finalDebugNode, err := graph.NewDebugNode(testGraph, "final")
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -59,11 +101,51 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.OneWayRoute("leavingStart", childNode)
+		err = rootNode.OneWayRoute("leavingStart", forkNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
-		err = childNode.OneWayRoute("rejoining", endNode)
+		err = forkNode.OneWayRoute("branch1", branch1)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = forkNode.OneWayRoute("branch2", branch2)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = forkNode.OneWayRoute("branch3", branch3)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = branch1.OneWayRoute("toJoin", debugNode1)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = branch2.OneWayRoute("toJoin", debugNode2)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = branch3.OneWayRoute("toJoin", debugNode3)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = debugNode1.OneWayRoute("toJoin", joinNode)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = debugNode2.OneWayRoute("toJoin", joinNode)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = debugNode3.OneWayRoute("toJoin", joinNode)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = joinNode.OneWayRoute("rejoining", finalDebugNode)
+		if err != nil {
+			t.Errorf(errorNewNodeMessage, err)
+		}
+		err = finalDebugNode.OneWayRoute("toEnd", endNode)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -100,4 +182,13 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf("Received more UUIDs than expected: got %d, want %d", len(actualUUIDs), len(uuids))
 		}
 	})
+}
+
+func genAddress(i int) (*url.URL, error) {
+	addr := "graph://nodes/forkjoin/test-" + uuid.NewString()
+	address, err := url.Parse(addr)
+	if err != nil {
+		return &url.URL{}, err
+	}
+	return address, nil
 }

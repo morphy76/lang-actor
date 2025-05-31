@@ -21,8 +21,16 @@ func newNode[T g.NodeState](
 		return nil, err
 	}
 
+	rv := &node{
+		lock:             &sync.Mutex{},
+		edges:            make(map[string]edge, 0),
+		address:          address,
+		resolver:         forGraph,
+		multipleOutcomes: false,
+	}
+
 	actorOutcome := make(chan string, 1)
-	useState := g.BasicNodeStateBuilder[T](forGraph, actorOutcome)
+	useState := g.BasicNodeStateBuilder[T](forGraph, rv, actorOutcome)
 
 	task, err := framework.NewActor(
 		*actorAddress,
@@ -34,19 +42,13 @@ func newNode[T g.NodeState](
 		return nil, err
 	}
 
-	rv := &node{
-		lock:         &sync.Mutex{},
-		edges:        make(map[string]edge, 0),
-		address:      address,
-		actor:        task,
-		actorOutcome: actorOutcome,
-		nodeState:    useState,
-		resolver:     forGraph,
-	}
-
 	if forGraph != nil {
 		forGraph.Register(rv)
 	}
+
+	rv.actor = task
+	rv.actorOutcome = actorOutcome
+	rv.nodeState = useState
 
 	return rv, nil
 }

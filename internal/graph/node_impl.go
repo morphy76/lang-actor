@@ -43,6 +43,8 @@ type node struct {
 	actorOutcome chan string
 
 	nodeState g.NodeState
+
+	multipleOutcomes bool
 }
 
 // Edges returns the edges of the node
@@ -50,6 +52,16 @@ func (r *node) Edges() []c.Addressable {
 	rv := make([]c.Addressable, 0, len(r.edges))
 	for _, edge := range r.edges {
 		rv = append(rv, edge.Destination)
+	}
+
+	return rv
+}
+
+// EdgeNames returns the edges of the node
+func (r *node) EdgeNames() []string {
+	rv := make([]string, 0, len(r.edges))
+	for name, _ := range r.edges {
+		rv = append(rv, name)
 	}
 
 	return rv
@@ -139,11 +151,23 @@ func (r *node) Accept(message c.Message) error {
 	}
 
 	// TODO implement a timeout for the outcome channel
-	outcome := <-r.actorOutcome
-	if outcome != "" {
-		r.ProceedOnRoute(outcome, message)
+	if r.multipleOutcomes {
+		for {
+			outcome := <-r.actorOutcome
+			if outcome == "" {
+				return nil
+			}
+			if err := r.ProceedOnRoute(outcome, message); err != nil {
+				return fmt.Errorf("failed to proceed on route [%s]: %w", outcome, err)
+			}
+		}
 	} else {
-		r.ProceedOnAnyRoute(message)
+		outcome := <-r.actorOutcome
+		if outcome != "" {
+			r.ProceedOnRoute(outcome, message)
+		} else {
+			r.ProceedOnAnyRoute(message)
+		}
 	}
 
 	return nil

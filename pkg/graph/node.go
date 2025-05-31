@@ -36,6 +36,11 @@ type Routable interface {
 	// Returns:
 	//   - ([]common.Addressable): The edges of the node.
 	Edges() []common.Addressable
+	// EdgeNames returns the names of the edges of the node.
+	//
+	// Returns:
+	//   - ([]string): The names of the edges of the node.
+	EdgeNames() []string
 	// ProceedOnAnyRoute proceeds the message on any route.
 	//
 	// Parameters:
@@ -57,10 +62,16 @@ type Routable interface {
 
 // NodeState holds the state of a node in the actor graph, including its configuration and current state.
 type NodeState interface {
+	// Outcome returns a channel that will receive the outcome of the node's processing.
 	Outcome() chan string
+	// GraphConfig returns the configuration of the graph.
 	GraphConfig() Configuration
+	// GraphState returns the current state of the graph.
 	GraphState() State
+	// UpdateGraphState updates the state of the graph.
 	UpdateGraphState(state State) error
+	// Routes returns the routes of the node.
+	Routes() []string
 }
 
 // Node represents a node in the actor graph.
@@ -87,5 +98,15 @@ type DebugNode interface {
 
 // ForkJoinNode represents a node that can handle fork-join patterns in the actor graph.
 type ForkJoinNode interface {
+	Node
+}
+
+// ForkNode is a node that can handle forking in the actor graph.
+type ForkNode interface {
+	Node
+}
+
+// JoinNode is a node that can handle joining in the actor graph.
+type JoinNode interface {
 	Node
 }
