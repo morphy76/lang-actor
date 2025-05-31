@@ -53,7 +53,7 @@ func NewForkJoingNode[C g.NodeState](forGraph g.Graph, transient bool, processin
 			}
 		}
 
-		self.State().Outcome() <- ""
+		self.State().Outcome() <- g.WhateverOutcome
 		return self.State(), nil
 	}
 
@@ -111,16 +111,20 @@ func NewJoinNode(forGraph g.Graph, forkNode g.Node) (g.Node, error) {
 	}
 
 	inbounds := len(forkNode.EdgeNames())
+	if inbounds == 0 {
+		return nil, fmt.Errorf("join node must have at least one inbound edge, but got %d", inbounds)
+	}
+
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		received, _ := self.State().GetAttribute("received")
 
 		if received.(int) < inbounds {
 			self.State().SetAttribute("received", received.(int)+1)
-			self.State().Outcome() <- "/dev/null"
+			self.State().Outcome() <- g.SkipOutcome
 			return self.State(), nil
 		}
 
-		self.State().Outcome() <- ""
+		self.State().Outcome() <- g.WhateverOutcome
 		self.State().SetAttribute("received", 0)
 		return self.State(), nil
 	}

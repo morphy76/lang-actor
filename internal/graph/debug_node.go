@@ -77,7 +77,7 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 			fmt.Printf("%s\n", jsonStateResponse)
 		}
 		fmt.Println("==========================================")
-		self.State().Outcome() <- ""
+		self.State().Outcome() <- g.WhateverOutcome
 		return self.State(), nil
 	}
 

@@ -155,18 +155,18 @@ func (r *node) Accept(message c.Message) error {
 	if r.multipleOutcomes {
 		for {
 			outcome := <-r.actorOutcome
-			if outcome == "/dev/null" {
+			if outcome == g.SkipOutcome {
 				return nil
-			} else if outcome == "" {
+			} else if outcome == g.WhateverOutcome {
 				r.ProceedOnAnyRoute(message)
 				return nil
-			} else if outcome != "" {
+			} else {
 				r.ProceedOnRoute(outcome, message)
 			}
 		}
 	} else {
 		outcome := <-r.actorOutcome
-		if outcome != "" {
+		if outcome != g.WhateverOutcome {
 			r.ProceedOnRoute(outcome, message)
 		} else {
 			r.ProceedOnAnyRoute(message)

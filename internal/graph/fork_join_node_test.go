@@ -42,7 +42,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 				rv := uuids[i]
 				t.Logf("Processing UUID: %s", rv)
 				self.State().GraphState().AppendGraphState(nil, rv)
-				self.State().Outcome() <- ""
+				self.State().Outcome() <- g.WhateverOutcome
 				return self.State(), nil
 			}
 		}

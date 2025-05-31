@@ -4,6 +4,13 @@ import (
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
+const (
+	// SkipOutcome is a special outcome that indicates the graph should skip to the next step without any action.
+	SkipOutcome = "/dev/null"
+	// WhateverOutcome is a special outcome that indicates the graph can proceed with any action.
+	WhateverOutcome = ""
+)
+
 var staticNoConfiguration Configuration = (*NoConfiguration)(nil)
 
 // NoConfiguration is an empty struct that implements the Configuration interface.
