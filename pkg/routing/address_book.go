@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/morphy76/lang-actor/pkg/framework"
+	"github.com/morphy76/lang-actor/pkg/common"
 )
 
 // ErrorActorAlreadyRegistered is returned when an actor is already registered in the catalog.
@@ -18,26 +18,29 @@ type Resolver interface {
 	// Register registers the given URL with the provided Addressable.
 	//
 	// Parameters:
-	//   - addressable (framework.Addressable): The Addressable to associate with the URL.
+	//   - addressable (common.Addressable): The Addressable to associate with the URL.
 	//
 	// Returns:
 	//   - (error): An error if the registration fails.
-	Register(addressable framework.Addressable) error
+	Register(addressable common.Addressable) error
 	// Resolve resolves the given URL to a framework.Addressable.
 	//
 	// Parameters:
 	//   - url (url.URL): The URL to resolve.
 	//
 	// Returns:
-	//   - (framework.Addressable): The resolved Addressable.
+	//   - (common.Addressable): The resolved Addressable.
 	//   - (bool): A boolean indicating whether the resolution was successful.
-	Resolve(address url.URL) (framework.Addressable, bool)
+	Resolve(address url.URL) (common.Addressable, bool)
 	// Query queries the catalog for Addressables matching the given schema and path parts.
 	//
 	// Parameters:
 	//   - schema (string): The schema to match.
 	//   - pathParts (...string): The path parts to match.
-	Query(schema string, pathParts ...string) []framework.Addressable
+	//
+	// Returns:
+	//   - ([]common.Addressable): A slice of Addressables matching the query.
+	Query(schema string, pathParts ...string) []common.Addressable
 }
 
 // AddressBook is an interface that defines the methods for a catalog.

@@ -55,32 +55,6 @@ type MailboxConfig struct {
 	Policy BackpressurePolicy
 }
 
-// Addressable is the interface for the routing layer of the actor model.
-type Addressable interface {
-	// Actor URI
-	//
-	// Returns:
-	//   - (url.URL): The URL of the actor.
-	Address() url.URL
-	// Deliver a message to the actor
-	//
-	// Parameters:
-	//   - msg (Message): The message to be delivered.
-	//
-	// Returns:
-	//   - (error): An error if the delivery fails, otherwise nil.
-	Deliver(msg Message) error
-	// Send is a function to send messages to other actors.
-	//
-	// Parameters:
-	//   - msg (Message): The message to be sent.
-	//   - addressable (Addressable): The addressable actor to which the message is sent.
-	//
-	// Returns:
-	//   - (error): An error if the sending fails, otherwise nil.
-	Send(msg Message, addressable Addressable) error
-}
-
 // Controllable is the interface for controllable actors.
 type Controllable interface {
 	// Stop the actor
@@ -129,10 +103,10 @@ type Relationable interface {
 
 // ActorRef is the interface for the actor reference.
 type ActorRef interface {
-	common.Visitable
+	common.Addressable
+	common.Transport
 	Controllable
 	Controller
-	Addressable
 	Relationable
 }
 
@@ -151,6 +125,7 @@ type Actor[T any] interface {
 
 // Message is the interface for messages sent to actors.
 type Message interface {
+	common.Message
 	// Sender returns the URL of the sender.
 	//
 	// Returns:

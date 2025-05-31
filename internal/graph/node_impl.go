@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 	"sync"
 
 	c "github.com/morphy76/lang-actor/pkg/common"
@@ -14,6 +13,54 @@ import (
 )
 
 var staticNodeAssertion g.Node = (*node)(nil)
+var staticNodeMessageAssertion f.Message = (*nodeMessage)(nil)
+var staticNodeStateAssertion g.NodeState = (*nodeState)(nil)
+
+type nodeMessage struct {
+	sender  url.URL
+	payload any
+}
+
+// Sender returns the sender of the message
+func (m nodeMessage) Sender() url.URL {
+	return m.sender
+}
+
+// Mutation returns false, indicating that this message is not a mutation
+func (m nodeMessage) Mutation() bool {
+	return false
+}
+
+type nodeState struct {
+	outcome chan string
+	graph   g.Graph
+}
+
+// Outcome returns the outcome channel for the node state.
+func (ns *nodeState) Outcome() chan string {
+	return ns.outcome
+}
+
+// GraphConfig returns the configuration of the graph associated with the node state.
+func (ns *nodeState) GraphConfig() g.Configuration {
+	if ns.graph == nil {
+		return nil
+	}
+	return ns.graph.Config()
+}
+
+// GraphState returns the state of the graph associated with the node state.
+func (ns *nodeState) GraphState() g.State {
+	if ns.graph == nil {
+		return nil
+	}
+	return ns.graph.State()
+}
+
+// InitState initializes the state for the node state.
+func (ns *nodeState) UpdateGraphState(state g.State) error {
+	return ns.graph.UpdateState(state)
+}
 
 type node struct {
 	lock *sync.Mutex
@@ -24,31 +71,17 @@ type node struct {
 
 	address url.URL
 	actor   f.ActorRef
-}
 
-// ActorRef returns the actor reference of the node
-func (r *node) ActorRef() f.ActorRef {
-	return r.actor
+	actorOutcome chan string
+
+	nodeState g.NodeState
 }
 
 // Edges returns the edges of the node
-func (r *node) Edges(includeInverse bool) []f.Addressable {
-	edges := make([]f.Addressable, 0, len(r.edges))
-	count := 0
-	for edgeName, edge := range r.edges {
-		if !includeInverse && strings.Contains(edgeName, "inverse-") {
-			continue
-		}
-		count++
-		edges = append(edges, edge.Destination)
-	}
-	if includeInverse {
-		return edges
-	}
-
-	rv := make([]f.Addressable, count)
-	for _, edge := range edges {
-		rv = append(rv, edge)
+func (r *node) Edges() []c.Addressable {
+	rv := make([]c.Addressable, 0, len(r.edges))
+	for _, edge := range r.edges {
+		rv = append(rv, edge.Destination)
 	}
 
 	return rv
@@ -71,59 +104,13 @@ func (r *node) OneWayRoute(name string, destination g.Node) error {
 	return nil
 }
 
-// TwoWayRoute adds a new possible outgoing route from the node
-func (r *node) TwoWayRoute(name string, destination g.Node) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	if _, ok := destination.(*rootNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] to root node", name, r.Address()))
-	}
-
-	if _, ok := destination.(*endNode); ok {
-		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route [%s] from node [%v] from end node", name, r.Address()))
-	}
-
-	r.edges[name] = edge{
-		Name:        name,
-		Destination: destination,
-	}
-
-	var meAsNode g.Node = r
-	return destination.OneWayRoute("inverse-"+name, meAsNode)
-}
-
 // DestinationAddress returns the address of the destination node
 func (r *node) Address() url.URL {
 	return r.address
 }
 
-// Deliver delivers a message to the node
-func (r *node) Deliver(mex f.Message) error {
-	return r.actor.Deliver(mex)
-}
-
-// Send sends a message to the node
-func (r *node) Send(mex f.Message, addressable f.Addressable) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	for _, route := range r.edges {
-		if route.Destination.Address() == addressable.Address() {
-			addressable, found := r.GetResolver().Resolve(route.Destination.Address())
-			if !found {
-				return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
-			} else {
-				return addressable.Deliver(mex)
-			}
-		}
-	}
-	destinationAddress := fmt.Sprintf("%s%s", addressable.Address().Host, addressable.Address().Path)
-	return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("cannot route message to [%s] from node [%v]", destinationAddress, r.Address()))
-}
-
 // ProceedOnAnyRoute proceeds with the first route available
-func (r *node) ProceedOnAnyRoute(mex f.Message) error {
+func (r *node) ProceedOnAnyRoute(mex c.Message) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
@@ -137,8 +124,58 @@ func (r *node) ProceedOnAnyRoute(mex f.Message) error {
 		if !found {
 			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 		} else {
-			return addressable.Deliver(mex)
+			handler, ok := addressable.(c.MessageHandler)
+			if !ok {
+				return fmt.Errorf("destination [%v] is not a message handler", addressable.Address())
+			}
+			return handler.Accept(mex)
 		}
+	}
+
+	return nil
+}
+
+// ProceedOnRoute proceeds the message on a specific route
+func (r *node) ProceedOnRoute(name string, mex c.Message) error {
+	edge, ok := r.edges[name]
+	if !ok {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%v] has no route named [%s]", r.Address(), name))
+	}
+	resolver := r.GetResolver()
+	addressable, found := resolver.Resolve(edge.Destination.Address())
+	if !found {
+		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", edge.Destination.Address(), r.Address()))
+	} else {
+		handler, ok := addressable.(c.MessageHandler)
+		if !ok {
+			return fmt.Errorf("destination [%v] is not a message handler", addressable.Address())
+		}
+		return handler.Accept(mex)
+	}
+}
+
+func (r *node) Accept(message c.Message) error {
+	_, ok := message.(f.Message)
+	if ok {
+		if err := r.actor.Deliver(message); err != nil {
+			return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
+		}
+	} else {
+		actorMessage := &nodeMessage{
+			sender:  r.actor.Address(),
+			payload: message,
+		}
+		if err := r.actor.Deliver(actorMessage); err != nil {
+			return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
+		}
+	}
+
+	// TODO implement a timeout for the outcome channel
+	outcome := <-r.actorOutcome
+	if outcome != "" {
+		r.ProceedOnRoute(outcome, message)
+	} else {
+		r.ProceedOnAnyRoute(message)
 	}
 
 	return nil
@@ -154,16 +191,7 @@ func (r *node) GetResolver() r.Resolver {
 	return r.resolver
 }
 
-// Visit visits the node and applies the given function
-func (r *node) Visit(fn c.VisitFn) {
-
-	fn(r)
-	fn(r.actor)
-
-	for _, edge := range r.edges {
-		visitableDestination, ok := edge.Destination.(c.Visitable)
-		if ok {
-			visitableDestination.Visit(fn)
-		}
-	}
+// State returns the current state of the graph.
+func (r *node) State() g.NodeState {
+	return r.nodeState
 }

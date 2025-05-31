@@ -23,7 +23,7 @@ type actor[T any] struct {
 	ctxCancel context.CancelFunc
 
 	address       url.URL
-	mailbox       chan f.Message
+	mailbox       chan c.Message
 	mailboxConfig f.MailboxConfig
 	processingFn  f.ProcessingFn[T]
 
@@ -53,7 +53,7 @@ func (a *actor[T]) Stop() (chan bool, error) {
 }
 
 // Deliver delivers a message to the actor.
-func (a *actor[T]) Deliver(msg f.Message) error {
+func (a *actor[T]) Deliver(msg c.Message) error {
 	if a.status != f.ActorStatusRunning {
 		return fmt.Errorf("failed to deliver message: %w", f.ErrorActorNotRunning)
 	}
@@ -108,8 +108,8 @@ func (a actor[T]) Status() f.ActorStatus {
 }
 
 // Send sends a message to the actor.
-func (a actor[T]) Send(msg f.Message, addressable f.Addressable) error {
-	return addressable.Deliver(msg)
+func (a actor[T]) Send(msg c.Message, destination c.Transport) error {
+	return destination.Deliver(msg)
 }
 
 // Append appends a child actor to the actor.
@@ -152,14 +152,6 @@ func (a *actor[T]) GetParent() (f.ActorRef, bool) {
 	return a.parent, true
 }
 
-// Visit visits the actor and its children.
-func (a *actor[T]) Visit(fn c.VisitFn) {
-	fn(a)
-	for _, child := range a.children {
-		child.Visit(fn)
-	}
-}
-
 func (a *actor[T]) verifyChildURL(url url.URL) error {
 	if url.Scheme != a.address.Scheme || url.Host != a.address.Host {
 		return f.ErrorInvalidChildURL
@@ -198,13 +190,16 @@ func (a *actor[T]) consume() {
 	for {
 		select {
 		case msg := <-a.mailbox:
-			newState, err := a.processingFn(msg, a)
-			if err != nil {
-				a.handleFailure(err)
-			}
+			useMessage, ok := msg.(f.Message)
+			if ok {
+				newState, err := a.processingFn(useMessage, a)
+				if err != nil {
+					a.handleFailure(err)
+				}
 
-			if msg.Mutation() || !a.transient {
-				a.swapState(newState)
+				if useMessage.Mutation() || !a.transient {
+					a.swapState(newState)
+				}
 			}
 		case <-a.ctx.Done():
 			cleanupTimeout := time.After(5 * time.Second)
@@ -212,13 +207,16 @@ func (a *actor[T]) consume() {
 			for {
 				select {
 				case msg := <-a.mailbox:
-					newState, err := a.processingFn(msg, a)
-					if err != nil {
-						a.handleFailure(err)
-					}
+					useMessage, ok := msg.(f.Message)
+					if ok {
+						newState, err := a.processingFn(useMessage, a)
+						if err != nil {
+							a.handleFailure(err)
+						}
 
-					if msg.Mutation() {
-						a.swapState(newState)
+						if useMessage.Mutation() {
+							a.swapState(newState)
+						}
 					}
 				case <-cleanupTimeout:
 					a.status = f.ActorStatusIdle

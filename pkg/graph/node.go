@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/morphy76/lang-actor/pkg/common"
-	"github.com/morphy76/lang-actor/pkg/framework"
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
@@ -14,8 +13,14 @@ var ErrorInvalidRouting = errors.New("invalid routing")
 // Routable represents a node that can have routes to other nodes.
 type Routable interface {
 	// SetResolver sets the resolver for the node.
+	//
+	// Parameters:
+	//   - resolver (routing.Resolver): The resolver to be set.
 	SetResolver(resolver routing.Resolver)
 	// GetResolver returns the resolver for the node.
+	//
+	// Returns:
+	//   - (routing.Resolver): The resolver for the node.
 	GetResolver() routing.Resolver
 	// OneWayRoute add a new possible outgoing route from the node
 	//
@@ -26,40 +31,43 @@ type Routable interface {
 	// Returns:
 	//   - (error): An error if the route is invalid.
 	OneWayRoute(name string, destination Node) error
-	// TwoWayRoute add a new possible outgoing route from the node
-	//
-	// Parameters:
-	//   - name (string): The name of the route.
-	//   - destination (Node): The destination node.
-	//
-	// Returns:
-	//   - (error): An error if the route is invalid.
-	TwoWayRoute(name string, destination Node) error
 	// Edges returns the edges of the node.
 	//
-	// Parameters:
-	//   - includeInverse (bool): Whether to include inverse edges.
-	//
 	// Returns:
-	//   - ([]framework.Addressable): The edges of the node.
-	Edges(includeInverse bool) []framework.Addressable
+	//   - ([]common.Addressable): The edges of the node.
+	Edges() []common.Addressable
 	// ProceedOnAnyRoute proceeds the message on any route.
 	//
 	// Parameters:
-	//   - msg (framework.Message): The message to be sent.
+	//   - msg (common.Message): The message to be sent.
 	//
 	// Returns:
 	//   - (error): An error if the routing is invalid.
-	ProceedOnAnyRoute(msg framework.Message) error
+	ProceedOnAnyRoute(msg common.Message) error
+	// ProceedOnRoute proceeds the message on a specific route.
+	//
+	// Parameters:
+	//   - name (string): The name of the route.
+	//   - msg (common.Message): The message to be sent.
+	//
+	// Returns:
+	//   - (error): An error if the routing is invalid.
+	ProceedOnRoute(name string, msg common.Message) error
+}
+
+// NodeState holds the state of a node in the actor graph, including its configuration and current state.
+type NodeState interface {
+	Outcome() chan string
+	GraphConfig() Configuration
+	GraphState() State
+	UpdateGraphState(state State) error
 }
 
 // Node represents a node in the actor graph.
 type Node interface {
-	common.Visitable
+	common.Addressable
+	common.MessageHandler
 	Routable
-	framework.Addressable
-
-	ActorRef() framework.ActorRef
 }
 
 // RootNode represents the root node of the actor graph.
@@ -74,9 +82,5 @@ type EndNode interface {
 
 // DebugNode represents a node used for debugging purposes.
 type DebugNode interface {
-	Node
-}
-
-type GraphStatus interface {
 	Node
 }

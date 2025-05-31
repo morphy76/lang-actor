@@ -15,7 +15,7 @@ func TestNewNode(t *testing.T) {
 
 	t.Run("NewDebugNode", func(t *testing.T) {
 		t.Log("NewDebugNode test case")
-		node, err := graph.NewDebugNode()
+		node, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -33,61 +33,27 @@ func TestNodeRelationships(t *testing.T) {
 
 	t.Run("Add node route", func(t *testing.T) {
 		t.Log("Add node route test case")
-		startNode, err := graph.NewRootNode()
+		startNode, err := graph.NewRootNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		endNode, _, err := graph.NewEndNode()
+		endNode, err := graph.NewEndNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode1, err := graph.NewDebugNode()
+		childNode1, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		childNode2, err := graph.NewDebugNode()
+		childNode2, err := graph.NewDebugNode(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
 		startNode.OneWayRoute(uuid.NewString(), childNode1)
-		childNode1.TwoWayRoute(uuid.NewString(), childNode2)
 		childNode2.OneWayRoute(uuid.NewString(), endNode)
-	})
-
-	t.Run("Add and verify a two way route", func(t *testing.T) {
-		t.Log("Add and verify a two way route test case")
-
-		childNode1, err := graph.NewDebugNode()
-		if err != nil {
-			t.Errorf(errorNewNodeMessage, err)
-		}
-
-		childNode2, err := graph.NewDebugNode()
-		if err != nil {
-			t.Errorf(errorNewNodeMessage, err)
-		}
-
-		err = childNode1.TwoWayRoute(uuid.NewString(), childNode2)
-		if err != nil {
-			t.Errorf("Expected no error, but got: %v", err)
-		}
-
-		routes1 := childNode1.Edges(true)
-		routes2 := childNode2.Edges(true)
-
-		if len(routes1) != 1 {
-			t.Errorf("Expected 1 route, but got: %d", len(routes1))
-		}
-		if len(routes2) != 1 {
-			t.Errorf("Expected 1 route, but got: %d", len(routes2))
-		}
-		directRoutes2 := childNode2.Edges(false)
-		if len(directRoutes2) != 0 {
-			t.Errorf("Expected 0 direct routes, but got: %d", len(directRoutes2))
-		}
 	})
 }
