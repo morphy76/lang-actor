@@ -14,7 +14,6 @@ import (
 
 var staticNodeAssertion g.Node = (*node)(nil)
 var staticNodeMessageAssertion f.Message = (*nodeMessage)(nil)
-var staticNodeStateAssertion g.NodeState = (*nodeState)(nil)
 
 type nodeMessage struct {
 	sender  url.URL
@@ -29,37 +28,6 @@ func (m nodeMessage) Sender() url.URL {
 // Mutation returns false, indicating that this message is not a mutation
 func (m nodeMessage) Mutation() bool {
 	return false
-}
-
-type nodeState struct {
-	outcome chan string
-	graph   g.Graph
-}
-
-// Outcome returns the outcome channel for the node state.
-func (ns *nodeState) Outcome() chan string {
-	return ns.outcome
-}
-
-// GraphConfig returns the configuration of the graph associated with the node state.
-func (ns *nodeState) GraphConfig() g.Configuration {
-	if ns.graph == nil {
-		return nil
-	}
-	return ns.graph.Config()
-}
-
-// GraphState returns the state of the graph associated with the node state.
-func (ns *nodeState) GraphState() g.State {
-	if ns.graph == nil {
-		return nil
-	}
-	return ns.graph.State()
-}
-
-// InitState initializes the state for the node state.
-func (ns *nodeState) UpdateGraphState(state g.State) error {
-	return ns.graph.UpdateState(state)
 }
 
 type node struct {

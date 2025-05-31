@@ -85,3 +85,24 @@ func NewCustomNode(
 ) (graph.Node, error) {
 	return g.NewCustomNode(forGraph, address, taskFn, transient)
 }
+
+// NewForkJoingNode creates a new fork-join node for the given graph.
+//
+// Type parameters:
+//   - C (graph.NodeState): The type of the state for the child nodes.
+//
+// Parameters:
+//   - forGraph (graph.Graph): The graph to which the fork-join node belongs.
+//   - transient (bool): Whether the node is transient or not.
+//   - taskFn (...framework.ProcessingFn[graph.NodeState]): Optional processing functions for the node.
+//
+// Returns:
+//   - (graph.Node): The created fork-join node.
+//   - (error): An error if the node creation fails.
+func NewForkJoingNode[T graph.NodeState, C graph.NodeState](
+	forGraph graph.Graph,
+	transient bool,
+	taskFn ...framework.ProcessingFn[C],
+) (graph.Node, error) {
+	return g.NewForkJoingNode[C](forGraph, transient, taskFn...)
+}

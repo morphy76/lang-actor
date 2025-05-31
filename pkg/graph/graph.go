@@ -4,6 +4,11 @@ import (
 	"github.com/morphy76/lang-actor/pkg/routing"
 )
 
+var staticNoConfiguration Configuration = (*NoConfiguration)(nil)
+
+// NoConfiguration is an empty struct that implements the Configuration interface.
+type NoConfiguration struct{}
+
 // Configuration defines the interface for a graph configuration.
 type Configuration interface {
 }

@@ -84,3 +84,8 @@ type EndNode interface {
 type DebugNode interface {
 	Node
 }
+
+// ForkJoinNode represents a node that can handle fork-join patterns in the actor graph.
+type ForkJoinNode interface {
+	Node
+}
