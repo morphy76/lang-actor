@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/morphy76/lang-actor/internal/graph"
 	"github.com/morphy76/lang-actor/pkg/builders"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 	g "github.com/morphy76/lang-actor/pkg/graph"
@@ -18,8 +19,13 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 	}
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
-		cfg := self.State().GraphConfig.(graphConfig)
-		graphState := self.State().GraphState.(graphState)
+		cfg, okCfg := self.State().GraphConfig.(graphConfig)
+		graphState, okState := self.State().GraphState.(graphState)
+
+		if !okCfg || !okState {
+			// TODO handle functional error
+			self.State().Outcome <- "leavingCounter"
+		}
 
 		if graphState.Counter < cfg.Iterations {
 			graphState.Counter++
@@ -31,7 +37,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		return self.State(), nil
 	}
 
-	return builders.NewCustomNode(
+	return graph.NewCustomNode(
 		forGraph,
 		address,
 		taskFn,
@@ -56,15 +62,17 @@ func TestNewCyclicGraph(t *testing.T) {
 	t.Run("NewCyclicGraph", func(t *testing.T) {
 		t.Log("NewCyclicGraph test case")
 
-		initialStatus := graphState{
+		state := graphState{
 			Counter: 0,
 		}
 
+		cfg := graphConfig{
+			Iterations: 10,
+		}
+
 		graph, err := builders.NewGraph(
-			initialStatus,
-			graphConfig{
-				Iterations: 10,
-			},
+			state,
+			cfg,
 		)
 		if err != nil {
 			t.Errorf("Error creating graph: %v\n", err)
@@ -121,12 +129,9 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Error accepting message: %v\n", err)
 		}
 
-		// val, found := graph.State().Value("counter")
-		// if !found {
-		// 	fmt.Println("Counter value not found in the graph state")
-		// 	return
-		// }
-
-		// fmt.Println("End of the graph having counter value:", val)
+		if state.Counter != cfg.Iterations {
+			t.Errorf("Expected counter to be %d, got %d", cfg.Iterations, state.Counter)
+		}
+		t.Log("Cyclic Graph test case completed successfully")
 	})
 }

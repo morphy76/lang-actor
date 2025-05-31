@@ -15,7 +15,7 @@ func NewRootNode(forGraph g.Graph) (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode, err := NewNode(forGraph, *address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	baseNode, err := newNode(forGraph, *address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		self.State().Outcome <- ""
 		return self.State(), nil
 	}, true)
@@ -35,7 +35,7 @@ func NewEndNode(forGraph g.Graph) (g.Node, error) {
 		return nil, err
 	}
 
-	baseNode, err := NewNode(forGraph, *address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	baseNode, err := newNode(forGraph, *address, func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
 		self.State().Outcome <- ""
 		return self.State(), nil
 	}, true)

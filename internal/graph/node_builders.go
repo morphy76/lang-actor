@@ -9,8 +9,7 @@ import (
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
-// NewNode creates a new instance of a node in the graph with the given address and actor.
-func NewNode(
+func newNode(
 	forGraph g.Graph,
 	address url.URL,
 	taskFn f.ProcessingFn[g.NodeState],
@@ -22,13 +21,13 @@ func NewNode(
 	}
 
 	actorOutcome := make(chan string, 1)
-	nodeState := g.NodeState{
+	nodeState := &g.NodeState{
 		Outcome: actorOutcome,
 	}
 	task, err := framework.NewActor(
 		*actorAddress,
 		taskFn,
-		nodeState,
+		*nodeState,
 		transient,
 	)
 	if err != nil {
@@ -41,7 +40,7 @@ func NewNode(
 		address:      address,
 		actor:        task,
 		actorOutcome: actorOutcome,
-		nodeState:    nodeState,
+		nodeState:    *nodeState,
 	}
 
 	if forGraph != nil {
