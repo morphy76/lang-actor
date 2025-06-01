@@ -1,8 +1,10 @@
 # lang-actor
 
-Lang-Actor is a lightweight, Go-based implementation of the Actor Model, a computational model in which "actors" serve as the universal primitives of concurrent computation. This framework provides a robust foundation for building concurrent, message-driven applications with clearly defined boundaries and communication patterns.
+Lang-Actor is a lightweight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
 
-## Description
+## Actor Model Framework
+
+### Description
 
 The Actor Model in Lang-Actor follows these core principles:
 
@@ -12,7 +14,7 @@ The Actor Model in Lang-Actor follows these core principles:
 - Actors can create child actors, forming hierarchical supervision trees;
 - Each actor processes messages sequentially from its mailbox.
 
-## Main Capabilities
+### Main Capabilities
 
 1. **Hierarchical Actor System**:
    - Actors can create and manage child actors
@@ -38,7 +40,7 @@ The Actor Model in Lang-Actor follows these core principles:
    - Actors can be started, stopped, and monitored
    - Graceful shutdown with message draining
 
-## Simple Usage Example
+### Simple Usage Example
 
 Here's a minimal example of how to create and use an actor:
 
@@ -115,7 +117,7 @@ func main() {
 
 This simple example creates a counter actor that processes increment messages and keeps track of a running total.
 
-## More Complex Examples
+### More Complex Examples
 
 For more advanced usage patterns, refer to the examples in the repository:
 
@@ -133,30 +135,153 @@ For more advanced usage patterns, refer to the examples in the repository:
 
 These examples demonstrate various aspects of the framework including actor creation, message passing, state management, and actor hierarchies.
 
-## Design Principles
+## Graph Model Framework
 
-The framework follows these key design principles:
+### Description
 
-- Type safety through Go's generics
-- Clear separation of concerns between actors
-- Message-driven communication
-- Hierarchical organization of actors
-- Flexible backpressure policies for mailboxes
-- Graceful handling of actor lifecycle
+The Graph Model in Lang-Actor provides a powerful foundation for building flow-based computational graphs. It represents computation as a directed graph where:
 
-## Disclaimer
+- Nodes represent processing units with specific responsibilities
+- Edges define the flow of messages between nodes
+- Each node can process messages and route them to connected nodes
+- The graph maintains shared state accessible to all nodes
 
-This document has been generated with Full Vibes (Github Copilot using Claude 3.7 Sonnet).
+This model is particularly useful for workflows, data processing pipelines, and complex business processes with branching logic.
 
-Prompt:
+### Main Capabilities
 
-```text
-Document the actor model framework with:
-- description
-- main capabilities
-- simple usage example
-- reference to the examples for more complex cases
+1. **Node Types and Hierarchies**:
+   - Root nodes as entry points for external messages
+   - Debug nodes for monitoring and logging
+   - End nodes as terminal points for flows
+   - Custom nodes for specialized processing
+   - Fork and Join nodes for parallel processing
+
+2. **Flow Control Patterns**:
+   - Sequential message passing
+   - Conditional routing based on message content
+   - Cyclic flows for iterative processing
+   - Fork-join patterns for parallel execution
+
+3. **State Management**:
+   - Shared graph-wide state
+   - Node-specific attributes
+   - Type-safe state updates through message processing
+
+4. **Flexibility and Extensibility**:
+   - URI-based addressing scheme similar to the actor model
+   - Custom node types through composition
+   - Support for transient and persistent nodes
+
+5. **Execution Control**:
+   - Deterministic message flow
+   - Error handling and recovery
+   - Graceful termination
+
+### Simple Usage Example
+
+Here's a minimal example of how to create and use a graph:
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/morphy76/lang-actor/pkg/builders"
+)
+
+// Define graph state
+type graphState struct {
+	stateAsMap map[string]any
+}
+
+func (s graphState) AppendGraphState(purpose any, value any) error {
+	return nil
+}
+
+func main() {
+	// Create graph configuration and initial state
+	config := make(map[string]any)
+	config["startTime"] = time.Now()
+	
+	initialStateMap := make(map[string]any)
+	initialStateMap["processedCount"] = 0
+	
+	initialState := graphState{
+		stateAsMap: initialStateMap,
+	}
+
+	// Create graph
+	graph, err := builders.NewGraph(initialState, config)
+	if err != nil {
+		fmt.Printf("Error creating graph: %v\n", err)
+		return
+	}
+
+	// Create nodes
+	rootNode, err := builders.NewRootNode(graph)
+	if err != nil {
+		fmt.Printf("Error creating root node: %v\n", err)
+		return
+	}
+
+	processingNode, err := builders.NewDebugNode(graph)
+	if err != nil {
+		fmt.Printf("Error creating processing node: %v\n", err)
+		return
+	}
+
+	endNode, err := builders.NewEndNode(graph)
+	if err != nil {
+		fmt.Printf("Error creating end node: %v\n", err)
+		return
+	}
+
+	// Connect nodes with routes
+	err = rootNode.OneWayRoute("start", processingNode)
+	if err != nil {
+		fmt.Printf("Error creating route: %v\n", err)
+		return
+	}
+	
+	err = processingNode.OneWayRoute("complete", endNode)
+	if err != nil {
+		fmt.Printf("Error creating route: %v\n", err)
+		return
+	}
+
+	// Run the graph with a message
+	fmt.Println("Starting graph execution...")
+	err = rootNode.Accept(uuid.NewString())
+	if err != nil {
+		fmt.Printf("Error accepting message: %v\n", err)
+		return
+	}
+
+	fmt.Println("Graph execution complete")
+}
 ```
+
+This simple example creates a graph with three nodes (root, processing, and end) and connects them in sequence.
+
+### More Complex Examples
+
+For more advanced graph usage patterns, refer to the examples in the repository:
+
+1. **Simple Graph** (`examples/graph/simple/run.go`): Demonstrates basic graph creation with sequential message flow through multiple nodes.
+
+2. **Fork Node** (`examples/graph/forknode/run.go`): Shows how to use a fork-join node for parallel processing of tasks with a combined join operation to synchronize results.
+
+3. **Fork Graph** (`examples/graph/forkgraph/run.go`): Implements parallel processing using separate fork and join nodes, providing more control over the parallel execution pattern.
+
+4. **Advanced Graph** (`examples/graph/advanced/run.go`): Demonstrates complex graph structures with conditional routing, cyclic flows, and rich state management.
+
+These examples showcase the flexibility of the graph model for creating sophisticated computational flows with branching, parallel execution, and state management.
 
 ## License
 
