@@ -29,8 +29,6 @@ func NewGraph[T g.State, C g.Configuration](
 		config:      config,
 		state:       initialState,
 		addressBook: routing.NewAddressBook(),
-
-		stateChangedCh: make(chan g.State),
 	}
 
 	return graph, nil

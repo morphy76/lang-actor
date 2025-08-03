@@ -19,8 +19,6 @@ type graph struct {
 	config      g.Configuration
 	state       g.State
 	addressBook r.AddressBook
-
-	stateChangedCh chan g.State
 }
 
 // Register registers the given URL with the provided Addressable.
@@ -54,16 +52,10 @@ func (g *graph) UpdateState(state g.State) error {
 	defer g.lock.Unlock()
 
 	g.state = state
-	g.stateChangedCh <- g.state
 	return nil
 }
 
 // SetConfiguration sets the configuration of the graph.
 func (g *graph) SetConfig(config g.Configuration) {
 	g.config = config
-}
-
-// StateChangedCh returns a channel that notifies when the state of the graph changes.
-func (g *graph) StateChangedCh() <-chan g.State {
-	return g.stateChangedCh
 }

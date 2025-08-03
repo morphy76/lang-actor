@@ -368,12 +368,6 @@ func main() {
 	msg := uuid.NewString()
 	fmt.Printf("Starting graph with message: %s\n\n", msg)
 
-	stateChangesCh := graph.StateChangedCh()
-	go func() {
-		for state := range stateChangesCh {
-			fmt.Printf("State changed: %+v\n", state)
-		}
-	}()
 	err = rootNode.Accept(msg)
 	if err != nil {
 		fmt.Printf("Error accepting message: %v\n", err)
