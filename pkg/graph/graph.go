@@ -54,4 +54,9 @@ type Graph interface {
 	// Returns:
 	//   - error: An error if the update fails, nil otherwise.
 	UpdateState(state State) error
+	// StateChangedCh returns a channel that notifies when the state of the graph changes.
+	//
+	// Returns:
+	//   - <-chan State: A read-only channel that emits the new state when it
+	StateChangedCh() <-chan State
 }
