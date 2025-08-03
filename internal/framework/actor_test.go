@@ -239,11 +239,13 @@ func TestBackpressurePolicies(t *testing.T) {
 		assert.NilError(t, err)
 
 		// First message should be accepted
-		err = actor.Deliver("", nil)
+		msg1 := &mockMessageWithID{id: "msg1"}
+		err = actor.Deliver(msg1, nil)
 		assert.NilError(t, err)
 
 		// Second message should be silently dropped
-		err = actor.Deliver("", nil)
+		msg2 := &mockMessageWithID{id: "msg2"}
+		err = actor.Deliver(msg2, nil)
 		assert.NilError(t, err) // No error, but message should be dropped
 
 		// Release processing
@@ -284,11 +286,13 @@ func TestBackpressurePolicies(t *testing.T) {
 		assert.NilError(t, err)
 
 		// Deliver first message - should be accepted
-		err = actor.Deliver("", nil)
+		msg1 := &mockMessageWithID{id: "msg1"}
+		err = actor.Deliver(msg1, nil)
 		assert.NilError(t, err)
 
 		// Deliver second message - should replace the first due to drop oldest policy
-		err = actor.Deliver("", nil)
+		msg2 := &mockMessageWithID{id: "msg2"}
+		err = actor.Deliver(msg2, nil)
 		assert.NilError(t, err)
 
 		// Wait for processing to complete
