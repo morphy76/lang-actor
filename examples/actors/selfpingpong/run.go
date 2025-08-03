@@ -17,7 +17,6 @@ type actorState struct {
 
 type chatMessage struct {
 	cancelFn  context.CancelFunc
-	sender    url.URL
 	stopAfter int
 }
 
@@ -40,7 +39,6 @@ var pingPongFn framework.ProcessingFn[actorState] = func(
 	}
 
 	content := chatMessage{
-		sender:    self.Address(),
 		stopAfter: useMsg.stopAfter,
 		cancelFn:  useMsg.cancelFn,
 	}
@@ -74,9 +72,8 @@ func main() {
 	initialMessage := chatMessage{
 		stopAfter: 5,
 		cancelFn:  cancelFn,
-		sender:    *pingURL,
 	}
-	pingActor.Deliver(initialMessage, nil)
+	pingActor.Deliver(initialMessage, pingActor)
 
 	<-ctx.Done()
 }

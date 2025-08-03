@@ -3,6 +3,7 @@ package graph
 import (
 	"fmt"
 	"net/url"
+	"sync"
 
 	"github.com/google/uuid"
 
@@ -85,10 +86,16 @@ func NewForkNode(forGraph g.Graph) (g.Node, error) {
 	}
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+		var wg sync.WaitGroup
 		for _, edgeName := range self.State().Routes() {
-			self.State().Outcome() <- edgeName
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				self.State().Outcome() <- edgeName
+			}()
 		}
-		self.State().Outcome() <- "/dev/null"
+		wg.Wait()
+		self.State().Outcome() <- g.SkipOutcome
 		return self.State(), nil
 	}
 

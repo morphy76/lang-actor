@@ -241,7 +241,7 @@ func setupGraph(processNames []string) (g.Graph, g.Node, error) {
 	}
 
 	// Create nodes
-	rootNode, counterNode, forkNode, joinNode, endNode, err := createAllNodes(graph, processNames)
+	rootNode, counterNode, forkNode, joinNode, endNode, err := createAllNodes(graph)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -256,7 +256,7 @@ func setupGraph(processNames []string) (g.Graph, g.Node, error) {
 }
 
 // createAllNodes creates all nodes in the graph
-func createAllNodes(graph g.Graph, processNames []string) (g.Node, g.Node, g.Node, g.Node, g.Node, error) {
+func createAllNodes(graph g.Graph) (g.Node, g.Node, g.Node, g.Node, g.Node, error) {
 	rootNode, err := builders.NewRootNode(graph)
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("error creating root node: %v", err)

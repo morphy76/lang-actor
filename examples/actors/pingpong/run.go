@@ -19,7 +19,6 @@ type actorState struct {
 
 type chatMessage struct {
 	cancelFn  context.CancelFunc
-	sender    url.URL
 	stopAfter int
 }
 
@@ -31,7 +30,7 @@ func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actor
 		var useMsg chatMessage = msg.Payload().(chatMessage)
 
 		fmt.Println("-----------------------------------")
-		fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", self.Address().Host, msg.Sender().Host)
+		fmt.Printf("I'm [%s] and I'm processing message from [%s]\n", self.Address().Host, msg.Sender().Host)
 
 		if useMsg.stopAfter < int(self.State().processedMessages) {
 			fmt.Println("Current state:", self.State().processedMessages)
@@ -43,7 +42,6 @@ func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actor
 		}
 
 		content := chatMessage{
-			sender:    self.Address(),
 			stopAfter: useMsg.stopAfter,
 			cancelFn:  useMsg.cancelFn,
 		}
@@ -105,9 +103,8 @@ func main() {
 	initialMessage := chatMessage{
 		stopAfter: 5,
 		cancelFn:  cancelFn,
-		sender:    *pongURL,
 	}
-	pingActor.Deliver(initialMessage, nil)
+	pingActor.Deliver(initialMessage, pongActor)
 
 	<-ctx.Done()
 }
