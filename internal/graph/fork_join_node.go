@@ -41,7 +41,7 @@ func NewForkJoingNode[C g.NodeState](forGraph g.Graph, transient bool, processin
 
 		for _, child := range self.Children() {
 			fmt.Printf("Delivering message to child: %v\n", child.Address())
-			child.Deliver(msg)
+			child.Deliver(msg, self)
 		}
 
 		receivedOutcomes := 0

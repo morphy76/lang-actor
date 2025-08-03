@@ -44,20 +44,20 @@ type Routable interface {
 	// ProceedOnAnyRoute proceeds the message on any route.
 	//
 	// Parameters:
-	//   - msg (common.Message): The message to be sent.
+	//   - msg (any): The message to be sent.
 	//
 	// Returns:
 	//   - (error): An error if the routing is invalid.
-	ProceedOnAnyRoute(msg common.Message) error
+	ProceedOnAnyRoute(msg any) error
 	// ProceedOnRoute proceeds the message on a specific route.
 	//
 	// Parameters:
 	//   - name (string): The name of the route.
-	//   - msg (common.Message): The message to be sent.
+	//   - msg (any): The message to be sent.
 	//
 	// Returns:
 	//   - (error): An error if the routing is invalid.
-	ProceedOnRoute(name string, msg common.Message) error
+	ProceedOnRoute(name string, msg any) error
 }
 
 // Stateful represents a graph that can maintain its state and configuration.
@@ -106,8 +106,9 @@ type NodeState interface {
 // Node represents a node in the actor graph.
 type Node interface {
 	common.Addressable
-	common.MessageHandler
 	Routable
+	// Accept processes a message sent to the node.
+	Accept(msg any) error
 }
 
 // RootNode represents the root node of the actor graph.

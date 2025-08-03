@@ -158,9 +158,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.Accept(&mockMessage{
-			sender: rootNode.Address(),
-		})
+		err = rootNode.Accept(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

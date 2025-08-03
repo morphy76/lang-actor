@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	c "github.com/morphy76/lang-actor/pkg/common"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
@@ -42,11 +41,11 @@ func (r *endNode) OneWayRoute(name string, destination g.Node) error {
 }
 
 // ProceedOnAnyRoute proceeds with the first route available
-func (r *endNode) ProceedOnAnyRoute(mex c.Message) error {
+func (r *endNode) ProceedOnAnyRoute(mex any) error {
 	return nil
 }
 
 // ProceedOnRoute proceeds with the first route available
-func (r *endNode) ProceedOnRoute(name string, mex c.Message) error {
+func (r *endNode) ProceedOnRoute(name string, mex any) error {
 	return nil
 }

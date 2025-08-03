@@ -13,22 +13,6 @@ import (
 )
 
 var staticNodeAssertion g.Node = (*node)(nil)
-var staticNodeMessageAssertion f.Message = (*nodeMessage)(nil)
-
-type nodeMessage struct {
-	sender  url.URL
-	payload any
-}
-
-// Sender returns the sender of the message
-func (m nodeMessage) Sender() url.URL {
-	return m.sender
-}
-
-// Mutation returns false, indicating that this message is not a mutation
-func (m nodeMessage) Mutation() bool {
-	return false
-}
 
 type node struct {
 	lock *sync.Mutex
@@ -90,7 +74,7 @@ func (r *node) Address() url.URL {
 }
 
 // ProceedOnAnyRoute proceeds with the first route available
-func (r *node) ProceedOnAnyRoute(mex c.Message) error {
+func (r *node) ProceedOnAnyRoute(mex any) error {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
@@ -104,7 +88,7 @@ func (r *node) ProceedOnAnyRoute(mex c.Message) error {
 		if !found {
 			return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", route.Destination, r.Address()))
 		} else {
-			handler, ok := addressable.(c.MessageHandler)
+			handler, ok := addressable.(g.Node)
 			if !ok {
 				return fmt.Errorf("destination [%v] is not a message handler", addressable.Address())
 			}
@@ -116,7 +100,7 @@ func (r *node) ProceedOnAnyRoute(mex c.Message) error {
 }
 
 // ProceedOnRoute proceeds the message on a specific route
-func (r *node) ProceedOnRoute(name string, mex c.Message) error {
+func (r *node) ProceedOnRoute(name string, mex any) error {
 	edge, ok := r.edges[name]
 	if !ok {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("node [%v] has no route named [%s]", r.Address(), name))
@@ -126,7 +110,7 @@ func (r *node) ProceedOnRoute(name string, mex c.Message) error {
 	if !found {
 		return errors.Join(g.ErrorInvalidRouting, fmt.Errorf("Unknown address [%v] from node [%v]", edge.Destination.Address(), r.Address()))
 	} else {
-		handler, ok := addressable.(c.MessageHandler)
+		handler, ok := addressable.(g.Node)
 		if !ok {
 			return fmt.Errorf("destination [%v] is not a message handler", addressable.Address())
 		}
@@ -135,20 +119,10 @@ func (r *node) ProceedOnRoute(name string, mex c.Message) error {
 }
 
 // Accept accepts a message and delivers it to the actor
-func (r *node) Accept(message c.Message) error {
-	_, ok := message.(f.Message)
-	if ok {
-		if err := r.actor.Deliver(message); err != nil {
-			return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
-		}
-	} else {
-		actorMessage := &nodeMessage{
-			sender:  r.actor.Address(),
-			payload: message,
-		}
-		if err := r.actor.Deliver(actorMessage); err != nil {
-			return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
-		}
+func (r *node) Accept(message any) error {
+
+	if err := r.actor.Deliver(message, r); err != nil {
+		return fmt.Errorf("failed to deliver message to node [%v]: %w", r.Address(), err)
 	}
 
 	// TODO implement a timeout for the outcome channel
