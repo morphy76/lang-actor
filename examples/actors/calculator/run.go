@@ -51,7 +51,6 @@ const (
 
 // CalcMessage represents messages sent between calculator actors
 type calcMessage struct {
-	sender         url.URL
 	mexType        messageType
 	expression     string    // Expression to evaluate
 	result         float64   // Result of evaluation
@@ -62,23 +61,13 @@ type calcMessage struct {
 	closePos       int       // Position of closing parenthesis
 }
 
-// Sender implements the framework.Message interface
-func (m calcMessage) Sender() url.URL {
-	return m.sender
-}
-
-// Mutation implements the framework.Message interface
-func (m calcMessage) Mutation() bool {
-	return m.mexType == messageTypeResult
-}
-
 // calculatorFn is the main processing function for calculator actors
 func calculatorFn(
 	msg framework.Message,
 	self framework.Actor[calcState],
 ) (calcState, error) {
 	// Type assert to our specific message type
-	useMsg := msg.(calcMessage)
+	useMsg := msg.Payload().(calcMessage)
 
 	switch useMsg.mexType {
 	case messageTypeEvaluate:
@@ -110,7 +99,6 @@ func evaluateExpression(msg calcMessage, self framework.Actor[calcState]) (calcS
 	if expression == "" {
 		if parent, found := self.GetParent(); found {
 			self.Send(calcMessage{
-				sender:         self.Address(),
 				mexType:        messageTypeResult,
 				result:         0,
 				isParenthesis:  state.isParenthesis,
@@ -131,7 +119,6 @@ func evaluateExpression(msg calcMessage, self framework.Actor[calcState]) (calcS
 		if parent, found := self.GetParent(); found {
 			// Send result back to parent
 			self.Send(calcMessage{
-				sender:         self.Address(),
 				mexType:        messageTypeResult,
 				result:         value,
 				isParenthesis:  state.isParenthesis,
@@ -180,14 +167,13 @@ func evaluateExpression(msg calcMessage, self framework.Actor[calcState]) (calcS
 
 		// Send the inner expression to the child actor
 		err = childActor.Deliver(calcMessage{
-			sender:         self.Address(),
 			mexType:        messageTypeEvaluate,
 			expression:     innerExpr,
 			isParenthesis:  true,
 			containingExpr: expression,
 			openPos:        openIdx,
 			closePos:       closeIdx,
-		})
+		}, nil)
 		if err != nil {
 			return state, fmt.Errorf("failed to deliver message: %w", err)
 		}
@@ -224,20 +210,18 @@ func handleResult(msg calcMessage, self framework.Actor[calcState]) (calcState, 
 
 		// Re-evaluate the expression with the substituted value
 		return state, self.Deliver(calcMessage{
-			sender:         self.Address(),
 			mexType:        messageTypeEvaluate,
 			expression:     newExpr,
 			isParenthesis:  self.State().isParenthesis,
 			containingExpr: self.State().containingExpr,
 			openPos:        self.State().openPos,
 			closePos:       self.State().closePos,
-		})
+		}, nil)
 	}
 
 	// Otherwise just pass the result up to our parent
 	if parent, found := self.GetParent(); found {
 		self.Send(calcMessage{
-			sender:         self.Address(),
 			mexType:        messageTypeResult,
 			result:         state.result,
 			isParenthesis:  self.State().isParenthesis,
@@ -278,10 +262,9 @@ func handleMultiplication(expression string, self framework.Actor[calcState], st
 			}
 
 			err = childActor.Deliver(calcMessage{
-				sender:     self.Address(),
 				mexType:    messageTypeEvaluate,
 				expression: part,
-			})
+			}, nil)
 			if err != nil {
 				return state, fmt.Errorf("failed to deliver message: %w", err)
 			}
@@ -305,7 +288,6 @@ func handleMultiplication(expression string, self framework.Actor[calcState], st
 		// Send result to parent
 		if parent, found := self.GetParent(); found {
 			self.Send(calcMessage{
-				sender:         self.Address(),
 				mexType:        messageTypeResult,
 				result:         result,
 				isParenthesis:  state.isParenthesis,
@@ -346,10 +328,9 @@ func handleAddition(expression string, self framework.Actor[calcState], state ca
 			}
 
 			err = childActor.Deliver(calcMessage{
-				sender:     self.Address(),
 				mexType:    messageTypeEvaluate,
 				expression: part,
-			})
+			}, nil)
 			if err != nil {
 				return state, fmt.Errorf("failed to deliver message: %w", err)
 			}
@@ -373,7 +354,6 @@ func handleAddition(expression string, self framework.Actor[calcState], state ca
 		// Send result to parent
 		if parent, found := self.GetParent(); found {
 			self.Send(calcMessage{
-				sender:         self.Address(),
 				mexType:        messageTypeResult,
 				result:         result,
 				isParenthesis:  state.isParenthesis,
@@ -423,20 +403,18 @@ func main() {
 		if input == "exit" {
 			// Send exit message to calculator
 			calcActor.Deliver(calcMessage{
-				sender:   *calcURL,
 				mexType:  messageTypeExit,
 				exitChan: exitChan,
-			})
+			}, nil)
 			break
 		}
 
 		// Send the input expression to the calculator
 		calcActor.Deliver(calcMessage{
-			sender:     *calcURL,
 			mexType:    messageTypeEvaluate,
 			expression: input,
 			exitChan:   exitChan,
-		})
+		}, nil)
 	}
 
 	// Wait for exit signal

@@ -15,8 +15,6 @@ type sorterState struct {
 	sortedInts []int
 }
 
-var staticinputMessageAssertion framework.Message = (*inputMessage)(nil)
-
 type inputMessageType int
 
 const (
@@ -31,17 +29,9 @@ type inputMessage struct {
 	mexType inputMessageType
 }
 
-func (m inputMessage) Sender() url.URL {
-	return url.URL{}
-}
-
-func (m inputMessage) Mutation() bool {
-	return m.mexType == inputMessageTypeMerge
-}
-
 func sortFn(leaveCh chan bool) framework.ProcessingFn[sorterState] {
 	return func(msg framework.Message, me framework.Actor[sorterState]) (sorterState, error) {
-		useMsg := msg.(inputMessage)
+		useMsg := msg.Payload().(inputMessage)
 		switch useMsg.mexType {
 		case inputMessageTypeSort:
 			return sortFnSort(leaveCh, useMsg, me)
@@ -49,7 +39,7 @@ func sortFn(leaveCh chan bool) framework.ProcessingFn[sorterState] {
 			return sortFnMerge(useMsg, me)
 		case inputMessageTypeEnd:
 			fmt.Println("Sort completed:", useMsg.ints)
-			me.Deliver(inputMessage{mexType: inputMessageTypeLeave})
+			me.Deliver(inputMessage{mexType: inputMessageTypeLeave}, nil)
 			return sorterState{}, nil
 		case inputMessageTypeLeave:
 			fmt.Println("Exiting...")
@@ -91,7 +81,7 @@ func sortFnMerge(
 		if found {
 			me.Send(inputMessage{ints: rv.sortedInts, mexType: inputMessageTypeMerge}, parent)
 		} else {
-			me.Deliver(inputMessage{ints: rv.sortedInts, mexType: inputMessageTypeEnd})
+			me.Deliver(inputMessage{ints: rv.sortedInts, mexType: inputMessageTypeEnd}, nil)
 		}
 	}
 
@@ -111,7 +101,7 @@ func sortFnSort(
 				fmt.Println("Error sending merge upstream", err)
 			}
 		} else {
-			err := me.Deliver(inputMessage{ints: msg.ints, mexType: inputMessageTypeEnd})
+			err := me.Deliver(inputMessage{ints: msg.ints, mexType: inputMessageTypeEnd}, nil)
 			if err != nil {
 				fmt.Println("Error sending end to me", err)
 			}
@@ -129,7 +119,7 @@ func sortFnSort(
 				fmt.Println("Error sending merge upstream", err)
 			}
 		} else {
-			err := me.Deliver(inputMessage{ints: msg.ints, mexType: inputMessageTypeEnd})
+			err := me.Deliver(inputMessage{ints: msg.ints, mexType: inputMessageTypeEnd}, nil)
 			if err != nil {
 				fmt.Println("Error sending end to me", err)
 			}
@@ -145,24 +135,24 @@ func sortFnSort(
 	leftActor, err := builders.SpawnChild(me, sortFn(leaveCh), childState)
 	if err != nil {
 		fmt.Println("Error creating left actor:", err)
-		me.Deliver(inputMessage{mexType: inputMessageTypeLeave})
+		me.Deliver(inputMessage{mexType: inputMessageTypeLeave}, nil)
 	}
 
-	err = leftActor.Deliver(inputMessage{ints: msg.ints[:mid], mexType: inputMessageTypeSort})
+	err = leftActor.Deliver(inputMessage{ints: msg.ints[:mid], mexType: inputMessageTypeSort}, nil)
 	if err != nil {
 		fmt.Println("Error sending sort left downstream", err)
-		me.Deliver(inputMessage{mexType: inputMessageTypeLeave})
+		me.Deliver(inputMessage{mexType: inputMessageTypeLeave}, nil)
 	}
 	rightActor, err := builders.SpawnChild(me, sortFn(leaveCh), childState)
 	if err != nil {
 		fmt.Println("Error creating left actor:", err)
-		me.Deliver(inputMessage{mexType: inputMessageTypeLeave})
+		me.Deliver(inputMessage{mexType: inputMessageTypeLeave}, nil)
 	}
 
-	err = rightActor.Deliver(inputMessage{ints: msg.ints[mid:], mexType: inputMessageTypeSort})
+	err = rightActor.Deliver(inputMessage{ints: msg.ints[mid:], mexType: inputMessageTypeSort}, nil)
 	if err != nil {
 		fmt.Println("Error sending sort right downstream", err)
-		me.Deliver(inputMessage{mexType: inputMessageTypeLeave})
+		me.Deliver(inputMessage{mexType: inputMessageTypeLeave}, nil)
 	}
 
 	return sorterState{}, nil
@@ -195,7 +185,7 @@ func main() {
 	sorterActor.Deliver(inputMessage{
 		ints:    partsAsIntegers,
 		mexType: inputMessageTypeSort,
-	})
+	}, nil)
 
 	<-leaveCh
 }

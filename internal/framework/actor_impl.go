@@ -12,6 +12,20 @@ import (
 )
 
 var staticActorAssertion f.Actor[any] = (*actor[any])(nil)
+var staticMessageAssertion f.Message = (*actorMessage)(nil)
+
+type actorMessage struct {
+	payload any
+	from    c.Addressable
+}
+
+func (m actorMessage) Payload() any {
+	return m.payload
+}
+
+func (m actorMessage) Sender() url.URL {
+	return m.from.Address()
+}
 
 type actor[T any] struct {
 	lock *sync.Mutex
@@ -23,7 +37,7 @@ type actor[T any] struct {
 	ctxCancel context.CancelFunc
 
 	address       url.URL
-	mailbox       chan c.Message
+	mailbox       chan f.Message
 	mailboxConfig f.MailboxConfig
 	processingFn  f.ProcessingFn[T]
 
@@ -53,23 +67,28 @@ func (a *actor[T]) Stop() (chan bool, error) {
 }
 
 // Deliver delivers a message to the actor.
-func (a *actor[T]) Deliver(msg c.Message) error {
+func (a *actor[T]) Deliver(msg any, from c.Addressable) error {
 	if a.status != f.ActorStatusRunning {
 		return fmt.Errorf("failed to deliver message: %w", f.ErrorActorNotRunning)
 	}
 
+	useMessage := actorMessage{
+		payload: msg,
+		from:    from,
+	}
+
 	switch a.mailboxConfig.Policy {
 	case f.BackpressurePolicyBlock:
-		a.mailbox <- msg
+		a.mailbox <- useMessage
 	case f.BackpressurePolicyFail:
 		select {
-		case a.mailbox <- msg:
+		case a.mailbox <- useMessage:
 		default:
 			return fmt.Errorf("mailbox full: message rejected")
 		}
 	case f.BackpressurePolicyDropNewest:
 		select {
-		case a.mailbox <- msg:
+		case a.mailbox <- useMessage:
 		default:
 			// Mailbox is full, silently drop the message
 			// This is intentional as per the policy
@@ -82,16 +101,16 @@ func (a *actor[T]) Deliver(msg c.Message) error {
 			}
 		}
 		select {
-		case a.mailbox <- msg:
+		case a.mailbox <- useMessage:
 		default:
 			return fmt.Errorf("failed to deliver message: mailbox state changed unexpectedly")
 		}
 
 	case f.BackpressurePolicyUnbounded:
-		a.mailbox <- msg
+		a.mailbox <- useMessage
 
 	default:
-		a.mailbox <- msg
+		a.mailbox <- useMessage
 	}
 
 	return nil
@@ -108,8 +127,8 @@ func (a actor[T]) Status() f.ActorStatus {
 }
 
 // Send sends a message to the actor.
-func (a actor[T]) Send(msg c.Message, destination c.Transport) error {
-	return destination.Deliver(msg)
+func (a actor[T]) Send(msg any, destination c.Transport) error {
+	return destination.Deliver(msg, a)
 }
 
 // Append appends a child actor to the actor.
@@ -206,9 +225,7 @@ func (a *actor[T]) consume() {
 					a.handleFailure(err)
 				}
 
-				if useMessage.Mutation() || !a.transient {
-					a.swapState(newState)
-				}
+				a.swapState(newState)
 			}
 		case <-a.ctx.Done():
 			cleanupTimeout := time.After(5 * time.Second)
@@ -223,9 +240,7 @@ func (a *actor[T]) consume() {
 							a.handleFailure(err)
 						}
 
-						if useMessage.Mutation() {
-							a.swapState(newState)
-						}
+						a.swapState(newState)
 					}
 				case <-cleanupTimeout:
 					a.status = f.ActorStatusIdle

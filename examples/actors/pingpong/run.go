@@ -17,20 +17,10 @@ type actorState struct {
 	processedMessages uint64
 }
 
-var staticChatMessageAssertion framework.Message = (*chatMessage)(nil)
-
 type chatMessage struct {
 	cancelFn  context.CancelFunc
 	sender    url.URL
 	stopAfter int
-}
-
-func (m chatMessage) Sender() url.URL {
-	return m.sender
-}
-
-func (m chatMessage) Mutation() bool {
-	return true
 }
 
 func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actorState] {
@@ -38,7 +28,7 @@ func getPingPongFn(addressBook routing.AddressBook) framework.ProcessingFn[actor
 		msg framework.Message,
 		self framework.Actor[actorState],
 	) (actorState, error) {
-		var useMsg chatMessage = msg.(chatMessage)
+		var useMsg chatMessage = msg.Payload().(chatMessage)
 
 		fmt.Println("-----------------------------------")
 		fmt.Printf("I'm [%s] and I'm rocessing message from [%s]\n", self.Address().Host, msg.Sender().Host)
@@ -117,7 +107,7 @@ func main() {
 		cancelFn:  cancelFn,
 		sender:    *pongURL,
 	}
-	pingActor.Deliver(initialMessage)
+	pingActor.Deliver(initialMessage, nil)
 
 	<-ctx.Done()
 }
