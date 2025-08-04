@@ -23,7 +23,161 @@ func (m *mockState) MergeChange(purpose any, value any) error {
 }
 
 func TestNewStateWrapper(t *testing.T) {
-	t.Log("StateWrapper test suite")
+	t.Log("NewStateWrapper test suite")
+
+	t.Run("creates state wrapper with valid parameters", func(t *testing.T) {
+		t.Log("creates state wrapper with valid parameters test case")
+
+		// Arrange
+		mockState := &mockState{}
+		stateChangesCh := make(chan g.State, 1)
+
+		// Act
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+
+		// Assert
+		if err != nil {
+			t.Errorf("Expected no error, but got: %v", err)
+		}
+
+		if wrapper == nil {
+			t.Errorf("Expected wrapper to be created, but got nil")
+		}
+
+		if wrapper.state != mockState {
+			t.Errorf("Expected wrapper state to be the provided mockState")
+		}
+
+		if wrapper.stateChangesCh != stateChangesCh {
+			t.Errorf("Expected wrapper stateChangesCh to be the provided channel")
+		}
+
+		if wrapper.lock == nil {
+			t.Errorf("Expected wrapper lock to be initialized")
+		}
+	})
+
+	t.Run("returns error when state is nil", func(t *testing.T) {
+		t.Log("returns error when state is nil test case")
+
+		// Arrange
+		stateChangesCh := make(chan g.State, 1)
+
+		// Act
+		wrapper, err := NewStateWrapper(nil, stateChangesCh)
+
+		// Assert
+		if err == nil {
+			t.Errorf("Expected error when state is nil, but got none")
+		}
+
+		if wrapper != nil {
+			t.Errorf("Expected wrapper to be nil when error occurs, but got: %v", wrapper)
+		}
+
+		expectedErrorMessage := "state cannot be nil"
+		if err.Error() != expectedErrorMessage {
+			t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMessage, err.Error())
+		}
+	})
+
+	t.Run("returns error when stateChangesCh is nil", func(t *testing.T) {
+		t.Log("returns error when stateChangesCh is nil test case")
+
+		// Arrange
+		mockState := &mockState{}
+
+		// Act
+		wrapper, err := NewStateWrapper(mockState, nil)
+
+		// Assert
+		if err == nil {
+			t.Errorf("Expected error when stateChangesCh is nil, but got none")
+		}
+
+		if wrapper != nil {
+			t.Errorf("Expected wrapper to be nil when error occurs, but got: %v", wrapper)
+		}
+
+		expectedErrorMessage := "stateChangesCh cannot be nil"
+		if err.Error() != expectedErrorMessage {
+			t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMessage, err.Error())
+		}
+	})
+
+	t.Run("returns error when both parameters are nil", func(t *testing.T) {
+		t.Log("returns error when both parameters are nil test case")
+
+		// Act
+		wrapper, err := NewStateWrapper(nil, nil)
+
+		// Assert
+		if err == nil {
+			t.Errorf("Expected error when both parameters are nil, but got none")
+		}
+
+		if wrapper != nil {
+			t.Errorf("Expected wrapper to be nil when error occurs, but got: %v", wrapper)
+		}
+
+		// The function should return the first validation error (state cannot be nil)
+		expectedErrorMessage := "state cannot be nil"
+		if err.Error() != expectedErrorMessage {
+			t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMessage, err.Error())
+		}
+	})
+
+	t.Run("creates wrapper with buffered channel", func(t *testing.T) {
+		t.Log("creates wrapper with buffered channel test case")
+
+		// Arrange
+		mockState := &mockState{}
+		stateChangesCh := make(chan g.State, 10) // Buffered channel
+
+		// Act
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+
+		// Assert
+		if err != nil {
+			t.Errorf("Expected no error, but got: %v", err)
+		}
+
+		if wrapper == nil {
+			t.Errorf("Expected wrapper to be created, but got nil")
+		}
+
+		if wrapper.stateChangesCh != stateChangesCh {
+			t.Errorf("Expected wrapper stateChangesCh to be the provided buffered channel")
+		}
+	})
+
+	t.Run("creates wrapper with unbuffered channel", func(t *testing.T) {
+		t.Log("creates wrapper with unbuffered channel test case")
+
+		// Arrange
+		mockState := &mockState{}
+		stateChangesCh := make(chan g.State) // Unbuffered channel
+
+		// Act
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+
+		// Assert
+		if err != nil {
+			t.Errorf("Expected no error, but got: %v", err)
+		}
+
+		if wrapper == nil {
+			t.Errorf("Expected wrapper to be created, but got nil")
+		}
+
+		if wrapper.stateChangesCh != stateChangesCh {
+			t.Errorf("Expected wrapper stateChangesCh to be the provided unbuffered channel")
+		}
+	})
+}
+
+func TestStateWrapperMethods(t *testing.T) {
+	t.Log("StateWrapper methods test suite")
 
 	t.Run("MergeChange proxies to underlying state", func(t *testing.T) {
 		t.Log("MergeChange proxies to underlying state test case")
@@ -31,16 +185,16 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := &stateWrapper{
-			state:          mockState,
-			stateChangesCh: stateChangesCh,
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+		if err != nil {
+			t.Fatalf("Failed to create state wrapper: %v", err)
 		}
 
 		purpose := "test-purpose"
 		value := "test-value"
 
 		// Act
-		err := wrapper.MergeChange(purpose, value)
+		err = wrapper.MergeChange(purpose, value)
 
 		// Assert
 		if err != nil {
@@ -66,16 +220,16 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := &stateWrapper{
-			state:          mockState,
-			stateChangesCh: stateChangesCh,
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+		if err != nil {
+			t.Fatalf("Failed to create state wrapper: %v", err)
 		}
 
 		purpose := "test-purpose"
 		value := "test-value"
 
 		// Act
-		err := wrapper.MergeChange(purpose, value)
+		err = wrapper.MergeChange(purpose, value)
 
 		// Assert
 		if err != nil {
@@ -100,16 +254,16 @@ func TestNewStateWrapper(t *testing.T) {
 		expectedError := &mockError{message: "test error"}
 		mockState := &mockState{mergeChangeError: expectedError}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := &stateWrapper{
-			state:          mockState,
-			stateChangesCh: stateChangesCh,
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+		if err != nil {
+			t.Fatalf("Failed to create state wrapper: %v", err)
 		}
 
 		purpose := "test-purpose"
 		value := "test-value"
 
 		// Act
-		err := wrapper.MergeChange(purpose, value)
+		err = wrapper.MergeChange(purpose, value)
 
 		// Assert
 		if err != expectedError {
@@ -135,13 +289,13 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := &stateWrapper{
-			state:          mockState,
-			stateChangesCh: stateChangesCh,
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+		if err != nil {
+			t.Fatalf("Failed to create state wrapper: %v", err)
 		}
 
 		// Act
-		err := wrapper.MergeChange(nil, nil)
+		err = wrapper.MergeChange(nil, nil)
 
 		// Assert
 		if err != nil {
@@ -175,9 +329,9 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 3) // Buffer for multiple notifications
-		wrapper := &stateWrapper{
-			state:          mockState,
-			stateChangesCh: stateChangesCh,
+		wrapper, err := NewStateWrapper(mockState, stateChangesCh)
+		if err != nil {
+			t.Fatalf("Failed to create state wrapper: %v", err)
 		}
 
 		// Act
