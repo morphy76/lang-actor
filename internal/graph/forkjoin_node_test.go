@@ -16,7 +16,7 @@ type uUUIDGraphState struct {
 	uuids []any
 }
 
-func (s *uUUIDGraphState) AppendGraphState(purpose any, value any) error {
+func (s *uUUIDGraphState) MergeChange(purpose any, value any) error {
 	s.uuids = append(s.uuids, value.(string))
 	return nil
 }
@@ -40,11 +40,11 @@ func TestForkJoinNode(t *testing.T) {
 		}
 
 		uuids := []string{uuid.NewString(), uuid.NewString(), uuid.NewString()}
-		uuidGenFn := func(i int) f.ProcessingFn[g.NodeState] {
-			return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+		uuidGenFn := func(i int) f.ProcessingFn[g.NodeRef] {
+			return func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 				rv := uuids[i]
 				t.Logf("Processing UUID: %s", rv)
-				self.State().Outcome() <- rv
+				self.State().ProceedOntoRoute() <- rv
 				return self.State(), nil
 			}
 		}
@@ -68,9 +68,7 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.Accept(&mockMessage{
-			sender: rootNode.Address(),
-		})
+		err = rootNode.Accept(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

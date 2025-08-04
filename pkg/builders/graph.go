@@ -72,8 +72,7 @@ func NewEndNode(forGraph graph.Graph) (graph.Node, error) {
 // Parameters:
 //   - forGraph (graph.Graph): The graph to which the custom node belongs.
 //   - address (*url.URL): The URL address of the node.
-//   - taskFn (framework.ProcessingFn[NodeState]): The processing function for the node.
-//   - transient (bool): Whether the node is transient or not.
+//   - taskFn (framework.ProcessingFn[NodeRef]): The processing function for the node.
 //
 // Returns:
 //   - (graph.Node): The created custom node.
@@ -81,26 +80,25 @@ func NewEndNode(forGraph graph.Graph) (graph.Node, error) {
 func NewCustomNode(
 	forGraph graph.Graph,
 	address *url.URL,
-	taskFn framework.ProcessingFn[graph.NodeState],
-	transient bool,
+	taskFn framework.ProcessingFn[graph.NodeRef],
 ) (graph.Node, error) {
-	return g.NewCustomNode(forGraph, address, taskFn, transient)
+	return g.NewCustomNode(forGraph, address, taskFn)
 }
 
 // NewForkJoingNode creates a new fork-join node for the given graph for node-scope processing.
 //
 // Type parameters:
-//   - C (graph.NodeState): The type of the state for the child nodes.
+//   - C (graph.NodeRef): The type of the state for the child nodes.
 //
 // Parameters:
 //   - forGraph (graph.Graph): The graph to which the fork-join node belongs.
 //   - transient (bool): Whether the node is transient or not.
-//   - taskFn (...framework.ProcessingFn[graph.NodeState]): Optional processing functions for the node.
+//   - taskFn (...framework.ProcessingFn[graph.NodeRef]): Optional processing functions for the node.
 //
 // Returns:
 //   - (graph.Node): The created fork-join node.
 //   - (error): An error if the node creation fails.
-func NewForkJoingNode[C graph.NodeState](
+func NewForkJoingNode[C graph.NodeRef](
 	forGraph graph.Graph,
 	transient bool,
 	taskFn ...framework.ProcessingFn[C],

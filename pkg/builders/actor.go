@@ -7,7 +7,7 @@ import (
 	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
-// NewActor creates a new actor with the given address. Mutation is fully driven by the message.
+// NewActor creates a new actor with the given address. The actor state is always updated by message processing.
 // Supported schemas are:
 // - actor://
 //
@@ -29,7 +29,7 @@ func NewActor[T any](
 	initialState T,
 	mailboxConfig ...framework.MailboxConfig,
 ) (framework.Actor[T], error) {
-	return f.NewActor(address, processingFn, initialState, true, mailboxConfig...)
+	return f.NewActor(address, processingFn, initialState, mailboxConfig...)
 }
 
 // NewMutableActor creates a new actor with the given address alwways mutable.
@@ -54,7 +54,7 @@ func NewMutableActor[T any](
 	initialState T,
 	mailboxConfig ...framework.MailboxConfig,
 ) (framework.Actor[T], error) {
-	return f.NewActor(address, processingFn, initialState, false, mailboxConfig...)
+	return f.NewActor(address, processingFn, initialState, mailboxConfig...)
 }
 
 // SpawnChild creates a new child actor with the given processing function and initial state.
@@ -66,6 +66,7 @@ func NewMutableActor[T any](
 //   - parent (framework.ActorRef): The reference to the parent actor.
 //   - processingFn (framework.ProcessingFn): The function to process messages sent to the child actor.
 //   - initialState (T): The initial state of the child actor.
+//   - parent (framework.ActorRef): The parent actor reference.
 //   - mailboxConfig (framework.MailboxConfig): Optional configuration for the child's mailbox.
 //
 // Returns:
@@ -77,7 +78,7 @@ func SpawnChild[T any](
 	initialState T,
 	mailboxConfig ...framework.MailboxConfig,
 ) (framework.Actor[T], error) {
-	child, err := f.NewActorWithParent(processingFn, initialState, true, parent, mailboxConfig...)
+	child, err := f.NewActorWithParent(processingFn, initialState, parent, mailboxConfig...)
 	if err != nil {
 		return nil, err
 	}

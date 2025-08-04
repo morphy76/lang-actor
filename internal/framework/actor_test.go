@@ -29,7 +29,7 @@ func TestNewActor(t *testing.T) {
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState, true)
+		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 		assert.Equal(t, actor.Address().Scheme, address.Scheme)
 	})
@@ -40,7 +40,7 @@ func TestNewActor(t *testing.T) {
 		address, err := url.Parse("http://example")
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState, true)
+		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.Assert(t, actor == nil)
 		assert.ErrorContains(t, err, "invalid actor address")
 	})
@@ -59,7 +59,7 @@ func TestActorLifecycle(t *testing.T) {
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState, true)
+		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		assert.Equal(t, actor.Status(), f.ActorStatusRunning)
@@ -71,7 +71,7 @@ func TestActorLifecycle(t *testing.T) {
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState, true)
+		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		stopCompleted, err := actor.Stop()
@@ -81,21 +81,6 @@ func TestActorLifecycle(t *testing.T) {
 
 		assert.Equal(t, actor.Status(), f.ActorStatusIdle)
 	})
-}
-
-var staticMockMessageAssertion f.Message = (*mockMessage)(nil)
-
-type mockMessage struct {
-	sender   url.URL
-	mutation bool
-}
-
-func (m mockMessage) Sender() url.URL {
-	return m.sender
-}
-
-func (m mockMessage) Mutation() bool {
-	return m.mutation
 }
 
 type mockActorState struct {
@@ -120,11 +105,10 @@ func TestActorMessageDelivery(t *testing.T) {
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, spyFn, noState{}, true)
+		actor, err := framework.NewActor(*address, spyFn, noState{})
 		assert.NilError(t, err)
 
-		message := &mockMessage{sender: *address, mutation: false}
-		err = actor.Deliver(message)
+		err = actor.Deliver("", nil)
 		assert.NilError(t, err)
 
 		stopCompleted, err := actor.Stop()
@@ -135,8 +119,8 @@ func TestActorMessageDelivery(t *testing.T) {
 		assert.Assert(t, *messageProcessed)
 	})
 
-	t.Run("Update actor state on mutation message", func(t *testing.T) {
-		t.Log("Should update the actor's state when a mutation message is delivered")
+	t.Run("Update actor state on message processing", func(t *testing.T) {
+		t.Log("Should update the actor's state when any message is delivered")
 
 		var initialState = mockActorState{processed: false}
 		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.Actor[mockActorState]) (mockActorState, error) {
@@ -146,11 +130,10 @@ func TestActorMessageDelivery(t *testing.T) {
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, spyFn, initialState, true)
+		actor, err := framework.NewActor(*address, spyFn, initialState)
 		assert.NilError(t, err)
 
-		message := &mockMessage{sender: *address, mutation: true}
-		err = actor.Deliver(message)
+		err = actor.Deliver("", nil)
 		assert.NilError(t, err)
 
 		stopCompleted, err := actor.Stop()
@@ -176,12 +159,11 @@ func TestBackpressurePolicies(t *testing.T) {
 		address, err := url.Parse(actorURI)
 		assert.NilError(t, err)
 
-		actor, err := framework.NewActor(*address, nullProcessingFn, initialState, true)
+		actor, err := framework.NewActor(*address, nullProcessingFn, initialState)
 		assert.NilError(t, err)
 
 		// Verify we can deliver a message
-		message := &mockMessage{sender: *address, mutation: false}
-		err = actor.Deliver(message)
+		err = actor.Deliver("", nil)
 		assert.NilError(t, err)
 
 		stopCompleted, err := actor.Stop()
@@ -208,17 +190,15 @@ func TestBackpressurePolicies(t *testing.T) {
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, slowProcessingFn, initialState, true, config)
+		actor, err := framework.NewActor(*address, slowProcessingFn, initialState, config)
 		assert.NilError(t, err)
 
 		// First message should be accepted
-		message1 := &mockMessage{sender: *address, mutation: false}
-		err = actor.Deliver(message1)
+		err = actor.Deliver("", nil)
 		assert.NilError(t, err)
 
 		// Second message should be rejected since mailbox is full and we're using fail policy
-		message2 := &mockMessage{sender: *address, mutation: false}
-		err = actor.Deliver(message2)
+		err = actor.Deliver("", nil)
 		assert.ErrorContains(t, err, "mailbox full")
 
 		// Release the processing function
@@ -247,7 +227,7 @@ func TestBackpressurePolicies(t *testing.T) {
 		// Track which messages were processed
 		processedMessages := make(map[string]bool)
 		processingFn := func(msg f.Message, actor f.Actor[noState]) (noState, error) {
-			idMsg, ok := msg.(*mockMessageWithID)
+			idMsg, ok := msg.Payload().(*mockMessageWithID)
 			if ok {
 				processedMessages[idMsg.id] = true
 			}
@@ -255,17 +235,17 @@ func TestBackpressurePolicies(t *testing.T) {
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, processingFn, initialState, true, config)
+		actor, err := framework.NewActor(*address, processingFn, initialState, config)
 		assert.NilError(t, err)
 
 		// First message should be accepted
-		message1 := &mockMessageWithID{mockMessage: mockMessage{sender: *address}, id: "msg1"}
-		err = actor.Deliver(message1)
+		msg1 := &mockMessageWithID{id: "msg1"}
+		err = actor.Deliver(msg1, nil)
 		assert.NilError(t, err)
 
 		// Second message should be silently dropped
-		message2 := &mockMessageWithID{mockMessage: mockMessage{sender: *address}, id: "msg2"}
-		err = actor.Deliver(message2)
+		msg2 := &mockMessageWithID{id: "msg2"}
+		err = actor.Deliver(msg2, nil)
 		assert.NilError(t, err) // No error, but message should be dropped
 
 		// Release processing
@@ -295,24 +275,24 @@ func TestBackpressurePolicies(t *testing.T) {
 		// Track which messages were received
 		receiveChannel := make(chan string, 3) // Buffer to prevent blocking
 		processingFn := func(msg f.Message, actor f.Actor[noState]) (noState, error) {
-			idMsg, ok := msg.(*mockMessageWithID)
+			idMsg, ok := msg.Payload().(*mockMessageWithID)
 			if ok {
 				receiveChannel <- idMsg.id
 			}
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, processingFn, initialState, true, config)
+		actor, err := framework.NewActor(*address, processingFn, initialState, config)
 		assert.NilError(t, err)
 
 		// Deliver first message - should be accepted
-		message1 := &mockMessageWithID{mockMessage: mockMessage{sender: *address}, id: "msg1"}
-		err = actor.Deliver(message1)
+		msg1 := &mockMessageWithID{id: "msg1"}
+		err = actor.Deliver(msg1, nil)
 		assert.NilError(t, err)
 
 		// Deliver second message - should replace the first due to drop oldest policy
-		message2 := &mockMessageWithID{mockMessage: mockMessage{sender: *address}, id: "msg2"}
-		err = actor.Deliver(message2)
+		msg2 := &mockMessageWithID{id: "msg2"}
+		err = actor.Deliver(msg2, nil)
 		assert.NilError(t, err)
 
 		// Wait for processing to complete
@@ -353,14 +333,13 @@ func TestBackpressurePolicies(t *testing.T) {
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, counterFn, initialState, true, config)
+		actor, err := framework.NewActor(*address, counterFn, initialState, config)
 		assert.NilError(t, err)
 
 		// Deliver a significant number of messages (less than our "unbounded" buffer)
 		messagesToSend := 500
 		for i := 0; i < messagesToSend; i++ {
-			message := &mockMessage{sender: *address, mutation: false}
-			err = actor.Deliver(message)
+			err = actor.Deliver("", nil)
 			assert.NilError(t, err)
 		}
 
@@ -393,19 +372,17 @@ func TestBackpressurePolicies(t *testing.T) {
 			return noState{}, nil
 		}
 
-		actor, err := framework.NewActor(*address, processingFn, initialState, true, config)
+		actor, err := framework.NewActor(*address, processingFn, initialState, config)
 		assert.NilError(t, err)
 
 		// Should accept 5 messages (matching our capacity)
 		for i := 0; i < 5; i++ {
-			message := &mockMessage{sender: *address, mutation: false}
-			err = actor.Deliver(message)
+			err = actor.Deliver("", nil)
 			assert.NilError(t, err)
 		}
 
 		// Sixth message should fail
-		message := &mockMessage{sender: *address, mutation: false}
-		err = actor.Deliver(message)
+		err = actor.Deliver("", nil)
 		assert.ErrorContains(t, err, "mailbox full")
 
 		// Release processing
@@ -419,6 +396,5 @@ func TestBackpressurePolicies(t *testing.T) {
 
 // mockMessageWithID extends mockMessage to include an ID for tracking
 type mockMessageWithID struct {
-	mockMessage
 	id string
 }

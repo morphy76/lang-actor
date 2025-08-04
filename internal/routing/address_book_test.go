@@ -20,14 +20,6 @@ func (m *mockActor) Address() url.URL {
 	return m.address
 }
 
-func (m *mockActor) Deliver(msg c.Message) error {
-	return nil
-}
-
-func (m *mockActor) Send(msg c.Message, actor c.Addressable) error {
-	return nil
-}
-
 const actorURI = "actor://example"
 
 func TestAddressBookRegister(t *testing.T) {

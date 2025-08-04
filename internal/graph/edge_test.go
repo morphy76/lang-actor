@@ -1,27 +1,12 @@
 package graph_test
 
 import (
-	"net/url"
 	"testing"
 	"time"
 
 	"github.com/morphy76/lang-actor/internal/graph"
 	b "github.com/morphy76/lang-actor/pkg/builders"
-	f "github.com/morphy76/lang-actor/pkg/framework"
 )
-
-var staticMockMessageAssertion f.Message = (*mockMessage)(nil)
-
-type mockMessage struct {
-	sender url.URL
-}
-
-func (m *mockMessage) Sender() url.URL {
-	return m.sender
-}
-func (m *mockMessage) Mutation() bool {
-	return false
-}
 
 func TestSimpleGraph(t *testing.T) {
 	t.Log("Simple Graph test suite")
@@ -68,9 +53,7 @@ func TestSimpleGraph(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.Accept(&mockMessage{
-			sender: rootNode.Address(),
-		})
+		err = rootNode.Accept(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

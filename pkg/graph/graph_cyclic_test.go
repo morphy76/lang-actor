@@ -18,20 +18,20 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		return nil, err
 	}
 
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		cfg, okCfg := self.State().GraphConfig().(graphConfig)
 		graphState, okState := self.State().GraphState().(*graphState)
 
 		if !okCfg || !okState {
 			// TODO handle functional error
-			self.State().Outcome() <- "leavingCounter"
+			self.State().ProceedOntoRoute() <- "leavingCounter"
 		}
 
 		if graphState.Counter < cfg.Iterations {
-			self.State().GraphState().AppendGraphState(nil, nil)
-			self.State().Outcome() <- "iterate"
+			self.State().GraphState().MergeChange(nil, nil)
+			self.State().ProceedOntoRoute() <- "iterate"
 		} else {
-			self.State().Outcome() <- "leavingCounter"
+			self.State().ProceedOntoRoute() <- "leavingCounter"
 		}
 
 		return self.State(), nil
@@ -41,7 +41,6 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		forGraph,
 		address,
 		taskFn,
-		false,
 	)
 }
 
@@ -52,7 +51,7 @@ type graphState struct {
 	Counter int
 }
 
-func (s *graphState) AppendGraphState(purpose any, value any) error {
+func (s *graphState) MergeChange(purpose any, value any) error {
 	s.Counter++
 	return nil
 }

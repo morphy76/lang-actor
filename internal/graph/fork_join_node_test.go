@@ -45,12 +45,12 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		}
 
 		uuids := []string{uuid.NewString(), uuid.NewString(), uuid.NewString()}
-		uuidGenFn := func(i int) f.ProcessingFn[g.NodeState] {
-			return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+		uuidGenFn := func(i int) f.ProcessingFn[g.NodeRef] {
+			return func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 				rv := uuids[i]
 				t.Logf("Processing UUID: %s", rv)
-				self.State().GraphState().AppendGraphState(nil, rv)
-				self.State().Outcome() <- g.WhateverOutcome
+				self.State().GraphState().MergeChange(nil, rv)
+				self.State().ProceedOntoRoute() <- g.WhateverOutcome
 				return self.State(), nil
 			}
 		}
@@ -58,7 +58,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		if err != nil {
 			t.Errorf(errorAddressMessage, err)
 		}
-		branch1, err := graph.NewCustomNode(testGraph, addr1, uuidGenFn(0), true)
+		branch1, err := graph.NewCustomNode(testGraph, addr1, uuidGenFn(0))
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -66,7 +66,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		if err != nil {
 			t.Errorf(errorAddressMessage, err)
 		}
-		branch2, err := graph.NewCustomNode(testGraph, addr2, uuidGenFn(1), true)
+		branch2, err := graph.NewCustomNode(testGraph, addr2, uuidGenFn(1))
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -74,7 +74,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 		if err != nil {
 			t.Errorf(errorAddressMessage, err)
 		}
-		branch3, err := graph.NewCustomNode(testGraph, addr3, uuidGenFn(2), true)
+		branch3, err := graph.NewCustomNode(testGraph, addr3, uuidGenFn(2))
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}
@@ -158,9 +158,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 			t.Errorf(errorNewNodeMessage, err)
 		}
 
-		err = rootNode.Accept(&mockMessage{
-			sender: rootNode.Address(),
-		})
+		err = rootNode.Accept(nil)
 		if err != nil {
 			t.Errorf(errorNewNodeMessage, err)
 		}

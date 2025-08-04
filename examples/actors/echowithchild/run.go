@@ -37,18 +37,9 @@ const (
 
 // Echo message that will be used for both request and reply
 type echoMessage struct {
-	sender    url.URL
 	mexType   messageType
 	content   string
 	decorated string // The prepared/decorated message (filled by child)
-}
-
-func (m echoMessage) Sender() url.URL {
-	return m.sender
-}
-
-func (m echoMessage) Mutation() bool {
-	return true
 }
 
 // Main actor processing function
@@ -56,7 +47,7 @@ var mainActorFn framework.ProcessingFn[mainActorState] = func(
 	msg framework.Message,
 	actor framework.Actor[mainActorState],
 ) (mainActorState, error) {
-	useMsg, ok := msg.(echoMessage)
+	useMsg, ok := msg.Payload().(echoMessage)
 	if !ok {
 		return actor.State(), fmt.Errorf("unexpected message type")
 	}
@@ -71,7 +62,6 @@ var mainActorFn framework.ProcessingFn[mainActorState] = func(
 
 		// Send request to child actor
 		requestMsg := echoMessage{
-			sender:  actor.Address(),
 			mexType: messageTypeRequest,
 			content: useMsg.content,
 		}
@@ -96,7 +86,7 @@ var childActorFn framework.ProcessingFn[childActorState] = func(
 	msg framework.Message,
 	actor framework.Actor[childActorState],
 ) (childActorState, error) {
-	useMsg, ok := msg.(echoMessage)
+	useMsg, ok := msg.Payload().(echoMessage)
 	if !ok {
 		return actor.State(), fmt.Errorf("unexpected message type")
 	}
@@ -107,7 +97,6 @@ var childActorFn framework.ProcessingFn[childActorState] = func(
 
 		// Create reply message
 		replyMsg := echoMessage{
-			sender:    actor.Address(),
 			mexType:   messageTypeReply,
 			content:   useMsg.content,
 			decorated: decoratedContent,
@@ -156,10 +145,9 @@ func main() {
 
 		// Create and deliver the initial message
 		initialMsg := echoMessage{
-			sender:  *echoURL,
 			mexType: messageTypeRequest,
 			content: input,
 		}
-		mainActor.Deliver(initialMsg)
+		mainActor.Deliver(initialMsg, nil)
 	}
 }

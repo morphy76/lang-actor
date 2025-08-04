@@ -127,17 +127,16 @@ type Actor[T any] interface {
 
 // Message is the interface for messages sent to actors.
 type Message interface {
-	common.Message
+	// Payload returns the payload of the message.
+	//
+	// Returns:
+	//   - (any): The payload of the message.
+	Payload() any
 	// Sender returns the URL of the sender.
 	//
 	// Returns:
 	//   - (url.URL): The URL of the sender.
 	Sender() url.URL
-	// Mutation returns true if the message is an actor mutation.
-	//
-	// Returns:
-	//   - (bool): A boolean indicating whether the message is a mutation.
-	Mutation() bool
 }
 
 // ProcessingFn defines a generic function type for processing messages within an actor system.
@@ -145,8 +144,7 @@ type Message interface {
 // It takes a message of type M and the current actor state of type T, and returns the updated
 // state of type T along with an error, if any.
 //
-// If the message is a mutation, the state is updated and returned. If the message is not a mutation,
-// the state remains unchanged regardless by what's returned by the processing funcion.
+// The actor state is always updated with the returned state from the processing function.
 //
 // Type Parameters:
 //   - T: The type of the actor state.

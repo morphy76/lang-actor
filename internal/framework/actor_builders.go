@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	c "github.com/morphy76/lang-actor/pkg/common"
 	f "github.com/morphy76/lang-actor/pkg/framework"
 )
 
@@ -23,7 +22,6 @@ func NewActor[T any](
 	address url.URL,
 	processingFn f.ProcessingFn[T],
 	initialState T,
-	transient bool,
 	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
 	// Validate the schema
@@ -38,17 +36,17 @@ func NewActor[T any](
 		config = mailboxConfig[0]
 	}
 
-	var mailbox chan c.Message
+	var mailbox chan f.Message
 	switch config.Policy {
 	case f.BackpressurePolicyUnbounded:
 		// In Go, we can't truly have an unbounded channel, but we can make it very large
-		mailbox = make(chan c.Message, 1000000)
+		mailbox = make(chan f.Message, 1000000)
 	default:
 		capacity := config.Capacity
 		if capacity <= 0 {
 			capacity = defaultMailboxConfig.Capacity
 		}
-		mailbox = make(chan c.Message, capacity)
+		mailbox = make(chan f.Message, capacity)
 	}
 
 	rv := &actor[T]{
@@ -67,8 +65,7 @@ func NewActor[T any](
 
 		children: make(map[url.URL]f.ActorRef),
 
-		state:     initialState,
-		transient: transient,
+		state: initialState,
 	}
 	go rv.consume()
 
@@ -79,7 +76,6 @@ func NewActor[T any](
 func NewActorWithParent[T any](
 	processingFn f.ProcessingFn[T],
 	initialState T,
-	transient bool,
 	parent f.ActorRef,
 	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
@@ -99,17 +95,17 @@ func NewActorWithParent[T any](
 		config = mailboxConfig[0]
 	}
 
-	var mailbox chan c.Message
+	var mailbox chan f.Message
 	switch config.Policy {
 	case f.BackpressurePolicyUnbounded:
 		// In Go, we can't truly have an unbounded channel, but we can make it very large
-		mailbox = make(chan c.Message, 1000000)
+		mailbox = make(chan f.Message, 1000000)
 	default:
 		capacity := config.Capacity
 		if capacity <= 0 {
 			capacity = defaultMailboxConfig.Capacity
 		}
-		mailbox = make(chan c.Message, capacity)
+		mailbox = make(chan f.Message, capacity)
 	}
 
 	rv := &actor[T]{
@@ -129,8 +125,7 @@ func NewActorWithParent[T any](
 		parent:   parent,
 		children: make(map[url.URL]f.ActorRef),
 
-		state:     initialState,
-		transient: transient,
+		state: initialState,
 	}
 	go rv.consume()
 

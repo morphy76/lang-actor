@@ -15,27 +15,15 @@ type actorState struct {
 	processedMessages uint64
 }
 
-var staticChatMessageAssertion framework.Message = (*chatMessage)(nil)
-
-type chatMessage struct {
-	sender  url.URL
-	Message string
-}
-
-func (m chatMessage) Sender() url.URL {
-	return m.sender
-}
-
-func (m chatMessage) Mutation() bool {
-	return true
-}
-
 var echoFn framework.ProcessingFn[actorState] = func(
 	msg framework.Message,
 	actor framework.Actor[actorState],
 ) (actorState, error) {
-	var useMsg chatMessage = msg.(chatMessage)
-	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg.Message, actor.State().processedMessages)
+	useMsg, ok := msg.Payload().(string)
+	if !ok {
+		return actorState{}, fmt.Errorf("expected string payload, got %T", msg.Payload())
+	}
+	fmt.Printf("Echo [%s] after [%d] messages\n", useMsg, actor.State().processedMessages)
 	return actorState{processedMessages: actor.State().processedMessages + 1}, nil
 }
 
@@ -61,10 +49,6 @@ func main() {
 		if input == "exit" {
 			break
 		}
-		emitMessage := chatMessage{
-			sender:  *echoURL,
-			Message: input,
-		}
-		echoActor.Deliver(emitMessage)
+		echoActor.Deliver(input, nil)
 	}
 }

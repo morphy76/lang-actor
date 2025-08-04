@@ -26,7 +26,7 @@ type graphState struct {
 }
 
 // Implement the required graph.State interface method
-func (s *graphState) AppendGraphState(purpose any, value any) error {
+func (s *graphState) MergeChange(purpose any, value any) error {
 	if purpose == "count" {
 		s.Counter++
 	} else if value != nil {
@@ -58,35 +58,35 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 	}
 
 	// Define the processing function
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		fmt.Println("Counter node processing message")
 
 		// Get graph state and config from the node state
 		graphState, ok := self.State().GraphState().(*graphState)
 		if !ok {
 			fmt.Println("Error: Could not cast to graphState")
-			self.State().Outcome() <- "error"
+			self.State().ProceedOntoRoute() <- "error"
 			return self.State(), nil
 		}
 
 		config, ok := self.State().GraphConfig().(graphConfig)
 		if !ok {
 			fmt.Println("Error: Could not cast to graphConfig")
-			self.State().Outcome() <- "error"
+			self.State().ProceedOntoRoute() <- "error"
 			return self.State(), nil
 		}
 
 		// Increment counter and check if we should continue or exit cycle
-		graphState.AppendGraphState("count", nil)
+		graphState.MergeChange("count", nil)
 		fmt.Printf("Counter iteration: %d/%d\n", graphState.Counter, config.MaxIterations)
 
 		if graphState.Counter < config.MaxIterations {
 			// Continue cycling
-			self.State().Outcome() <- "iterate"
+			self.State().ProceedOntoRoute() <- "iterate"
 		} else {
 			// Exit the cycle
 			fmt.Println("Maximum iterations reached, proceeding to next stage")
-			self.State().Outcome() <- "complete"
+			self.State().ProceedOntoRoute() <- "complete"
 		}
 
 		return self.State(), nil
@@ -97,13 +97,12 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		forGraph,
 		address,
 		taskFn,
-		false,
 	)
 }
 
 // Creates a processing function for branch nodes after fork
-func createProcessingFn(id string) f.ProcessingFn[g.NodeState] {
-	return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+func createProcessingFn(id string) f.ProcessingFn[g.NodeRef] {
+	return func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		fmt.Printf("Process '%s' executing\n", id)
 
 		// Simulate work with different durations based on ID length
@@ -115,10 +114,10 @@ func createProcessingFn(id string) f.ProcessingFn[g.NodeState] {
 
 		// Update state with result
 		graphState := self.State().GraphState().(*graphState)
-		graphState.AppendGraphState(id, result)
+		graphState.MergeChange(id, result)
 
 		// Signal completion to parent
-		self.State().Outcome() <- "done"
+		self.State().ProceedOntoRoute() <- "done"
 
 		return self.State(), nil
 	}
@@ -170,7 +169,6 @@ func createProcessBranchNodes(graph g.Graph, processNames []string) ([]g.Node, e
 			graph,
 			address,
 			createProcessingFn(name),
-			false,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error creating branch node for %s: %v", name, err)
@@ -241,7 +239,7 @@ func setupGraph(processNames []string) (g.Graph, g.Node, error) {
 	}
 
 	// Create nodes
-	rootNode, counterNode, forkNode, joinNode, endNode, err := createAllNodes(graph, processNames)
+	rootNode, counterNode, forkNode, joinNode, endNode, err := createAllNodes(graph)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -256,7 +254,7 @@ func setupGraph(processNames []string) (g.Graph, g.Node, error) {
 }
 
 // createAllNodes creates all nodes in the graph
-func createAllNodes(graph g.Graph, processNames []string) (g.Node, g.Node, g.Node, g.Node, g.Node, error) {
+func createAllNodes(graph g.Graph) (g.Node, g.Node, g.Node, g.Node, g.Node, error) {
 	rootNode, err := builders.NewRootNode(graph)
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("error creating root node: %v", err)
