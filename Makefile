@@ -8,6 +8,8 @@ GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
 GCFLAGS := -gcflags="-m -l"
 TESTFLAGS := -v -count=1 -timeout=2s
+LINTFLAGS := #-v
+PACKAGES := $(shell $(GO) list ./... | grep -vE '/tools/|/examples/')
 
 # Declare phony targets
 .PHONY: help
@@ -18,10 +20,16 @@ help: ## Show this help message
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*##"; printf "\033[36m\033[0m"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+##@ Static Analysis
+.PHONY: lint
+lint: ## Run static analysis tools (golint, go vet, etc.)
+	@echo "Running static analysis..."
+	@$(GO) vet $(LINTFLAGS) $(PACKAGES)
+
 ##@ Testing
 .PHONY: test
-test: ## Run all tests (excluding tools and examples)
-	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -vE '/tools/|/examples/')
+test: lint ## Run all tests (excluding tools and examples)
+	@$(GO) test $(TESTFLAGS) $(PACKAGES)
 
 ##@ Actor Examples
 .PHONY: run-echo-case run-pingpong-case run-selfpingpong-case run-sort-case run-calculator-case run-echowithchild-case run-counter-case
