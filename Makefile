@@ -47,7 +47,7 @@ run-echowithchild-case: ## Run the echowithchild actor example
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echowithchild/run.go
 
 ##@ Graph Examples
-.PHONY: run-simplegraph-case run-forknode-case run-forkgraph-case
+.PHONY: run-simplegraph-case run-forknode-case run-forkgraph-case run-loremstream-case
 run-simplegraph-case: ## Run the simple graph example
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/simple/run.go
 
@@ -56,3 +56,6 @@ run-forknode-case: ## Run the forknode graph example
 
 run-forkgraph-case: ## Run the forkgraph graph example
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/forkgraph/run.go
+
+run-loremstream-case: ## Run the lorem ipsum streaming graph example
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/graph/loremstream/run.go
