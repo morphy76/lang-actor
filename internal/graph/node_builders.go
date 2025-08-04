@@ -9,7 +9,7 @@ import (
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
-func newNode[T g.NodeState](
+func newNode[T g.NodeRef](
 	forGraph g.Graph,
 	address url.URL,
 	taskFn f.ProcessingFn[T],
@@ -31,12 +31,12 @@ func newNode[T g.NodeState](
 	}
 
 	actorOutcome := make(chan string, 1)
-	useState := g.BasicNodeStateBuilder[T](forGraph, rv, actorOutcome, attrs...)
+	useRef := g.BasicNodeRefBuilder[T](forGraph, rv, actorOutcome, attrs...)
 
 	task, err := framework.NewActor(
 		*actorAddress,
 		taskFn,
-		useState,
+		useRef,
 		transient,
 	)
 	if err != nil {
@@ -49,7 +49,7 @@ func newNode[T g.NodeState](
 
 	rv.actor = task
 	rv.actorOutcome = actorOutcome
-	rv.nodeState = useState
+	rv.nodeRef = useRef
 
 	return rv, nil
 }

@@ -58,21 +58,21 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 	}
 
 	// Define the processing function
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		fmt.Println("Counter node processing message")
 
 		// Get graph state and config from the node state
 		graphState, ok := self.State().GraphState().(*graphState)
 		if !ok {
 			fmt.Println("Error: Could not cast to graphState")
-			self.State().Outcome() <- "error"
+			self.State().ProceedOntoRoute() <- "error"
 			return self.State(), nil
 		}
 
 		config, ok := self.State().GraphConfig().(graphConfig)
 		if !ok {
 			fmt.Println("Error: Could not cast to graphConfig")
-			self.State().Outcome() <- "error"
+			self.State().ProceedOntoRoute() <- "error"
 			return self.State(), nil
 		}
 
@@ -82,11 +82,11 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 
 		if graphState.Counter < config.MaxIterations {
 			// Continue cycling
-			self.State().Outcome() <- "iterate"
+			self.State().ProceedOntoRoute() <- "iterate"
 		} else {
 			// Exit the cycle
 			fmt.Println("Maximum iterations reached, proceeding to next stage")
-			self.State().Outcome() <- "complete"
+			self.State().ProceedOntoRoute() <- "complete"
 		}
 
 		return self.State(), nil
@@ -102,8 +102,8 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 }
 
 // Creates a processing function for branch nodes after fork
-func createProcessingFn(id string) f.ProcessingFn[g.NodeState] {
-	return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+func createProcessingFn(id string) f.ProcessingFn[g.NodeRef] {
+	return func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		fmt.Printf("Process '%s' executing\n", id)
 
 		// Simulate work with different durations based on ID length
@@ -118,7 +118,7 @@ func createProcessingFn(id string) f.ProcessingFn[g.NodeState] {
 		graphState.AppendGraphState(id, result)
 
 		// Signal completion to parent
-		self.State().Outcome() <- "done"
+		self.State().ProceedOntoRoute() <- "done"
 
 		return self.State(), nil
 	}

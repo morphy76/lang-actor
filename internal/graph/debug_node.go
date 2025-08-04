@@ -50,7 +50,7 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 		return nil, err
 	}
 
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		fmt.Println("==========================================")
 		fmt.Printf("Debug node [%+v] received message [%+v]\n", self.Address(), msg)
 		fmt.Println("---------------------------------")
@@ -58,7 +58,7 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 		fmt.Println("---------------------------------")
 		fmt.Printf("Graph status [%+v]\n", self.State().GraphState())
 		fmt.Println("==========================================")
-		self.State().Outcome() <- g.WhateverOutcome
+		self.State().ProceedOntoRoute() <- g.WhateverOutcome
 		return self.State(), nil
 	}
 

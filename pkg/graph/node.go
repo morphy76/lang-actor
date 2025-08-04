@@ -94,13 +94,13 @@ type WithMutableAttributes interface {
 	GetAttribute(key string) (any, bool)
 }
 
-// NodeState holds the state of a node in the actor graph, including its configuration and current state.
-type NodeState interface {
+// NodeRef holds the state of a node in the actor graph, including its configuration and current state.
+type NodeRef interface {
 	Stateful
 	Connected
 	WithMutableAttributes
-	// Outcome returns a channel that will receive the outcome of the node's processing.
-	Outcome() chan string
+	// ProceedOntoRoute returns a channel that will receive the outcome of the node's processing.
+	ProceedOntoRoute() chan string
 }
 
 // Node represents a node in the actor graph.

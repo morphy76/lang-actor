@@ -26,7 +26,7 @@ type node struct {
 
 	actorOutcome chan string
 
-	nodeState g.NodeState
+	nodeRef g.NodeRef
 
 	multipleOutcomes bool
 }
@@ -160,7 +160,7 @@ func (r *node) GetResolver() r.Resolver {
 	return r.resolver
 }
 
-// State returns the current state of the graph.
-func (r *node) State() g.NodeState {
-	return r.nodeState
+// NodeRef returns the node reference for the node
+func (r *node) NodeRef() g.NodeRef {
+	return r.nodeRef
 }

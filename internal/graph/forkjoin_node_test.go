@@ -40,11 +40,11 @@ func TestForkJoinNode(t *testing.T) {
 		}
 
 		uuids := []string{uuid.NewString(), uuid.NewString(), uuid.NewString()}
-		uuidGenFn := func(i int) f.ProcessingFn[g.NodeState] {
-			return func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+		uuidGenFn := func(i int) f.ProcessingFn[g.NodeRef] {
+			return func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 				rv := uuids[i]
 				t.Logf("Processing UUID: %s", rv)
-				self.State().Outcome() <- rv
+				self.State().ProceedOntoRoute() <- rv
 				return self.State(), nil
 			}
 		}

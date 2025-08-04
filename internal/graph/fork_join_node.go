@@ -29,7 +29,7 @@ type joinNode struct {
 }
 
 // NewForkJoingNode creates a new fork-join node for the given graph.
-func NewForkJoingNode[C g.NodeState](forGraph g.Graph, transient bool, processingFns ...f.ProcessingFn[C]) (g.Node, error) {
+func NewForkJoingNode[C g.NodeRef](forGraph g.Graph, transient bool, processingFns ...f.ProcessingFn[C]) (g.Node, error) {
 	address, err := url.Parse("graph://nodes/forkjoin/" + uuid.NewString())
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func NewForkJoingNode[C g.NodeState](forGraph g.Graph, transient bool, processin
 	expectedOutcomes := len(processingFns)
 	childOutcomes := make(chan string, expectedOutcomes)
 
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 
 		for _, child := range self.Children() {
 			fmt.Printf("Delivering message to child: %v\n", child.Address())
@@ -54,7 +54,7 @@ func NewForkJoingNode[C g.NodeState](forGraph g.Graph, transient bool, processin
 			}
 		}
 
-		self.State().Outcome() <- g.WhateverOutcome
+		self.State().ProceedOntoRoute() <- g.WhateverOutcome
 		return self.State(), nil
 	}
 
@@ -64,7 +64,7 @@ func NewForkJoingNode[C g.NodeState](forGraph g.Graph, transient bool, processin
 	}
 
 	for _, processingFn := range processingFns {
-		childState := g.BasicNodeStateBuilder[C](forGraph, baseNode, childOutcomes)
+		childState := g.BasicNodeRefBuilder[C](forGraph, baseNode, childOutcomes)
 		framework.NewActorWithParent(
 			processingFn,
 			childState,
@@ -85,17 +85,17 @@ func NewForkNode(forGraph g.Graph) (g.Node, error) {
 		return nil, err
 	}
 
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		var wg sync.WaitGroup
 		for _, edgeName := range self.State().Routes() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				self.State().Outcome() <- edgeName
+				self.State().ProceedOntoRoute() <- edgeName
 			}()
 		}
 		wg.Wait()
-		self.State().Outcome() <- g.SkipOutcome
+		self.State().ProceedOntoRoute() <- g.SkipOutcome
 		return self.State(), nil
 	}
 
@@ -117,7 +117,7 @@ func NewJoinNode(forGraph g.Graph, forkNode g.Node) (g.Node, error) {
 		return nil, err
 	}
 
-	taskFn := func(msg f.Message, self f.Actor[g.NodeState]) (g.NodeState, error) {
+	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		received, _ := self.State().GetAttribute("received")
 
 		inbounds := len(forkNode.EdgeNames())
@@ -127,11 +127,11 @@ func NewJoinNode(forGraph g.Graph, forkNode g.Node) (g.Node, error) {
 
 		if received.(int) < inbounds-1 {
 			self.State().SetAttribute("received", received.(int)+1)
-			self.State().Outcome() <- g.SkipOutcome
+			self.State().ProceedOntoRoute() <- g.SkipOutcome
 			return self.State(), nil
 		}
 
-		self.State().Outcome() <- g.WhateverOutcome
+		self.State().ProceedOntoRoute() <- g.WhateverOutcome
 		self.State().SetAttribute("received", 0)
 		return self.State(), nil
 	}
