@@ -44,8 +44,7 @@ type actor[T any] struct {
 	parent   f.ActorRef
 	children map[url.URL]f.ActorRef
 
-	state     T
-	transient bool
+	state T
 }
 
 // Address returns the actor's address.

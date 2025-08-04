@@ -73,7 +73,6 @@ func NewEndNode(forGraph graph.Graph) (graph.Node, error) {
 //   - forGraph (graph.Graph): The graph to which the custom node belongs.
 //   - address (*url.URL): The URL address of the node.
 //   - taskFn (framework.ProcessingFn[NodeRef]): The processing function for the node.
-//   - transient (bool): Whether the node is transient or not.
 //
 // Returns:
 //   - (graph.Node): The created custom node.
@@ -82,9 +81,8 @@ func NewCustomNode(
 	forGraph graph.Graph,
 	address *url.URL,
 	taskFn framework.ProcessingFn[graph.NodeRef],
-	transient bool,
 ) (graph.Node, error) {
-	return g.NewCustomNode(forGraph, address, taskFn, transient)
+	return g.NewCustomNode(forGraph, address, taskFn)
 }
 
 // NewForkJoingNode creates a new fork-join node for the given graph for node-scope processing.

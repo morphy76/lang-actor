@@ -13,7 +13,6 @@ func newNode[T g.NodeRef](
 	forGraph g.Graph,
 	address url.URL,
 	taskFn f.ProcessingFn[T],
-	transient bool,
 	attrs ...map[string]any,
 ) (*node, error) {
 
@@ -37,7 +36,6 @@ func newNode[T g.NodeRef](
 		*actorAddress,
 		taskFn,
 		useRef,
-		transient,
 	)
 	if err != nil {
 		return nil, err

@@ -6,14 +6,6 @@ import (
 
 var staticStateWrapperAssertion g.State = (*stateWrapper)(nil)
 
-// NewStateWrapper creates a new instance of the state wrapper.
-func NewStateWrapper(state g.State, stateChangesCh chan g.State) g.State {
-	return &stateWrapper{
-		state:          state,
-		stateChangesCh: stateChangesCh,
-	}
-}
-
 type stateWrapper struct {
 	state          g.State
 	stateChangesCh chan g.State

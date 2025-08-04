@@ -17,7 +17,7 @@ type graph struct {
 	resolvables map[url.URL]*c.Addressable
 	graphURL    url.URL
 	config      g.Configuration
-	state       g.State
+	state       *stateWrapper
 	addressBook r.AddressBook
 
 	stateChangedCh chan g.State
@@ -40,7 +40,7 @@ func (g *graph) Query(schema string, pathParts ...string) []c.Addressable {
 
 // State returns the current state of the graph.
 func (g *graph) State() g.State {
-	return g.state
+	return g.state.state
 }
 
 // Config returns the configuration of the graph.

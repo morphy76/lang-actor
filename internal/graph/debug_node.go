@@ -62,7 +62,7 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 		return self.State(), nil
 	}
 
-	baseNode, err := newNode(forGraph, *address, taskFn, true)
+	baseNode, err := newNode(forGraph, *address, taskFn)
 	if err != nil {
 		return nil, err
 	}

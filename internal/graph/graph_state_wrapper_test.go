@@ -1,10 +1,9 @@
-package graph_test
+package graph
 
 import (
 	"testing"
 	"time"
 
-	"github.com/morphy76/lang-actor/internal/graph"
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
@@ -34,7 +33,10 @@ func TestNewStateWrapper(t *testing.T) {
 		stateChangesCh := make(chan g.State, 1)
 
 		// Act
-		wrapper := graph.NewStateWrapper(mockState, stateChangesCh)
+		wrapper := &stateWrapper{
+			state:          mockState,
+			stateChangesCh: stateChangesCh,
+		}
 
 		// Assert
 		if wrapper == nil {
@@ -51,7 +53,10 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := graph.NewStateWrapper(mockState, stateChangesCh)
+		wrapper := &stateWrapper{
+			state:          mockState,
+			stateChangesCh: stateChangesCh,
+		}
 
 		purpose := "test-purpose"
 		value := "test-value"
@@ -83,7 +88,10 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := graph.NewStateWrapper(mockState, stateChangesCh)
+		wrapper := &stateWrapper{
+			state:          mockState,
+			stateChangesCh: stateChangesCh,
+		}
 
 		purpose := "test-purpose"
 		value := "test-value"
@@ -114,7 +122,10 @@ func TestNewStateWrapper(t *testing.T) {
 		expectedError := &mockError{message: "test error"}
 		mockState := &mockState{mergeChangeError: expectedError}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := graph.NewStateWrapper(mockState, stateChangesCh)
+		wrapper := &stateWrapper{
+			state:          mockState,
+			stateChangesCh: stateChangesCh,
+		}
 
 		purpose := "test-purpose"
 		value := "test-value"
@@ -146,7 +157,10 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 1)
-		wrapper := graph.NewStateWrapper(mockState, stateChangesCh)
+		wrapper := &stateWrapper{
+			state:          mockState,
+			stateChangesCh: stateChangesCh,
+		}
 
 		// Act
 		err := wrapper.MergeChange(nil, nil)
@@ -183,7 +197,10 @@ func TestNewStateWrapper(t *testing.T) {
 		// Arrange
 		mockState := &mockState{}
 		stateChangesCh := make(chan g.State, 3) // Buffer for multiple notifications
-		wrapper := graph.NewStateWrapper(mockState, stateChangesCh)
+		wrapper := &stateWrapper{
+			state:          mockState,
+			stateChangesCh: stateChangesCh,
+		}
 
 		// Act
 		err1 := wrapper.MergeChange("purpose1", "value1")

@@ -58,7 +58,7 @@ func NewForkJoingNode[C g.NodeRef](forGraph g.Graph, transient bool, processingF
 		return self.State(), nil
 	}
 
-	baseNode, err := newNode(forGraph, *address, taskFn, true)
+	baseNode, err := newNode(forGraph, *address, taskFn)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,6 @@ func NewForkJoingNode[C g.NodeRef](forGraph g.Graph, transient bool, processingF
 		framework.NewActorWithParent(
 			processingFn,
 			childState,
-			true,
 			baseNode.actor,
 		)
 	}
@@ -99,7 +98,7 @@ func NewForkNode(forGraph g.Graph) (g.Node, error) {
 		return self.State(), nil
 	}
 
-	baseNode, err := newNode(forGraph, *address, taskFn, true)
+	baseNode, err := newNode(forGraph, *address, taskFn)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +138,7 @@ func NewJoinNode(forGraph g.Graph, forkNode g.Node) (g.Node, error) {
 	attrs := make(map[string]any)
 	attrs["received"] = 0
 
-	baseNode, err := newNode(forGraph, *address, taskFn, false, attrs)
+	baseNode, err := newNode(forGraph, *address, taskFn, attrs)
 	if err != nil {
 		return nil, err
 	}

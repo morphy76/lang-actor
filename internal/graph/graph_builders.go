@@ -22,7 +22,10 @@ func NewGraph[T g.State, C g.Configuration](
 	}
 
 	stateChangedCh := make(chan g.State, 100000000) // Buffered channel to avoid blocking
-	useState := NewStateWrapper(initialState, stateChangedCh)
+	useState := &stateWrapper{
+		state:          initialState,
+		stateChangesCh: stateChangedCh,
+	}
 
 	graph := &graph{
 		lock: &sync.Mutex{},

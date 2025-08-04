@@ -12,7 +12,6 @@ func NewCustomNode(
 	forGraph g.Graph,
 	address *url.URL,
 	taskFn f.ProcessingFn[g.NodeRef],
-	transient bool,
 ) (g.Node, error) {
-	return newNode(forGraph, *address, taskFn, transient)
+	return newNode(forGraph, *address, taskFn)
 }

@@ -22,7 +22,6 @@ func NewActor[T any](
 	address url.URL,
 	processingFn f.ProcessingFn[T],
 	initialState T,
-	transient bool,
 	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
 	// Validate the schema
@@ -66,8 +65,7 @@ func NewActor[T any](
 
 		children: make(map[url.URL]f.ActorRef),
 
-		state:     initialState,
-		transient: transient,
+		state: initialState,
 	}
 	go rv.consume()
 
@@ -78,7 +76,6 @@ func NewActor[T any](
 func NewActorWithParent[T any](
 	processingFn f.ProcessingFn[T],
 	initialState T,
-	transient bool,
 	parent f.ActorRef,
 	mailboxConfig ...f.MailboxConfig,
 ) (f.Actor[T], error) {
@@ -128,8 +125,7 @@ func NewActorWithParent[T any](
 		parent:   parent,
 		children: make(map[url.URL]f.ActorRef),
 
-		state:     initialState,
-		transient: transient,
+		state: initialState,
 	}
 	go rv.consume()
 
