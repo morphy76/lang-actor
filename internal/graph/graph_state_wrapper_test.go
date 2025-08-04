@@ -346,12 +346,13 @@ func TestStateWrapperMethods(t *testing.T) {
 
 		// Check that three notifications were sent
 		notificationCount := 0
+	notificationLoop:
 		for i := 0; i < 3; i++ {
 			select {
 			case <-stateChangesCh:
 				notificationCount++
 			case <-time.After(100 * time.Millisecond):
-				break
+				break notificationLoop
 			}
 		}
 
