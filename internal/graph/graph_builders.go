@@ -21,7 +21,7 @@ func NewGraph[T g.State, C g.Configuration](
 		return nil, err
 	}
 
-	stateChangedCh := make(chan g.State, 100000000) // Buffered channel to avoid blocking
+	stateChangedCh := make(chan g.State, 1000) // Reasonable buffer to avoid blocking
 	useState := &stateWrapper{
 		state:          initialState,
 		stateChangesCh: stateChangedCh,

@@ -39,8 +39,8 @@ func NewActor[T any](
 	var mailbox chan f.Message
 	switch config.Policy {
 	case f.BackpressurePolicyUnbounded:
-		// In Go, we can't truly have an unbounded channel, but we can make it very large
-		mailbox = make(chan f.Message, 1000000)
+		// Use a reasonable initial size for "unbounded" channels to avoid massive memory allocation
+		mailbox = make(chan f.Message, 10000)
 	default:
 		capacity := config.Capacity
 		if capacity <= 0 {
@@ -98,8 +98,8 @@ func NewActorWithParent[T any](
 	var mailbox chan f.Message
 	switch config.Policy {
 	case f.BackpressurePolicyUnbounded:
-		// In Go, we can't truly have an unbounded channel, but we can make it very large
-		mailbox = make(chan f.Message, 1000000)
+		// Use a reasonable initial size for "unbounded" channels to avoid massive memory allocation
+		mailbox = make(chan f.Message, 10000)
 	default:
 		capacity := config.Capacity
 		if capacity <= 0 {
