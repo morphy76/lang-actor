@@ -54,9 +54,21 @@ func (a actor[T]) Address() url.URL {
 
 // Stop stops the actor.
 func (a *actor[T]) Stop() (chan bool, error) {
+	// First, collect child URLs without holding the lock to avoid deadlock
+	a.lock.Lock()
+	childURLs := make([]url.URL, 0, len(a.children))
 	for childURL := range a.children {
+		childURLs = append(childURLs, childURL)
+	}
+	a.lock.Unlock()
+
+	// Stop children without holding the parent lock
+	for _, childURL := range childURLs {
 		a.Crop(childURL)
 	}
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
 
 	if a.status == f.ActorStatusRunning {
 		return a.teardown()
@@ -116,7 +128,9 @@ func (a *actor[T]) Deliver(msg any, from c.Addressable) error {
 }
 
 // State returns the actor's state.
-func (a actor[T]) State() T {
+func (a *actor[T]) State() T {
+	a.lock.Lock()
+	defer a.lock.Unlock()
 	return a.state
 }
 
@@ -205,15 +219,25 @@ func (a *actor[T]) verifyChildURL(url url.URL) error {
 }
 
 func (a *actor[T]) teardown() (chan bool, error) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
+	// Lock is already held by caller (Stop method)
 	a.ctxCancel()
-
 	return a.stopCompleted, nil
 }
 
 func (a *actor[T]) consume() {
+	defer func() {
+		// Ensure status is set and channel is closed on any exit
+		a.lock.Lock()
+		a.status = f.ActorStatusIdle
+		a.lock.Unlock()
+
+		// Send completion signal (non-blocking)
+		select {
+		case a.stopCompleted <- true:
+		default:
+		}
+	}()
+
 	for {
 		select {
 		case msg := <-a.mailbox:
@@ -236,12 +260,8 @@ func (a *actor[T]) consume() {
 
 					a.swapState(newState)
 				case <-cleanupTimeout:
-					a.status = f.ActorStatusIdle
-					a.stopCompleted <- true
 					return
 				default:
-					a.status = f.ActorStatusIdle
-					a.stopCompleted <- true
 					break drainLoop
 				}
 			}
@@ -256,6 +276,12 @@ func (a *actor[T]) swapState(newState T) {
 	a.state = newState
 }
 
-func (a actor[T]) handleFailure(err error) {
-	fmt.Printf("(%v) handleFailure: %s\n", a.address, err)
+func (a *actor[T]) handleFailure(err error) {
+	// TODO: Implement proper error handling strategy:
+	// - Error escalation to parent actors
+	// - Configurable error recovery policies
+	// - Structured logging
+	// - Metrics/monitoring integration
+	// For now, just log the error
+	fmt.Printf("Actor [%v] error: %s\n", a.address, err)
 }

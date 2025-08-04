@@ -7,7 +7,7 @@ GO := go
 GOFLAGS := #-mod=vendor
 LDFLAGS := -ldflags="-s -w"
 GCFLAGS := -gcflags="-m -l"
-TESTFLAGS := -v -count=1 -timeout=2s
+TESTFLAGS := -v -count=1 -timeout=30s -race -failfast -shuffle=on -coverprofile=coverage.out
 LINTFLAGS := #-v
 PACKAGES := $(shell $(GO) list ./... | grep -vE '/tools/|/examples/')
 
@@ -28,8 +28,21 @@ lint: ## Run static analysis tools (golint, go vet, etc.)
 
 ##@ Testing
 .PHONY: test
-test: lint ## Run all tests (excluding tools and examples)
+test: lint ## Run all tests with race detection and comprehensive flags
 	@$(GO) test $(TESTFLAGS) $(PACKAGES)
+
+.PHONY: test-bench
+test-bench: ## Run benchmark tests
+	@$(GO) test -v -bench=. -benchmem -timeout=60s $(PACKAGES)
+
+##@ Cleanup
+.PHONY: clean clean-test
+clean: clean-test ## Clean all generated files
+
+clean-test: ## Clean test artifacts (coverage files, etc.)
+	@echo "Cleaning test artifacts..."
+	@rm -f coverage.out coverage.html
+	@echo "✅ Test artifacts cleaned"
 
 ##@ Actor Examples
 .PHONY: run-echo-case run-pingpong-case run-selfpingpong-case run-sort-case run-calculator-case run-echowithchild-case run-counter-case

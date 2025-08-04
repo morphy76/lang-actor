@@ -36,8 +36,8 @@ func NewMailboxConfigWithFailPolicy(capacity int) framework.MailboxConfig {
 //   - (framework.MailboxConfig): The created MailboxConfig instance.
 func NewMailboxConfigWithUnboundedPolicy() framework.MailboxConfig {
 	return framework.MailboxConfig{
-		Capacity: 1000000,
-		Policy:   framework.BackpressurePolicyFail,
+		Capacity: 0, // Capacity is ignored for unbounded policy
+		Policy:   framework.BackpressurePolicyUnbounded,
 	}
 }
 

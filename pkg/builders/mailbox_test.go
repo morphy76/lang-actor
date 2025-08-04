@@ -32,12 +32,12 @@ func TestNewMailboxConfig(t *testing.T) {
 	})
 
 	t.Run("Creates mailbox with fail policy and large capacity", func(t *testing.T) {
-		t.Log("Should create a mailbox configuration with fail policy and large capacity for unbounded behavior")
+		t.Log("Should create a mailbox configuration with unbounded policy")
 
 		config := builders.NewMailboxConfigWithUnboundedPolicy()
 
-		assert.Equal(t, config.Capacity, 1000000)
-		assert.Equal(t, config.Policy, framework.BackpressurePolicyFail)
+		assert.Equal(t, config.Capacity, 0) // Capacity is ignored for unbounded policy
+		assert.Equal(t, config.Policy, framework.BackpressurePolicyUnbounded)
 	})
 
 	t.Run("Creates mailbox with drop newest policy and specified capacity", func(t *testing.T) {
