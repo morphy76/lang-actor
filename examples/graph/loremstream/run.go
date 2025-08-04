@@ -31,7 +31,7 @@ const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
 
 // GraphState holds the streaming text state
 type GraphState struct {
-	StreamedText  string
+	StreamedText  []string
 	TotalText     string
 	IsComplete    bool
 	ChunkIndex    int
@@ -43,12 +43,12 @@ func (s *GraphState) MergeChange(purpose any, value any) error {
 	switch purpose.(string) {
 	case "chunk":
 		if chunk, ok := value.(string); ok {
-			s.StreamedText += chunk
-			fmt.Print(chunk) // Stream to stdout immediately
+			s.StreamedText = append(s.StreamedText, chunk)
+			s.ChunkIndex++
 		}
 	case "complete":
 		s.IsComplete = true
-		s.TotalText = s.StreamedText
+		s.TotalText = strings.Join(s.StreamedText, "")
 		fmt.Print("") // Just ensure we're ready for the final output
 	case "start":
 		s.StreamStarted = time.Now()
@@ -144,8 +144,7 @@ func startStateMonitor(graph g.Graph) {
 	go func() {
 		for state := range graph.StateChangedCh() {
 			if graphState, ok := state.(*GraphState); ok {
-				// You could add additional monitoring here if needed
-				_ = graphState // Suppress unused variable warning
+				fmt.Print(graphState.StreamedText[graphState.ChunkIndex])
 			}
 		}
 	}()
@@ -180,7 +179,7 @@ func main() {
 
 	// Create initial state
 	initialState := &GraphState{
-		StreamedText:  "",
+		StreamedText:  []string{},
 		TotalText:     "",
 		IsComplete:    false,
 		ChunkIndex:    0,

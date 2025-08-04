@@ -58,7 +58,7 @@ func NewOllamaNode(
 		}
 
 		respFunc := func(resp api.ChatResponse) error {
-			fmt.Print(resp.Message.Content)
+			self.State().GraphState().MergeChange(nil, resp.Message.Content)
 			return nil
 		}
 

@@ -14,14 +14,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/morphy76/lang-actor/pkg/builders"
+
+	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
 // graphState holds the streaming text state
 type graphState struct {
+	content string
 }
 
 // MergeChange implements the graph.State interface
 func (s *graphState) MergeChange(purpose any, value any) error {
+	if v, ok := value.(string); ok {
+		s.content += v
+	}
 	return nil
 }
 
@@ -29,8 +35,18 @@ func (s *graphState) MergeChange(purpose any, value any) error {
 type graphConfig struct {
 }
 
+func startStateMonitor(graph g.Graph) {
+	go func() {
+		for state := range graph.StateChangedCh() {
+			if graphState, ok := state.(*graphState); ok {
+				fmt.Print(graphState.content)
+			}
+		}
+	}()
+}
+
 func main() {
-	graph, err := builders.NewGraph(&graphState{}, &graphConfig{})
+	graph, err := builders.NewGraph(&graphState{content: ""}, &graphConfig{})
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
 		return
@@ -84,6 +100,8 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Press a enter to start")
+
+	startStateMonitor(graph)
 
 	reader.ReadString('\n')
 
