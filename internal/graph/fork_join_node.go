@@ -47,7 +47,7 @@ func NewForkJoingNode[C g.NodeRef](forGraph g.Graph, transient bool, processingF
 
 		receivedOutcomes := 0
 		for childOutcome := range childOutcomes {
-			self.State().GraphState().AppendGraphState(nil, childOutcome)
+			self.State().GraphState().MergeChange(nil, childOutcome)
 			receivedOutcomes++
 			if receivedOutcomes == expectedOutcomes {
 				break

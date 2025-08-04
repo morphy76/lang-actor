@@ -49,7 +49,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 			return func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 				rv := uuids[i]
 				t.Logf("Processing UUID: %s", rv)
-				self.State().GraphState().AppendGraphState(nil, rv)
+				self.State().GraphState().MergeChange(nil, rv)
 				self.State().ProceedOntoRoute() <- g.WhateverOutcome
 				return self.State(), nil
 			}

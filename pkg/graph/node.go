@@ -66,8 +66,6 @@ type Stateful interface {
 	GraphConfig() Configuration
 	// GraphState returns the current state of the graph.
 	GraphState() State
-	// UpdateGraphState updates the state of the graph.
-	UpdateGraphState(state State) error
 }
 
 // Connected represents a node that is connected to other nodes in the actor graph.

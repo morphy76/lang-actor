@@ -31,7 +31,7 @@ type graphState struct {
 }
 
 // Implement the required graph.State interface method
-func (s *graphState) AppendGraphState(purpose any, value any) error {
+func (s *graphState) MergeChange(purpose any, value any) error {
 	if purpose == "count" {
 		s.Counter++
 	} else if value != nil {
@@ -82,7 +82,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		}
 
 		// Increment counter and check if we should continue or exit cycle
-		graphState.AppendGraphState("count", nil)
+		graphState.MergeChange("count", nil)
 		fmt.Printf("Counter iteration: %d/%d\n", graphState.Counter, config.MaxIterations)
 
 		if graphState.Counter < config.MaxIterations {
@@ -120,7 +120,7 @@ func createProcessingFn(id string) f.ProcessingFn[g.NodeRef] {
 
 		// Update state with result
 		graphState := self.State().GraphState().(*graphState)
-		graphState.AppendGraphState(id, result)
+		graphState.MergeChange(id, result)
 
 		// Signal completion to parent
 		self.State().ProceedOntoRoute() <- fmt.Sprintf("%s-done", id)

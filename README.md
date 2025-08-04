@@ -1,8 +1,9 @@
 # lang-actor
 
 Lang-Actor is a ligh5. **Type-Safe Message Processing**:
-   - Generic typed actors and message handlers
-   - State always updated through message processingight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
+
+- Generic typed actors and message handlers
+- State always updated through message processingight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
 
 ## Actor Model Framework
 
@@ -194,7 +195,7 @@ type graphState struct {
 	stateAsMap map[string]any
 }
 
-func (s graphState) AppendGraphState(purpose any, value any) error {
+func (s graphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 

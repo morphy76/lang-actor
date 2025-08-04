@@ -28,7 +28,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		}
 
 		if graphState.Counter < cfg.Iterations {
-			self.State().GraphState().AppendGraphState(nil, nil)
+			self.State().GraphState().MergeChange(nil, nil)
 			self.State().ProceedOntoRoute() <- "iterate"
 		} else {
 			self.State().ProceedOntoRoute() <- "leavingCounter"
@@ -52,7 +52,7 @@ type graphState struct {
 	Counter int
 }
 
-func (s *graphState) AppendGraphState(purpose any, value any) error {
+func (s *graphState) MergeChange(purpose any, value any) error {
 	s.Counter++
 	return nil
 }

@@ -22,7 +22,7 @@ type Configuration interface {
 
 // State defines the interface for managing state within a graph.
 type State interface {
-	// AppendGraphState appends a new state to the graph.
+	// MergeChange appends a new state to the graph.
 	//
 	// Parameters:
 	//   - purpose (any): The purpose of the state.
@@ -30,7 +30,7 @@ type State interface {
 	//
 	// Returns:
 	//   - error: An error if the append operation fails, nil otherwise.
-	AppendGraphState(purpose any, value any) error
+	MergeChange(purpose any, value any) error
 }
 
 // Graph represents the actor, runnable, graph.
@@ -46,12 +46,6 @@ type Graph interface {
 	// Returns:
 	//   - State: The current state of the graph.
 	State() State
-	// UpdateState updates the state of the graph.
-	//
-	// Parameters:
-	//   - state State: The new state to set for the graph.
-	//
-	// Returns:
-	//   - error: An error if the update fails, nil otherwise.
-	UpdateState(state State) error
+	// StateChangedCh returns a channel that is closed when the state of the graph changes.
+	StateChangedCh() <-chan State
 }

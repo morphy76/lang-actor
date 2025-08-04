@@ -16,7 +16,7 @@ type uUUIDGraphState struct {
 	uuids []any
 }
 
-func (s *uUUIDGraphState) AppendGraphState(purpose any, value any) error {
+func (s *uUUIDGraphState) MergeChange(purpose any, value any) error {
 	s.uuids = append(s.uuids, value.(string))
 	return nil
 }

@@ -68,17 +68,6 @@ func (ns *BasicNodeRef) GraphState() State {
 	return ns.graph.State()
 }
 
-// UpdateGraphState initializes the state for the node state.
-//
-// Parameters:
-//   - state (State): The new state to set for the
-//
-// Returns:
-//   - (error): An error if the update fails, nil otherwise.
-func (ns *BasicNodeRef) UpdateGraphState(state State) error {
-	return ns.graph.UpdateState(state)
-}
-
 // Routes returns the routes of the node state.
 func (ns *BasicNodeRef) Routes() []string {
 	return ns.owner.EdgeNames()

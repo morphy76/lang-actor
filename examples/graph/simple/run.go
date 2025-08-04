@@ -15,7 +15,7 @@ type graphState struct {
 	stateAsMap map[string]any
 }
 
-func (s graphState) AppendGraphState(purpose any, value any) error {
+func (s graphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 

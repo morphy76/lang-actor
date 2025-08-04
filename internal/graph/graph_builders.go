@@ -21,14 +21,19 @@ func NewGraph[T g.State, C g.Configuration](
 		return nil, err
 	}
 
+	stateChangedCh := make(chan g.State, 100000000) // Buffered channel to avoid blocking
+	useState := NewStateWrapper(initialState, stateChangedCh)
+
 	graph := &graph{
 		lock: &sync.Mutex{},
 
 		resolvables: make(map[url.URL]*c.Addressable),
 		graphURL:    *graphURL,
 		config:      config,
-		state:       initialState,
+		state:       useState,
 		addressBook: routing.NewAddressBook(),
+
+		stateChangedCh: stateChangedCh,
 	}
 
 	return graph, nil
