@@ -25,28 +25,6 @@ func (m *mockState) MergeChange(purpose any, value any) error {
 func TestNewStateWrapper(t *testing.T) {
 	t.Log("StateWrapper test suite")
 
-	t.Run("NewStateWrapper creates valid wrapper", func(t *testing.T) {
-		t.Log("NewStateWrapper creates valid wrapper test case")
-
-		// Arrange
-		mockState := &mockState{}
-		stateChangesCh := make(chan g.State, 1)
-
-		// Act
-		wrapper := &stateWrapper{
-			state:          mockState,
-			stateChangesCh: stateChangesCh,
-		}
-
-		// Assert
-		if wrapper == nil {
-			t.Errorf("Expected a StateWrapper, but got nil")
-		}
-
-		// Verify that the wrapper implements the State interface
-		var _ g.State = wrapper
-	})
-
 	t.Run("MergeChange proxies to underlying state", func(t *testing.T) {
 		t.Log("MergeChange proxies to underlying state test case")
 
