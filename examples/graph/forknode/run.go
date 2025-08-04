@@ -102,7 +102,6 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		forGraph,
 		address,
 		taskFn,
-		false,
 	)
 }
 

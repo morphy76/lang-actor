@@ -136,7 +136,6 @@ func NewLoremGeneratorNode(forGraph g.Graph) (g.Node, error) {
 		forGraph,
 		address,
 		taskFn,
-		false,
 	)
 }
 

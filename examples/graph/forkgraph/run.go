@@ -97,7 +97,6 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		forGraph,
 		address,
 		taskFn,
-		false,
 	)
 }
 
@@ -170,7 +169,6 @@ func createProcessBranchNodes(graph g.Graph, processNames []string) ([]g.Node, e
 			graph,
 			address,
 			createProcessingFn(name),
-			false,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error creating branch node for %s: %v", name, err)
