@@ -7,7 +7,7 @@ import (
 	"github.com/morphy76/lang-actor/pkg/framework"
 )
 
-// NewActor creates a new actor with the given address. Mutation is fully driven by the message.
+// NewActor creates a new actor with the given address. The actor state is always updated by message processing.
 // Supported schemas are:
 // - actor://
 //

@@ -24,9 +24,12 @@ test: ## Run all tests (excluding tools and examples)
 	@$(GO) test $(TESTFLAGS) $(shell $(GO) list ./... | grep -vE '/tools/|/examples/')
 
 ##@ Actor Examples
-.PHONY: run-echo-case run-pingpong-case run-selfpingpong-case run-sort-case run-calculator-case run-echowithchild-case
+.PHONY: run-echo-case run-pingpong-case run-selfpingpong-case run-sort-case run-calculator-case run-echowithchild-case run-counter-case
 run-echo-case: ## Run the echo actor example
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/echo/run.go
+
+run-counter-case: ## Run the counter actor example (from README)
+	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/counter/run.go
 
 run-pingpong-case: ## Run the pingpong actor example
 	@$(GO) run $(GOFLAGS) $(LDFLAGS) $(GCFLAGS) ./examples/actors/pingpong/run.go

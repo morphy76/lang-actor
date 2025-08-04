@@ -144,8 +144,7 @@ type Message interface {
 // It takes a message of type M and the current actor state of type T, and returns the updated
 // state of type T along with an error, if any.
 //
-// If the message is a mutation, the state is updated and returned. If the message is not a mutation,
-// the state remains unchanged regardless by what's returned by the processing funcion.
+// The actor state is always updated with the returned state from the processing function.
 //
 // Type Parameters:
 //   - T: The type of the actor state.

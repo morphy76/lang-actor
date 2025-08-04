@@ -119,8 +119,8 @@ func TestActorMessageDelivery(t *testing.T) {
 		assert.Assert(t, *messageProcessed)
 	})
 
-	t.Run("Update actor state on mutation message", func(t *testing.T) {
-		t.Log("Should update the actor's state when a mutation message is delivered")
+	t.Run("Update actor state on message processing", func(t *testing.T) {
+		t.Log("Should update the actor's state when any message is delivered")
 
 		var initialState = mockActorState{processed: false}
 		var spyFn f.ProcessingFn[mockActorState] = func(msg f.Message, actor f.Actor[mockActorState]) (mockActorState, error) {

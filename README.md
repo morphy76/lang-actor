@@ -1,6 +1,8 @@
 # lang-actor
 
-Lang-Actor is a lightweight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
+Lang-Actor is a ligh5. **Type-Safe Message Processing**:
+   - Generic typed actors and message handlers
+   - State always updated through message processingight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
 
 ## Actor Model Framework
 
@@ -10,7 +12,7 @@ The Actor Model in Lang-Actor follows these core principles:
 
 - Each actor has a unique address (URI);
 - Actors communicate exclusively through asynchronous message passing;
-- Actors maintain private state that can only be modified by processing messages;
+- Actors maintain private state that is modified by processing messages;
 - Actors can create child actors, forming hierarchical supervision trees;
 - Each actor processes messages sequentially from its mailbox.
 
@@ -34,7 +36,7 @@ The Actor Model in Lang-Actor follows these core principles:
 
 4. **Type-Safe Message Processing**:
    - Generic typed actors and message handlers
-   - State mutation controlled through message processing
+   - State always updated through message processing
 
 5. **Lifecycle Management**:
    - Actors can be started, stopped, and monitored
@@ -71,16 +73,12 @@ func (m incrementMessage) Sender() url.URL {
  return m.senderURL
 }
 
-func (m incrementMessage) Mutation() bool {
- return true
-}
-
 // Define message processing function
 var counterFn framework.ProcessingFn[counterState] = func(
  msg framework.Message,
  self framework.Actor[counterState],
 ) (counterState, error) {
- if incMsg, ok := msg.(incrementMessage); ok {
+ if incMsg, ok := msg.Payload().(incrementMessage); ok {
   newCount := self.State().count + incMsg.amount
   fmt.Printf("Counter incremented to: %d\n", newCount)
   return counterState{count: newCount}, nil
@@ -109,7 +107,7 @@ func main() {
    senderURL: *actorURL,
    amount:    i,
   }
-  counterActor.Deliver(msg)
+  counterActor.Deliver(msg, nil)
   time.Sleep(500 * time.Millisecond)
  }
 }
@@ -121,17 +119,19 @@ This simple example creates a counter actor that processes increment messages an
 
 For more advanced usage patterns, refer to the examples in the repository:
 
-1. **Echo Actor** (`examples/actors/echo/run.go`): Demonstrates basic message handling by echoing received messages.
+1. **Counter** (`examples/actors/counter/run.go`): The simple counter example shown above.
 
-2. **Ping-Pong** (`examples/actors/pingpong/run.go`): Shows communication between multiple actors.
+2. **Echo Actor** (`examples/actors/echo/run.go`): Demonstrates basic message handling by echoing received messages.
 
-3. **Echo With Child** (`examples/actors/echowithchild/run.go`): Demonstrates parent-child actor relationships.
+3. **Ping-Pong** (`examples/actors/pingpong/run.go`): Shows communication between multiple actors.
 
-4. **Calculator** (`examples/actors/calculator/run.go`): Implements a simple calculator using actors.
+4. **Echo With Child** (`examples/actors/echowithchild/run.go`): Demonstrates parent-child actor relationships.
 
-5. **Self-Ping-Pong** (`examples/actors/selfpingpong/run.go`): Shows how actors can send messages to themselves.
+5. **Calculator** (`examples/actors/calculator/run.go`): Implements a simple calculator using actors.
 
-6. **Sort** (`examples/actors/sort/run.go`): Demonstrates more complex state management and processing.
+6. **Self-Ping-Pong** (`examples/actors/selfpingpong/run.go`): Shows how actors can send messages to themselves.
+
+7. **Sort** (`examples/actors/sort/run.go`): Demonstrates more complex state management and processing.
 
 These examples demonstrate various aspects of the framework including actor creation, message passing, state management, and actor hierarchies.
 
