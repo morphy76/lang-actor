@@ -65,12 +65,7 @@ type counterState struct {
 
 // Define a message type
 type incrementMessage struct {
- senderURL url.URL
  amount    int
-}
-
-func (m incrementMessage) Sender() url.URL {
- return m.senderURL
 }
 
 // Define message processing function
@@ -104,7 +99,6 @@ func main() {
  // Send messages to the actor
  for i := 1; i <= 5; i++ {
   msg := incrementMessage{
-   senderURL: *actorURL,
    amount:    i,
   }
   counterActor.Deliver(msg, nil)
