@@ -24,8 +24,6 @@ type node struct {
 	address url.URL
 	actor   f.ActorRef
 
-	actorOutcome chan string
-
 	nodeRef g.NodeRef
 
 	multipleOutcomes bool
@@ -128,7 +126,7 @@ func (r *node) Accept(message any) error {
 	// TODO implement a timeout for the outcome channel
 	if r.multipleOutcomes {
 		for {
-			outcome := <-r.actorOutcome
+			outcome := <-r.NodeRef().ProceedOntoRoute()
 			if outcome == g.SkipOutcome {
 				return nil
 			} else if outcome == g.WhateverOutcome {
@@ -139,7 +137,7 @@ func (r *node) Accept(message any) error {
 			}
 		}
 	} else {
-		outcome := <-r.actorOutcome
+		outcome := <-r.NodeRef().ProceedOntoRoute()
 		if outcome != g.WhateverOutcome {
 			r.ProceedOnRoute(outcome, message)
 		} else {

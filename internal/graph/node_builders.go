@@ -48,7 +48,6 @@ func newNode[T g.NodeRef](
 	}
 
 	rv.actor = task
-	rv.actorOutcome = actorOutcome
 	rv.nodeRef = useRef
 
 	return rv, nil
