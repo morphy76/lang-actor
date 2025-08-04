@@ -217,30 +217,24 @@ func (a *actor[T]) consume() {
 	for {
 		select {
 		case msg := <-a.mailbox:
-			useMessage, ok := msg.(f.Message)
-			if ok {
-				newState, err := a.processingFn(useMessage, a)
-				if err != nil {
-					a.handleFailure(err)
-				}
-
-				a.swapState(newState)
+			newState, err := a.processingFn(msg, a)
+			if err != nil {
+				a.handleFailure(err)
 			}
+
+			a.swapState(newState)
 		case <-a.ctx.Done():
 			cleanupTimeout := time.After(5 * time.Second)
 		drainLoop:
 			for {
 				select {
 				case msg := <-a.mailbox:
-					useMessage, ok := msg.(f.Message)
-					if ok {
-						newState, err := a.processingFn(useMessage, a)
-						if err != nil {
-							a.handleFailure(err)
-						}
-
-						a.swapState(newState)
+					newState, err := a.processingFn(msg, a)
+					if err != nil {
+						a.handleFailure(err)
 					}
+
+					a.swapState(newState)
 				case <-cleanupTimeout:
 					a.status = f.ActorStatusIdle
 					a.stopCompleted <- true
