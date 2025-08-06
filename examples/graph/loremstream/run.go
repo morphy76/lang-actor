@@ -53,6 +53,11 @@ func (s *graphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 
+// Unwrap implements the graph.State interface
+func (s *graphState) Unwrap() g.State {
+	return s
+}
+
 // GraphConfig holds configuration for text streaming
 type GraphConfig struct {
 	ChunkSize   int

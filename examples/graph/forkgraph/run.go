@@ -44,6 +44,11 @@ func (s *graphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 
+// Unwrap implements the graph.State interface
+func (s *graphState) Unwrap() g.State {
+	return s
+}
+
 // Define our graph configuration with iteration count and process names
 type graphConfig struct {
 	MaxIterations int
@@ -62,7 +67,7 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 		fmt.Println("Counter node processing message")
 
 		// Get graph state and config from the node state
-		graphState, ok := self.State().GraphState().(*graphState)
+		graphState, ok := self.State().GraphState().Unwrap().(*graphState)
 		if !ok {
 			fmt.Println("Error: Could not cast to graphState")
 			self.State().ProceedOntoRoute() <- "error"
@@ -113,7 +118,7 @@ func createProcessingFn(id string) f.ProcessingFn[g.NodeRef] {
 		fmt.Printf("Process '%s' %s\n", id, result)
 
 		// Update state with result
-		graphState := self.State().GraphState().(*graphState)
+		graphState := self.State().GraphState().Unwrap().(*graphState)
 		graphState.MergeChange(id, result)
 
 		// Signal completion to parent
