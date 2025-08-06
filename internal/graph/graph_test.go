@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/morphy76/lang-actor/internal/graph"
+	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
 type graphState struct {
@@ -13,6 +14,10 @@ type graphState struct {
 
 func (s graphState) MergeChange(purpose any, value any) error {
 	return nil
+}
+
+func (s graphState) Unwrap() g.State {
+	return s
 }
 
 func TestNewGraph(t *testing.T) {

@@ -22,6 +22,10 @@ func (m *mockState) MergeChange(purpose any, value any) error {
 	return m.mergeChangeError
 }
 
+func (m *mockState) Unwrap() g.State {
+	return m
+}
+
 func TestNewStateWrapper(t *testing.T) {
 	t.Log("NewStateWrapper test suite")
 

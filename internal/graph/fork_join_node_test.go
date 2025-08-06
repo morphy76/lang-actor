@@ -168,7 +168,7 @@ func TestForkAndThenJoinNode(t *testing.T) {
 			t.Errorf("Expected uuids to be generated, but got nil")
 		}
 
-		actualUUIDs := testGraph.State().(*uUUIDGraphState).uuids
+		actualUUIDs := testGraph.State().Unwrap().(*uUUIDGraphState).uuids
 		if len(actualUUIDs) != len(uuids) {
 			t.Errorf("Expected %d UUIDs, but got %d", len(uuids), len(actualUUIDs))
 		}

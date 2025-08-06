@@ -57,3 +57,11 @@ func (s *stateWrapper) MergeChange(purpose any, value any) error {
 
 	return nil
 }
+
+// Unwrap retrieves the underlying, non-proxy, state.
+func (s *stateWrapper) Unwrap() g.State {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state
+}

@@ -20,11 +20,12 @@ func NewCounterNode(forGraph g.Graph) (g.Node, error) {
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 		cfg, okCfg := self.State().GraphConfig().(graphConfig)
-		graphState, okState := self.State().GraphState().(*graphState)
+		graphState, okState := self.State().GraphState().Unwrap().(*graphState)
 
 		if !okCfg || !okState {
 			// TODO handle functional error
 			self.State().ProceedOntoRoute() <- "leavingCounter"
+			return self.State(), nil
 		}
 
 		if graphState.Counter < cfg.Iterations {
@@ -54,6 +55,10 @@ type graphState struct {
 func (s *graphState) MergeChange(purpose any, value any) error {
 	s.Counter++
 	return nil
+}
+
+func (s *graphState) Unwrap() g.State {
+	return s
 }
 
 type graphConfig struct {
@@ -138,7 +143,7 @@ func TestNewCyclicGraph(t *testing.T) {
 			t.Errorf("Expected graph config to be of type graphConfig, got %T", graph.Config())
 		}
 
-		currentGraphState, ok := graph.State().(*graphState)
+		currentGraphState, ok := graph.State().Unwrap().(*graphState)
 		if !ok {
 			t.Errorf("Expected graph state to be of type graphState, got %T", graph.State())
 		}
