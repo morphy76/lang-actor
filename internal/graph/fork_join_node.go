@@ -41,7 +41,6 @@ func NewForkJoingNode[C g.NodeRef](forGraph g.Graph, transient bool, processingF
 	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 
 		for _, child := range self.Children() {
-			fmt.Printf("Delivering message to child: %v\n", child.Address())
 			child.Deliver(msg, self)
 		}
 

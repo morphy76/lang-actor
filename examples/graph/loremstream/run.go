@@ -29,29 +29,25 @@ import (
 // Lorem ipsum text to stream
 const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt."
 
-// GraphState holds the streaming text state
-type GraphState struct {
-	StreamedText  []string
-	TotalText     string
-	IsComplete    bool
-	ChunkIndex    int
-	StreamStarted time.Time
+// graphState holds the streaming text state
+type graphState struct {
+	StreamedText []string
+	TotalText    string
+	IsComplete   bool
 }
 
 // MergeChange implements the graph.State interface
-func (s *GraphState) MergeChange(purpose any, value any) error {
+func (s *graphState) MergeChange(purpose any, value any) error {
 	switch purpose.(string) {
 	case "chunk":
 		if chunk, ok := value.(string); ok {
 			s.StreamedText = append(s.StreamedText, chunk)
-			s.ChunkIndex++
 		}
 	case "complete":
 		s.IsComplete = true
 		s.TotalText = strings.Join(s.StreamedText, "")
-		fmt.Print("") // Just ensure we're ready for the final output
+		fmt.Printf("\n\n📜 Total Lorem Ipsum Text:\n%s\n", s.TotalText)
 	case "start":
-		s.StreamStarted = time.Now()
 		fmt.Print("\n🔄 Starting lorem ipsum generation...\n\n📝 ")
 	}
 	return nil
@@ -143,8 +139,10 @@ func NewLoremGeneratorNode(forGraph g.Graph) (g.Node, error) {
 func startStateMonitor(graph g.Graph) {
 	go func() {
 		for state := range graph.StateChangedCh() {
-			if graphState, ok := state.(*GraphState); ok {
-				fmt.Print(graphState.StreamedText[graphState.ChunkIndex])
+			if graphState, ok := state.(*graphState); ok {
+				if len(graphState.StreamedText) > 0 {
+					fmt.Print(graphState.StreamedText[len(graphState.StreamedText)-1])
+				}
 			}
 		}
 	}()
@@ -178,12 +176,10 @@ func main() {
 	}
 
 	// Create initial state
-	initialState := &GraphState{
-		StreamedText:  []string{},
-		TotalText:     "",
-		IsComplete:    false,
-		ChunkIndex:    0,
-		StreamStarted: time.Time{},
+	initialState := &graphState{
+		StreamedText: []string{},
+		TotalText:    "",
+		IsComplete:   false,
 	}
 
 	// Create graph

@@ -26,7 +26,7 @@ type graphState struct {
 // MergeChange implements the graph.State interface
 func (s *graphState) MergeChange(purpose any, value any) error {
 	if v, ok := value.(string); ok {
-		s.content += v
+		s.content = v
 	}
 	return nil
 }

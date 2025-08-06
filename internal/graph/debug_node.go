@@ -51,7 +51,7 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 	}
 
 	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
-		fmt.Println("==========================================")
+		fmt.Println("\n==========================================")
 		fmt.Printf("Debug node [%+v] received message [%+v]\n", self.Address(), msg)
 		fmt.Println("---------------------------------")
 		fmt.Printf("System config [%+v]\n", self.State().GraphConfig())

@@ -48,13 +48,11 @@ func (s *stateWrapper) MergeChange(purpose any, value any) error {
 		return err
 	}
 
-	// Use non-blocking send to avoid deadlock if channel is full
 	select {
 	case s.stateChangesCh <- s.state:
-		// State change notification sent successfully
 	default:
 		// Channel is full, skip notification rather than blocking
-		// In production, this could be logged as a warning
+		// TODO In production, this could be logged as a warning
 	}
 
 	return nil

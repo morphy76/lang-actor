@@ -29,6 +29,8 @@ func NewOllamaNode(
 		return nil, err
 	}
 
+	// 03c7fec5967149cca9a85c6baa41787c.2PT6vp8oZ5GRBSUzysjqGV3l
+
 	ollamaClient := ollamaAPI.NewClient(url, http.DefaultClient)
 	taskFn := func(msg f.Message, self f.Actor[g.NodeRef]) (g.NodeRef, error) {
 
@@ -51,22 +53,29 @@ func NewOllamaNode(
 			},
 		}
 
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
+		stream := new(bool)
+		*stream = false
 		req := &api.ChatRequest{
 			Model:    "Almawave/Velvet:2B",
 			Messages: messages,
+			Stream:   stream,
 		}
 
 		respFunc := func(resp api.ChatResponse) error {
 			self.State().GraphState().MergeChange(nil, resp.Message.Content)
+			if resp.Done {
+				cancel()
+			}
 			return nil
 		}
 
 		err = ollamaClient.Chat(ctx, req, respFunc)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("❌ Error calling Ollama API: %v\n", err)
 		}
 
+		<-ctx.Done()
 		self.State().ProceedOntoRoute() <- g.WhateverOutcome
 
 		return self.State(), nil
