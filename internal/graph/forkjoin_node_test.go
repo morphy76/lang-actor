@@ -21,6 +21,14 @@ func (s *uUUIDGraphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 
+func (s *uUUIDGraphState) Unwrap() g.State {
+	return s
+}
+
+func (s *uUUIDGraphState) ReadAttribute(name string) any {
+	return s.uuids
+}
+
 func TestForkJoinNode(t *testing.T) {
 	t.Log("Fork join test suite")
 
@@ -78,7 +86,7 @@ func TestForkJoinNode(t *testing.T) {
 			t.Errorf("Expected uuids to be generated, but got nil")
 		}
 
-		actualUUIDs := testGraph.State().(*uUUIDGraphState).uuids
+		actualUUIDs := testGraph.State().Unwrap().(*uUUIDGraphState).uuids
 		if len(actualUUIDs) != len(uuids) {
 			t.Errorf("Expected %d UUIDs, but got %d", len(uuids), len(actualUUIDs))
 		}

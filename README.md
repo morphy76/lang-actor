@@ -1,9 +1,6 @@
 # lang-actor
 
-Lang-Actor is a ligh5. **Type-Safe Message Processing**:
-
-- Generic typed actors and message handlers
-- State always updated through message processingight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
+Lang-Actor is a lightweight, Go-based implementation of the Actor Model and Graph Model, providing robust foundations for building concurrent and flow-based applications with clearly defined boundaries and communication patterns.
 
 ## Actor Model Framework
 

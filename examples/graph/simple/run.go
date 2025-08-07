@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/morphy76/lang-actor/pkg/builders"
+
+	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
 type graphState struct {
@@ -17,6 +19,15 @@ type graphState struct {
 
 func (s graphState) MergeChange(purpose any, value any) error {
 	return nil
+}
+
+// Unwrap implements the graph.State interface
+func (s graphState) Unwrap() g.State {
+	return s
+}
+
+func (s graphState) ReadAttribute(name string) any {
+	return s.stateAsMap[name]
 }
 
 func main() {

@@ -31,6 +31,15 @@ type State interface {
 	// Returns:
 	//   - error: An error if the append operation fails, nil otherwise.
 	MergeChange(purpose any, value any) error
+
+	// Unwrap retrieves the underlying, non-proxy, state.
+	//
+	// Returns:
+	//   - State: The underlying state.
+	Unwrap() State
+
+	// TODO
+	ReadAttribute(name string) any
 }
 
 // Graph represents the actor, runnable, graph.

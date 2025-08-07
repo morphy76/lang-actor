@@ -48,14 +48,28 @@ func (s *stateWrapper) MergeChange(purpose any, value any) error {
 		return err
 	}
 
-	// Use non-blocking send to avoid deadlock if channel is full
 	select {
 	case s.stateChangesCh <- s.state:
-		// State change notification sent successfully
 	default:
 		// Channel is full, skip notification rather than blocking
-		// In production, this could be logged as a warning
+		// TODO In production, this could be logged as a warning
 	}
 
 	return nil
+}
+
+// Unwrap retrieves the underlying, non-proxy, state.
+func (s *stateWrapper) Unwrap() g.State {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state
+}
+
+// TODO
+func (s *stateWrapper) ReadAttribute(name string) any {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state.ReadAttribute(name)
 }

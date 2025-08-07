@@ -40,7 +40,7 @@ func (g *graph) Query(schema string, pathParts ...string) []c.Addressable {
 
 // State returns the current state of the graph.
 func (g *graph) State() g.State {
-	return g.state.state
+	return g.state
 }
 
 // Config returns the configuration of the graph.
