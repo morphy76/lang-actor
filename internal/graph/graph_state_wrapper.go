@@ -65,3 +65,11 @@ func (s *stateWrapper) Unwrap() g.State {
 
 	return s.state
 }
+
+// TODO
+func (s *stateWrapper) ReadAttribute(name string) any {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state.ReadAttribute(name)
+}

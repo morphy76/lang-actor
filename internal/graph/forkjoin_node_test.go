@@ -25,6 +25,10 @@ func (s *uUUIDGraphState) Unwrap() g.State {
 	return s
 }
 
+func (s *uUUIDGraphState) ReadAttribute(name string) any {
+	return s.uuids
+}
+
 func TestForkJoinNode(t *testing.T) {
 	t.Log("Fork join test suite")
 

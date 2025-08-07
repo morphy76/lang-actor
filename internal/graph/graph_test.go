@@ -20,6 +20,10 @@ func (s graphState) Unwrap() g.State {
 	return s
 }
 
+func (s graphState) ReadAttribute(name string) any {
+	return s.stateAsMap[name]
+}
+
 func TestNewGraph(t *testing.T) {
 	t.Log("Graph Builders test suite")
 

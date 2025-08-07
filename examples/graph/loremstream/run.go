@@ -53,6 +53,20 @@ func (s *graphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 
+func (s *graphState) ReadAttribute(name string) any {
+	switch name {
+	case "StreamedText":
+		return s.StreamedText
+	case "TotalText":
+		return s.TotalText
+	case "IsComplete":
+		return s.IsComplete
+	default:
+		return nil
+
+	}
+}
+
 // Unwrap implements the graph.State interface
 func (s *graphState) Unwrap() g.State {
 	return s

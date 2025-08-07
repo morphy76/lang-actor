@@ -49,6 +49,19 @@ func (s *graphState) MergeChange(purpose any, value any) error {
 	return nil
 }
 
+func (s *graphState) ReadAttribute(name string) any {
+	switch name {
+	case "counter":
+		return s.Counter
+	case "results":
+		return s.Results
+	case "startTime":
+		return s.StartTime
+	default:
+		return nil
+	}
+}
+
 // Unwrap implements the graph.State interface
 func (s *graphState) Unwrap() g.State {
 	return s

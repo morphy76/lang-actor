@@ -61,6 +61,10 @@ func (s *graphState) Unwrap() g.State {
 	return s
 }
 
+func (s *graphState) ReadAttribute(name string) any {
+	return s.Counter
+}
+
 type graphConfig struct {
 	Iterations int
 }

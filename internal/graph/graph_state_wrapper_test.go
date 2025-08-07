@@ -26,6 +26,21 @@ func (m *mockState) Unwrap() g.State {
 	return m
 }
 
+func (m *mockState) ReadAttribute(name string) any {
+	switch name {
+	case "mergeChangeCalled":
+		return m.mergeChangeCalled
+	case "mergeChangeError":
+		return m.mergeChangeError
+	case "purposeReceived":
+		return m.purposeReceived
+	case "valueReceived":
+		return m.valueReceived
+	default:
+		return nil
+	}
+}
+
 func TestNewStateWrapper(t *testing.T) {
 	t.Log("NewStateWrapper test suite")
 

@@ -14,19 +14,40 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/morphy76/lang-actor/pkg/builders"
+	"github.com/morphy76/lang-actor/pkg/graph/ollama"
 
 	g "github.com/morphy76/lang-actor/pkg/graph"
 )
 
+var staticGraphStateAssertion g.State = (*graphState)(nil)
+
 // graphState holds the streaming text state
 type graphState struct {
-	content string
+	question string
+	answer   string
+
+	TotalQuestion string
+	TotalAnswer   string
 }
 
 // MergeChange implements the graph.State interface
 func (s *graphState) MergeChange(purpose any, value any) error {
-	if v, ok := value.(string); ok {
-		s.content = v
+	if typedPurpose, ok := purpose.(ollama.Kind); ok {
+		switch typedPurpose {
+		case ollama.Generate:
+			if v, ok := value.(string); ok {
+				s.question = v
+				s.TotalQuestion += v
+			}
+		case ollama.Chat:
+			if v, ok := value.(string); ok {
+				s.answer = v
+				s.TotalAnswer += v
+			}
+		}
+	} else {
+		return fmt.Errorf("No changes due to wrong purpose: %v", purpose)
+
 	}
 	return nil
 }
@@ -34,6 +55,21 @@ func (s *graphState) MergeChange(purpose any, value any) error {
 // Unwrap implements the graph.State interface
 func (s *graphState) Unwrap() g.State {
 	return s
+}
+
+func (s *graphState) ReadAttribute(name string) any {
+	switch name {
+	case "question":
+		return s.question
+	case "answer":
+		return s.answer
+	case "totalQuestion":
+		return s.TotalQuestion
+	case "totalAnswer":
+		return s.TotalAnswer
+	default:
+		return nil
+	}
 }
 
 // graphConfig holds configuration for text streaming
@@ -44,14 +80,19 @@ func startStateMonitor(graph g.Graph) {
 	go func() {
 		for state := range graph.StateChangedCh() {
 			if graphState, ok := state.(*graphState); ok {
-				fmt.Print(graphState.content)
+				if graphState.answer == "" {
+					fmt.Print(graphState.question)
+				} else {
+					fmt.Print(graphState.answer)
+				}
 			}
 		}
 	}()
 }
 
 func main() {
-	graph, err := builders.NewGraph(&graphState{content: ""}, &graphConfig{})
+	useState := &graphState{answer: "", question: ""}
+	graph, err := builders.NewGraph(useState, &graphConfig{})
 	if err != nil {
 		fmt.Printf("Error creating graph: %v\n", err)
 		return
@@ -81,18 +122,39 @@ func main() {
 		return
 	}
 
-	ollamaNode, err := builders.NewOllamaNode(graph, ollamaURL)
+	ollamaGenerateNode, err := builders.NewOllamaNode(graph, ollamaURL,
+		ollama.GenerateWithModel("Almawave/Velvet:2B"),
+		ollama.WithSystem("as a high school teacher of philosophy"),
+		ollama.WithPrompt("generate a random question about life, life style, society or being an human being"),
+		ollama.WithStream(),
+	)
 	if err != nil {
 		fmt.Printf("❌ Error creating Ollama node: %v\n", err)
 		return
 	}
 
-	err = rootNode.OneWayRoute("leavingStart", ollamaNode)
+	ollamaChatNode, err := builders.NewOllamaNode(graph, ollamaURL,
+		ollama.ChatWithModel("Almawave/Velvet:2B"),
+		ollama.WithStream(),
+		ollama.WithSystem("as a high school student of philosophy"),
+		ollama.WithUserUtterance("{{.question}}"),
+	)
+	if err != nil {
+		fmt.Printf("❌ Error creating Ollama node: %v\n", err)
+		return
+	}
+
+	err = rootNode.OneWayRoute("leavingStart", ollamaGenerateNode)
 	if err != nil {
 		fmt.Printf("Error creating route from root to child: %v\n", err)
 		return
 	}
-	err = ollamaNode.OneWayRoute("leavingOllama", debugNode)
+	err = ollamaGenerateNode.OneWayRoute("leavingQuestionGeneration", ollamaChatNode)
+	if err != nil {
+		fmt.Printf("Error creating route from root to child: %v\n", err)
+		return
+	}
+	err = ollamaChatNode.OneWayRoute("leavingOllama", debugNode)
 	if err != nil {
 		fmt.Printf("Error creating route from root to child: %v\n", err)
 		return

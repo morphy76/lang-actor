@@ -37,6 +37,9 @@ type State interface {
 	// Returns:
 	//   - State: The underlying state.
 	Unwrap() State
+
+	// TODO
+	ReadAttribute(name string) any
 }
 
 // Graph represents the actor, runnable, graph.

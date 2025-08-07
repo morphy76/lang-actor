@@ -55,8 +55,10 @@ func NewDebugNode(forGraph g.Graph, nameParts ...string) (g.Node, error) {
 		fmt.Printf("Debug node [%+v] received message [%+v]\n", self.Address(), msg)
 		fmt.Println("---------------------------------")
 		fmt.Printf("System config [%+v]\n", self.State().GraphConfig())
-		fmt.Println("---------------------------------")
-		fmt.Printf("Graph status [%+v]\n", self.State().GraphState())
+		if self.State().GraphState() != nil {
+			fmt.Println("---------------------------------")
+			fmt.Printf("Graph status [%+v]\n", self.State().GraphState().Unwrap())
+		}
 		fmt.Println("==========================================")
 		self.State().ProceedOntoRoute() <- g.WhateverOutcome
 		return self.State(), nil
