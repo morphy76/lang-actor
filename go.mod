@@ -6,7 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/ollama/ollama v0.14.2
+	github.com/ollama/ollama v0.14.3
 	gotest.tools/v3 v3.5.2
 )
 
