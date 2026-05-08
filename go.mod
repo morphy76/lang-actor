@@ -1,12 +1,10 @@
 module github.com/morphy76/lang-actor
 
-go 1.24.1
-
-toolchain go1.24.5
+go 1.26.0
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/ollama/ollama v0.22.1
+	github.com/ollama/ollama v0.23.2
 	gotest.tools/v3 v3.5.2
 )
 
